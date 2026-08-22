@@ -3,6 +3,9 @@ export type ContentStatus =
 
 export type ExerciseItemRole = 'primary' | 'secondary' | 'context'
 
+export * from './exact-answer-checker.js'
+export * from './review-scheduler.js'
+
 export interface UserMemory {
   userId: string
   itemId: string

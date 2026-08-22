@@ -7,11 +7,21 @@
     "node": ">=24.0.0"
   },
   "scripts": {
+    "postinstall": "pnpm --filter @language/database build",
     "dev": "turbo dev",
+    "dev:setup": "pnpm db:start && pnpm db:migrate:deploy && pnpm db:seed",
+    "dev:full": "pnpm dev:setup && pnpm dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "db:validate": "pnpm --filter @language/database db:validate",
+    "db:start": "node scripts/postgres.mjs start",
+    "db:stop": "node scripts/postgres.mjs stop",
+    "db:migrate:dev": "pnpm --filter @language/database db:migrate:dev",
+    "db:migrate:deploy": "pnpm --filter @language/database db:migrate:deploy",
+    "db:seed": "pnpm --filter @language/database db:seed",
+    "db:studio": "pnpm --filter @language/database db:studio",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

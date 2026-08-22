@@ -1,0 +1,597 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ContentStatus {
+  DRAFT
+  GENERATED
+  VERIFIED
+  CURATED
+  BLOCKED
+}
+
+enum KnowledgeItemKind {
+  LEXICAL_SENSE
+  GRAMMAR
+  SPECIFIC_SKILL
+  REGISTER
+}
+
+enum LessonItemRole {
+  INTRODUCED
+  PRACTICED
+  RECOGNITION
+}
+
+enum ExerciseKind {
+  PREPARED
+  GENERATED
+}
+
+enum ExerciseItemRole {
+  PRIMARY
+  SECONDARY
+  CONTEXT
+}
+
+enum LexicalFormSource {
+  GENERATED
+  OVERRIDE
+  CURATED
+}
+
+enum AudioAssetKind {
+  WORD
+  TEXT
+  EXERCISE
+}
+
+enum MemoryState {
+  NEW
+  LEARNING
+  REVIEW
+  RELEARNING
+}
+
+enum AttemptOutcome {
+  CORRECT
+  PARTIAL
+  INCORRECT
+}
+
+enum EvidenceResult {
+  SUCCESS
+  FAILURE
+  IGNORED
+}
+
+model Course {
+  id             String        @id
+  sourceLanguage String
+  targetLanguage String
+  title          Json
+  description    Json?
+  status         ContentStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  routeVersions     CourseRouteVersion[]
+  lessons           Lesson[]
+  exerciseTemplates ExerciseTemplate[]
+  exercises         Exercise[]
+  texts             Text[]
+
+  @@index([sourceLanguage, targetLanguage, status])
+}
+
+model CourseRouteVersion {
+  id          String        @id
+  courseId    String
+  version     Int
+  status      ContentStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  course             Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  entries            CourseRouteEntry[]
+  dependencies       CourseRouteDependency[]
+  userProgress       UserCourseProgress[]
+  lessonProgress     UserLessonProgress[]
+  generatedExercises GeneratedExercise[]
+  attempts           UserAttempt[]
+
+  @@unique([courseId, version])
+  @@index([courseId, status])
+}
+
+model CourseRouteEntry {
+  id             String @id @default(cuid())
+  routeVersionId String
+  lessonId       String
+  modulePosition Int
+  lessonPosition Int
+
+  routeVersion CourseRouteVersion @relation(fields: [routeVersionId], references: [id], onDelete: Cascade)
+  lesson       Lesson             @relation(fields: [lessonId], references: [id], onDelete: Restrict)
+
+  @@unique([routeVersionId, lessonId])
+  @@unique([routeVersionId, modulePosition, lessonPosition])
+  @@index([lessonId])
+}
+
+model CourseRouteDependency {
+  routeVersionId       String
+  lessonId             String
+  prerequisiteLessonId String
+
+  routeVersion CourseRouteVersion @relation(fields: [routeVersionId], references: [id], onDelete: Cascade)
+  lesson       Lesson             @relation("DependentLesson", fields: [lessonId], references: [id], onDelete: Cascade)
+  prerequisite Lesson             @relation("PrerequisiteLesson", fields: [prerequisiteLessonId], references: [id], onDelete: Cascade)
+
+  @@id([routeVersionId, lessonId, prerequisiteLessonId])
+  @@index([prerequisiteLessonId])
+}
+
+model Lesson {
+  id        String        @id
+  courseId  String
+  title     Json
+  summary   Json?
+  content   Json
+  status    ContentStatus @default(DRAFT)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  course            Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  routeEntries      CourseRouteEntry[]
+  routeDependencies CourseRouteDependency[] @relation("DependentLesson")
+  prerequisiteFor   CourseRouteDependency[] @relation("PrerequisiteLesson")
+  knowledgeItems    LessonKnowledgeItem[]
+  exercises         Exercise[]
+  progress          UserLessonProgress[]
+  currentForUsers   UserCourseProgress[]
+
+  @@index([courseId, status])
+}
+
+model KnowledgeItem {
+  id           String            @id
+  kind         KnowledgeItemKind
+  languageCode String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  skill           Skill?
+  lexicalSense    LexicalSense?
+  lessonItems     LessonKnowledgeItem[]
+  exerciseItems   ExerciseItem[]
+  textItems       TextKnowledgeItem[]
+  userMemories    UserMemory[]
+  attemptEvidence UserAttemptEvidence[]
+
+  @@index([languageCode, kind])
+}
+
+model Skill {
+  id          String @id
+  name        Json
+  description Json?
+  metadata    Json?
+
+  knowledgeItem   KnowledgeItem     @relation(fields: [id], references: [id], onDelete: Cascade)
+  dependencies    SkillDependency[] @relation("SkillDependencies")
+  prerequisiteFor SkillDependency[] @relation("SkillPrerequisites")
+}
+
+model SkillDependency {
+  skillId             String
+  prerequisiteSkillId String
+
+  skill        Skill @relation("SkillDependencies", fields: [skillId], references: [id], onDelete: Cascade)
+  prerequisite Skill @relation("SkillPrerequisites", fields: [prerequisiteSkillId], references: [id], onDelete: Cascade)
+
+  @@id([skillId, prerequisiteSkillId])
+  @@index([prerequisiteSkillId])
+}
+
+model Concept {
+  id            String   @id
+  semanticTypes String[]
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  lexicalSenses LexicalSense[]
+}
+
+model LexicalEntry {
+  id           String        @id
+  languageCode String
+  lemma        String
+  partOfSpeech String
+  register     String?
+  metadata     Json?
+  status       ContentStatus @default(DRAFT)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  senses LexicalSense[]
+  forms  LexicalForm[]
+
+  @@index([languageCode, lemma])
+  @@index([languageCode, partOfSpeech])
+}
+
+model LexicalSense {
+  id             String        @id
+  lexicalEntryId String
+  conceptId      String
+  gloss          Json
+  metadata       Json?
+  status         ContentStatus @default(DRAFT)
+
+  knowledgeItem KnowledgeItem @relation(fields: [id], references: [id], onDelete: Cascade)
+  lexicalEntry  LexicalEntry  @relation(fields: [lexicalEntryId], references: [id], onDelete: Cascade)
+  concept       Concept       @relation(fields: [conceptId], references: [id], onDelete: Restrict)
+  textTokens    TextToken[]
+
+  @@index([lexicalEntryId])
+  @@index([conceptId])
+}
+
+model LexicalForm {
+  id             String            @id @default(cuid())
+  lexicalEntryId String
+  surface        String
+  features       Json
+  source         LexicalFormSource @default(GENERATED)
+  audioAssetId   String?
+
+  lexicalEntry LexicalEntry @relation(fields: [lexicalEntryId], references: [id], onDelete: Cascade)
+  audioAsset   AudioAsset?  @relation(fields: [audioAssetId], references: [id], onDelete: SetNull)
+
+  @@index([lexicalEntryId, surface])
+  @@index([audioAssetId])
+}
+
+model LessonKnowledgeItem {
+  lessonId String
+  itemId   String
+  role     LessonItemRole
+  position Int?
+
+  lesson Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  item   KnowledgeItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([lessonId, itemId])
+  @@index([itemId])
+}
+
+model ExerciseTemplate {
+  id         String        @id
+  courseId   String
+  frame      String
+  version    Int
+  definition Json
+  status     ContentStatus @default(DRAFT)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  course             Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  generatedExercises GeneratedExercise[]
+
+  @@unique([id, version])
+  @@index([courseId, frame, status])
+}
+
+model Exercise {
+  id             String        @id
+  courseId       String
+  lessonId       String?
+  kind           ExerciseKind
+  status         ContentStatus @default(DRAFT)
+  targetLanguage String
+  targetText     String
+  answerSpec     Json
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  course      Course                @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson      Lesson?               @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  prompts     ExercisePrompt[]
+  items       ExerciseItem[]
+  generated   GeneratedExercise?
+  attempts    UserAttempt[]
+  userHistory UserExerciseHistory[]
+
+  @@index([courseId, kind, status])
+  @@index([lessonId])
+}
+
+model ExercisePrompt {
+  exerciseId     String
+  sourceLanguage String
+  text           String
+
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@id([exerciseId, sourceLanguage])
+}
+
+model ExerciseItem {
+  exerciseId     String
+  itemId         String
+  role           ExerciseItemRole
+  testedFeatures Json?
+
+  exercise Exercise      @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  item     KnowledgeItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@id([exerciseId, itemId])
+  @@index([itemId, role])
+}
+
+model GeneratedExercise {
+  exerciseId       String @id
+  templateId       String
+  routeVersionId   String
+  parametersHash   String
+  generatorVersion String
+
+  exercise     Exercise           @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  template     ExerciseTemplate   @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  routeVersion CourseRouteVersion @relation(fields: [routeVersionId], references: [id], onDelete: Restrict)
+
+  @@unique([templateId, routeVersionId, parametersHash, generatorVersion])
+  @@index([routeVersionId])
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions        Session[]
+  accounts        Account[]
+  courseProgress  UserCourseProgress[]
+  lessonProgress  UserLessonProgress[]
+  memories        UserMemory[]
+  attempts        UserAttempt[]
+  exerciseHistory UserExerciseHistory[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  issuer                String
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issuer, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+model UserCourseProgress {
+  userId          String
+  routeVersionId  String
+  currentLessonId String?
+  startedAt       DateTime  @default(now())
+  lastActivityAt  DateTime  @default(now())
+  completedAt     DateTime?
+
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routeVersion  CourseRouteVersion @relation(fields: [routeVersionId], references: [id], onDelete: Restrict)
+  currentLesson Lesson?            @relation(fields: [currentLessonId], references: [id], onDelete: SetNull)
+
+  @@id([userId, routeVersionId])
+  @@index([routeVersionId])
+  @@index([currentLessonId])
+}
+
+model UserLessonProgress {
+  userId                 String
+  routeVersionId         String
+  lessonId               String
+  explanationCompletedAt DateTime?
+  vocabularyCompletedAt  DateTime?
+  practiceCompletedAt    DateTime?
+  completedAt            DateTime?
+  updatedAt              DateTime  @updatedAt
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routeVersion CourseRouteVersion @relation(fields: [routeVersionId], references: [id], onDelete: Restrict)
+  lesson       Lesson             @relation(fields: [lessonId], references: [id], onDelete: Restrict)
+
+  @@id([userId, routeVersionId, lessonId])
+  @@index([routeVersionId, lessonId])
+  @@index([lessonId])
+}
+
+model UserMemory {
+  userId       String
+  itemId       String
+  difficulty   Float
+  stability    Float
+  state        MemoryState @default(NEW)
+  dueAt        DateTime
+  lastReviewAt DateTime?
+  repetitions  Int         @default(0)
+  lapses       Int         @default(0)
+  updatedAt    DateTime    @updatedAt
+
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item KnowledgeItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([userId, itemId])
+  @@index([userId, dueAt])
+  @@index([itemId])
+}
+
+model UserAttempt {
+  id                   String         @id @default(cuid())
+  userId               String
+  exerciseId           String
+  routeVersionId       String
+  idempotencyKey       String
+  answerText           String
+  normalizedAnswerText String
+  outcome              AttemptOutcome
+  diagnostics          Json?
+  checkerVersion       String
+  generatorVersion     String?
+  durationMs           Int?
+  answeredAt           DateTime       @default(now())
+
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise     Exercise              @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  routeVersion CourseRouteVersion    @relation(fields: [routeVersionId], references: [id], onDelete: Restrict)
+  evidence     UserAttemptEvidence[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, answeredAt])
+  @@index([exerciseId])
+  @@index([routeVersionId])
+}
+
+model UserAttemptEvidence {
+  attemptId String
+  itemId    String
+  role      ExerciseItemRole
+  result    EvidenceResult
+  score     Float?
+
+  attempt UserAttempt   @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  item    KnowledgeItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@id([attemptId, itemId])
+  @@index([itemId, result])
+}
+
+model UserExerciseHistory {
+  userId      String
+  exerciseId  String
+  firstSeenAt DateTime        @default(now())
+  lastSeenAt  DateTime
+  timesSeen   Int             @default(1)
+  lastOutcome AttemptOutcome?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@id([userId, exerciseId])
+  @@index([exerciseId])
+  @@index([userId, lastSeenAt])
+}
+
+model Text {
+  id           String        @id
+  courseId     String
+  title        Json
+  level        String
+  topics       String[]
+  body         String
+  status       ContentStatus @default(DRAFT)
+  audioAssetId String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  course         Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  audioAsset     AudioAsset?         @relation(fields: [audioAssetId], references: [id], onDelete: SetNull)
+  tokens         TextToken[]
+  knowledgeItems TextKnowledgeItem[]
+
+  @@index([courseId, level, status])
+  @@index([audioAssetId])
+}
+
+model TextToken {
+  id             String  @id @default(cuid())
+  textId         String
+  position       Int
+  surface        String
+  lemma          String?
+  lexicalSenseId String?
+  analysis       Json?
+  charStart      Int
+  charEnd        Int
+  audioStartMs   Int?
+  audioEndMs     Int?
+
+  text         Text          @relation(fields: [textId], references: [id], onDelete: Cascade)
+  lexicalSense LexicalSense? @relation(fields: [lexicalSenseId], references: [id], onDelete: SetNull)
+
+  @@unique([textId, position])
+  @@index([lexicalSenseId])
+}
+
+model TextKnowledgeItem {
+  textId String
+  itemId String
+
+  text Text          @relation(fields: [textId], references: [id], onDelete: Cascade)
+  item KnowledgeItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@id([textId, itemId])
+  @@index([itemId])
+}
+
+model AudioAsset {
+  id         String         @id
+  kind       AudioAssetKind
+  storageKey String         @unique
+  mimeType   String
+  durationMs Int?
+  checksum   String
+  status     ContentStatus  @default(DRAFT)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  lexicalForms LexicalForm[]
+  texts        Text[]
+}

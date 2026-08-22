@@ -4,7 +4,7 @@ import { getApiUrl } from './api-url'
 
 describe('getApiUrl', () => {
   it('uses the local API by default', () => {
-    expect(getApiUrl(undefined)).toBe('http://localhost:3000/api/v1')
+    expect(getApiUrl(undefined)).toBe('/api/v1')
   })
 
   it('removes a trailing slash', () => {
