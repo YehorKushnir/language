@@ -1,0 +1,149 @@
+:root {
+  color: #17221c;
+  background: #f5f1e8;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+.site-header a {
+  text-decoration: none;
+}
+
+.site-header nav a {
+  padding: 8px 12px;
+  border-radius: 999px;
+}
+
+.site-header nav a[aria-current='page'] {
+  background: #e1e9d8;
+}
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-weight: 750;
+}
+
+.brand-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 12px;
+  color: white;
+  background: #27633f;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+}
+
+.page-shell {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.hero {
+  padding: clamp(72px, 13vw, 160px) 0 80px;
+}
+
+.eyebrow {
+  margin: 0 0 20px;
+  color: #27633f;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  max-width: 920px;
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.7rem, 7vw, 6.3rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 0.96;
+}
+
+.hero-copy {
+  max-width: 720px;
+  margin: 32px 0;
+  color: #4d5d52;
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  line-height: 1.65;
+}
+
+.status-card {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  max-width: 580px;
+  padding: 18px 20px;
+  border: 1px solid #d5d9ce;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.status-dot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: #2f8652;
+  box-shadow: 0 0 0 5px #dcebdd;
+}
+
+.status-card div {
+  display: grid;
+  gap: 4px;
+}
+
+.status-card span {
+  color: #637067;
+}
+
+@media (max-width: 600px) {
+  .site-header {
+    align-items: flex-start;
+  }
+
+  .brand > span:last-child {
+    display: none;
+  }
+}
