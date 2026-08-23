@@ -36,7 +36,7 @@ describe('ExerciseGenerationService', () => {
       findFirst: vi.fn(),
       create: vi.fn(),
     },
-    exerciseTemplate: { findFirst: vi.fn() },
+    exerciseTemplate: { findMany: vi.fn() },
     userMemory: { findMany: vi.fn() },
   }
   const morphology = { analyzeText: vi.fn() }
@@ -46,9 +46,10 @@ describe('ExerciseGenerationService', () => {
   )
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     prisma.exercise.findMany.mockResolvedValue([])
     prisma.exercise.findFirst.mockResolvedValue(null)
+    prisma.exerciseTemplate.findMany.mockResolvedValue([])
     prisma.userMemory.findMany.mockResolvedValue([])
   })
 
@@ -84,16 +85,18 @@ describe('ExerciseGenerationService', () => {
       prompt: 'Я студент.',
       reviewItemIds: ['grammar.affirmative'],
     })
-    expect(prisma.exerciseTemplate.findFirst).not.toHaveBeenCalled()
+    expect(prisma.exerciseTemplate.findMany).not.toHaveBeenCalled()
     expect(morphology.analyzeText).not.toHaveBeenCalled()
   })
 
   it('realizes, validates and stores a deterministic exercise', async () => {
-    prisma.exerciseTemplate.findFirst.mockResolvedValue({
-      id: 'template.identity@1',
-      courseId: 'course.ru-fi',
-      definition: templateDefinition,
-    })
+    prisma.exerciseTemplate.findMany.mockResolvedValue([
+      {
+        id: 'template.identity@1',
+        courseId: 'course.ru-fi',
+        definition: templateDefinition,
+      },
+    ])
     morphology.analyzeText.mockResolvedValue({
       text: 'Minä olen opiskelija.',
       tokens: [
@@ -153,8 +156,122 @@ describe('ExerciseGenerationService', () => {
     )
   })
 
+  it('generates a reviewed variation for a later lesson item', async () => {
+    const variationDefinition = {
+      schemaVersion: 1,
+      frame: 'prepared-variation',
+      lessonId: 'fi.present.common',
+      sourceLanguage: 'ru',
+      targetLanguage: 'fi',
+      exerciseIds: ['exercise.fi.present.common.word.1'],
+      supportedItemIds: ['grammar.fi.present.common', 'word.fi.m1.02.01'],
+    }
+    prisma.exercise.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([
+      {
+        id: 'exercise.fi.present.common.word.1',
+        lessonId: 'fi.present.common',
+        targetText: 'Minä puhun suomea.',
+        answerSpec: {
+          acceptedVariants: ['Minä puhun suomea.', 'Puhun suomea.'],
+          slots: [
+            {
+              role: 'subject',
+              accepted: ['minä'],
+              itemIds: ['grammar.fi.present.common'],
+              optional: true,
+            },
+            {
+              role: 'verb',
+              accepted: ['puhun'],
+              itemIds: ['grammar.fi.present.common', 'word.fi.m1.02.01'],
+            },
+          ],
+        },
+        prompts: [{ text: 'Я говорю по-фински.' }],
+        items: [
+          {
+            itemId: 'grammar.fi.present.common',
+            role: ExerciseItemRole.PRIMARY,
+          },
+          {
+            itemId: 'word.fi.m1.02.01',
+            role: ExerciseItemRole.SECONDARY,
+          },
+        ],
+      },
+    ])
+    prisma.exerciseTemplate.findMany.mockResolvedValue([
+      {
+        id: 'template.fi.present.common.prepared-variation@1',
+        courseId: 'course.ru-fi',
+        definition: variationDefinition,
+      },
+    ])
+    morphology.analyzeText.mockResolvedValue({
+      text: 'Puhun suomea.',
+      tokens: [
+        { type: 'word', surface: 'Puhun', analyses: [{}] },
+        { type: 'word', surface: 'suomea', analyses: [{}] },
+      ],
+    })
+    prisma.exercise.create.mockImplementation(
+      ({
+        data,
+      }: {
+        data: {
+          id: string
+          lessonId: string
+          targetLanguage: string
+          prompts: { create: { text: string } }
+        }
+      }) => ({
+        id: data.id,
+        lessonId: data.lessonId,
+        targetLanguage: data.targetLanguage,
+        prompts: [{ text: data.prompts.create.text }],
+        items: [
+          {
+            itemId: 'word.fi.m1.02.01',
+            role: ExerciseItemRole.PRIMARY,
+          },
+        ],
+      }),
+    )
+
+    const result = await service.getOrCreateReviewExercise(
+      'user.1',
+      'route.1',
+      'ru',
+      ['word.fi.m1.02.01'],
+      [],
+    )
+
+    expect(result).toMatchObject({
+      lessonId: 'fi.present.common',
+      prompt: 'Я говорю по-фински.',
+      reviewItemIds: ['word.fi.m1.02.01'],
+    })
+    expect(morphology.analyzeText).toHaveBeenCalledWith('Puhun suomea.')
+    expect(prisma.exercise.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          targetText: 'Puhun suomea.',
+          answerSpec: expect.objectContaining({
+            sourceExerciseId: 'exercise.fi.present.common.word.1',
+            generatorVersion: 'finnish-prepared-variation-v1',
+          }),
+          generated: {
+            create: expect.objectContaining({
+              generatorVersion: 'finnish-prepared-variation-v1',
+            }),
+          },
+        }),
+      }),
+    )
+  })
+
   it('lets the review queue fall back when there is no curated template', async () => {
-    prisma.exerciseTemplate.findFirst.mockResolvedValue(null)
+    prisma.exerciseTemplate.findMany.mockResolvedValue([])
 
     await expect(
       service.getOrCreateReviewExercise(
@@ -169,11 +286,13 @@ describe('ExerciseGenerationService', () => {
   })
 
   it('does not generate for an unsupported earliest due item', async () => {
-    prisma.exerciseTemplate.findFirst.mockResolvedValue({
-      id: 'template.identity@1',
-      courseId: 'course.ru-fi',
-      definition: templateDefinition,
-    })
+    prisma.exerciseTemplate.findMany.mockResolvedValue([
+      {
+        id: 'template.identity@1',
+        courseId: 'course.ru-fi',
+        definition: templateDefinition,
+      },
+    ])
 
     await expect(
       service.getOrCreateReviewExercise(

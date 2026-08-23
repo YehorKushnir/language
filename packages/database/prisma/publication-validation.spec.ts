@@ -207,4 +207,43 @@ describe('validatePublishedCourse', () => {
       }),
     )
   })
+
+  it('validates prepared-variation templates against published exercises', async () => {
+    const fixture = createFixture()
+    const variationDefinition = {
+      schemaVersion: 1,
+      frame: 'prepared-variation',
+      lessonId: 'lesson.1',
+      sourceLanguage: 'ru',
+      targetLanguage: 'fi',
+      exerciseIds: fixture.exercises.map((exercise) => exercise.id),
+      supportedItemIds: [...grammarItemIds, wordItemId],
+    }
+    fixture.templates[0] = {
+      id: 'template.prepared-variation@1',
+      status: ContentStatus.CURATED,
+      definition:
+        variationDefinition as unknown as (typeof fixture.templates)[number]['definition'],
+    }
+
+    await expect(
+      validatePublishedCourse(createPrisma(fixture), 'route.1'),
+    ).resolves.toMatchObject({
+      templateCount: 1,
+      generatedCandidateCount: 60,
+    })
+
+    variationDefinition.exerciseIds.push('exercise.missing')
+    await expect(
+      validatePublishedCourse(createPrisma(fixture), 'route.1'),
+    ).rejects.toEqual(
+      expect.objectContaining({
+        issues: expect.arrayContaining([
+          expect.stringContaining(
+            'references unavailable prepared exercise exercise.missing',
+          ),
+        ]),
+      }),
+    )
+  })
 })

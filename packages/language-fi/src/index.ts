@@ -1,3 +1,5 @@
+export * from './exercise-template.js'
 export * from './identity-realizer.js'
+export * from './prepared-variation-realizer.js'
 export * from './types.js'
 export * from './voikko-analyzer.js'

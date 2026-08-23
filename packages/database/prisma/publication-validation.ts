@@ -1,6 +1,7 @@
 import {
+  finnishTemplateSupportedItemIds,
   realizeFinnishIdentity,
-  validateFinnishIdentityTemplate,
+  validateFinnishExerciseTemplate,
   type FinnishIdentityCategory,
 } from '@language/language-fi'
 
@@ -164,9 +165,9 @@ export async function validatePublishedCourse(
         exercise.lessonId === lessonId &&
         exercise.status === ContentStatus.CURATED,
     ).length
-    if (lessonExerciseCount < 60) {
+    if (lessonExerciseCount !== 60) {
       issues.push(
-        `${lessonId} must have at least 60 curated prepared exercises; received ${lessonExerciseCount}`,
+        `${lessonId} must have exactly 60 curated prepared exercises; received ${lessonExerciseCount}`,
       )
     }
   }
@@ -205,6 +206,7 @@ export async function validatePublishedCourse(
     where: { courseId: route.courseId },
   })
   let generatedCandidateCount = 0
+  const curatedTemplateCountByLesson = new Map<string, number>()
   for (const template of templates) {
     if (template.status === ContentStatus.BLOCKED) {
       issues.push(`${template.id} is blocked in a published course`)
@@ -212,7 +214,7 @@ export async function validatePublishedCourse(
     }
     if (template.status !== ContentStatus.CURATED) continue
     try {
-      validateFinnishIdentityTemplate(template.definition)
+      validateFinnishExerciseTemplate(template.definition)
       const definition = template.definition
       if (
         definition.sourceLanguage !== route.course.sourceLanguage ||
@@ -225,51 +227,91 @@ export async function validatePublishedCourse(
         issues.push(`${template.id} references a lesson outside the route`)
         continue
       }
-      for (const itemId of [
-        ...Object.values(definition.grammarItems),
-        ...definition.complements.map((item) => item.itemId),
-      ]) {
+      curatedTemplateCountByLesson.set(
+        definition.lessonId,
+        (curatedTemplateCountByLesson.get(definition.lessonId) ?? 0) + 1,
+      )
+      for (const itemId of finnishTemplateSupportedItemIds(definition)) {
         const itemOrder = introducedAt.get(itemId)
         if (itemOrder === undefined || itemOrder > templateLessonOrder) {
           issues.push(`${template.id} uses unavailable item ${itemId}`)
         }
       }
-      const targets = new Set<string>()
-      for (const category of [
-        'affirmative',
-        'negative',
-        'question',
-      ] as FinnishIdentityCategory[]) {
-        for (const person of definition.personKeys) {
-          for (const complement of definition.complements) {
-            const candidate = realizeFinnishIdentity(definition, {
-              category,
-              person,
-              complementKey: complement.key,
-            })
-            generatedCandidateCount += 1
-            targets.add(candidate.targetText)
-            if (!candidate.acceptedVariants.includes(candidate.targetText)) {
-              issues.push(
-                `${template.id} does not accept generated target ${candidate.targetText}`,
+      if (definition.frame === 'identity') {
+        const targets = new Set<string>()
+        for (const category of [
+          'affirmative',
+          'negative',
+          'question',
+        ] as FinnishIdentityCategory[]) {
+          for (const person of definition.personKeys) {
+            for (const complement of definition.complements) {
+              const candidate = realizeFinnishIdentity(definition, {
+                category,
+                person,
+                complementKey: complement.key,
+              })
+              generatedCandidateCount += 1
+              targets.add(candidate.targetText)
+              if (!candidate.acceptedVariants.includes(candidate.targetText)) {
+                issues.push(
+                  `${template.id} does not accept generated target ${candidate.targetText}`,
+                )
+              }
+              const mappedItems = new Set(
+                candidate.slots.flatMap((slot) => slot.itemIds),
               )
-            }
-            const mappedItems = new Set(
-              candidate.slots.flatMap((slot) => slot.itemIds),
-            )
-            if (
-              !mappedItems.has(candidate.grammarItemId) ||
-              !mappedItems.has(candidate.vocabularyItemId)
-            ) {
-              issues.push(`${template.id} generates an incomplete AnswerSpec`)
+              if (
+                !mappedItems.has(candidate.grammarItemId) ||
+                !mappedItems.has(candidate.vocabularyItemId)
+              ) {
+                issues.push(`${template.id} generates an incomplete AnswerSpec`)
+              }
             }
           }
         }
-      }
-      const expectedCount =
-        3 * definition.personKeys.length * definition.complements.length
-      if (targets.size !== expectedCount) {
-        issues.push(`${template.id} generates duplicate target sentences`)
+        const expectedCount =
+          3 * definition.personKeys.length * definition.complements.length
+        if (targets.size !== expectedCount) {
+          issues.push(`${template.id} generates duplicate target sentences`)
+        }
+      } else {
+        const referencedExercises = preparedExercises.filter((exercise) =>
+          definition.exerciseIds.includes(exercise.id),
+        )
+        const referencedExerciseIds = new Set(
+          referencedExercises.map((exercise) => exercise.id),
+        )
+        for (const exerciseId of definition.exerciseIds) {
+          if (!referencedExerciseIds.has(exerciseId)) {
+            issues.push(
+              `${template.id} references unavailable prepared exercise ${exerciseId}`,
+            )
+          }
+        }
+        const coveredItemIds = new Set(
+          referencedExercises.flatMap((exercise) =>
+            exercise.items
+              .filter((item) => item.role !== ExerciseItemRole.CONTEXT)
+              .map((item) => item.itemId),
+          ),
+        )
+        for (const itemId of definition.supportedItemIds) {
+          if (!coveredItemIds.has(itemId)) {
+            issues.push(`${template.id} does not cover item ${itemId}`)
+          }
+        }
+        for (const exercise of referencedExercises) {
+          if (exercise.lessonId !== definition.lessonId) {
+            issues.push(
+              `${template.id} references exercise ${exercise.id} from another lesson`,
+            )
+          }
+          const answerSpec = readAnswerSpec(exercise.answerSpec)
+          if (answerSpec) {
+            generatedCandidateCount += answerSpec.acceptedVariants.length
+          }
+        }
       }
     } catch (error) {
       issues.push(
@@ -283,6 +325,14 @@ export async function validatePublishedCourse(
     !templates.some((template) => template.status === ContentStatus.CURATED)
   ) {
     issues.push(`${route.courseId} has no curated exercise template`)
+  }
+  for (const lessonId of lessonIds) {
+    const templateCount = curatedTemplateCountByLesson.get(lessonId) ?? 0
+    if (templateCount !== 1) {
+      issues.push(
+        `${lessonId} must have exactly one curated exercise template; received ${templateCount}`,
+      )
+    }
   }
   const testedItemIds = new Set(
     exercises
@@ -527,6 +577,18 @@ function isAnswerSlot(value: unknown): boolean {
     Array.isArray(value.itemIds) &&
     value.itemIds.every((item) => typeof item === 'string' && item)
   )
+}
+
+function readAnswerSpec(value: unknown): { acceptedVariants: string[] } | null {
+  if (!isRecord(value) || !Array.isArray(value.acceptedVariants)) return null
+  if (
+    !value.acceptedVariants.every(
+      (item) => typeof item === 'string' && item.length > 0,
+    )
+  ) {
+    return null
+  }
+  return { acceptedVariants: value.acceptedVariants }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

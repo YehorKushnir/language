@@ -7,6 +7,7 @@ import {
 export const VERB_TYPE_FOUR_SKILL_ID = 'grammar.fi.verb-type.4'
 export const VERB_TYPE_FIVE_SKILL_ID = 'grammar.fi.verb-type.5'
 export const VERB_TYPE_SIX_SKILL_ID = 'grammar.fi.verb-type.6'
+export const VERB_TYPES_FOUR_SIX_SKILL_ID = 'grammar.fi.verb-types.four-six'
 
 const verbs: CuratedPresentVerb[] = [
   v(
@@ -531,6 +532,7 @@ export const verbTypesFourSixExercises = buildPresentVerbExercises({
       : item.verbType === '5'
         ? VERB_TYPE_FIVE_SKILL_ID
         : VERB_TYPE_SIX_SKILL_ID,
+  umbrellaSkillId: VERB_TYPES_FOUR_SIX_SKILL_ID,
 })
 
 export const verbTypesFourSixGoldenExerciseIds = [

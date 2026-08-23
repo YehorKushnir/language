@@ -169,8 +169,20 @@ export interface CourseLessonSeed {
     linguisticReview: 'PASSED' | 'PENDING'
     goldenExerciseIds: readonly string[]
   }
-  template?: typeof lessonIdentityTemplateDefinition
+  template?:
+    | typeof lessonIdentityTemplateDefinition
+    | CoursePreparedVariationTemplateSeed
   templateId?: string
+}
+
+export interface CoursePreparedVariationTemplateSeed {
+  schemaVersion: 1
+  frame: 'prepared-variation'
+  lessonId: string
+  sourceLanguage: 'ru'
+  targetLanguage: 'fi'
+  exerciseIds: string[]
+  supportedItemIds: string[]
 }
 
 interface LessonSpecification {
@@ -837,9 +849,14 @@ const firstLessonSkills: CourseSkillSeed[] = [
   },
 ]
 
-const generatedLessons = specifications.map((specification, index) =>
-  createLesson(specification, index + 2),
-)
+const generatedLessons = specifications.map((specification, index) => {
+  const lesson = createLesson(specification, index + 2)
+  return {
+    ...lesson,
+    template: createPreparedVariationTemplate(lesson),
+    templateId: `template.${lesson.id}.prepared-variation@1`,
+  }
+})
 
 export const moduleOneLessons: CourseLessonSeed[] = [
   {
@@ -1201,6 +1218,23 @@ function createLesson(
   }
 
   return lesson
+}
+
+function createPreparedVariationTemplate(
+  lesson: CourseLessonSeed,
+): CoursePreparedVariationTemplateSeed {
+  return {
+    schemaVersion: 1,
+    frame: 'prepared-variation',
+    lessonId: lesson.id,
+    sourceLanguage: 'ru',
+    targetLanguage: 'fi',
+    exerciseIds: lesson.exercises.map((exercise) => exercise.id),
+    supportedItemIds: [
+      ...lesson.skills.map((skill) => skill.id),
+      ...lesson.vocabulary.map((item) => item.itemId),
+    ],
+  }
 }
 
 function parseVocabulary(

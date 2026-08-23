@@ -291,6 +291,18 @@ async function seedVocabulary() {
 }
 
 async function seedExercise() {
+  const preparedExerciseIds = moduleOneLessons.flatMap((lesson) =>
+    lesson.exercises.map((exercise) => exercise.id),
+  )
+  await prisma.exercise.updateMany({
+    where: {
+      courseId: COURSE_ID,
+      kind: ExerciseKind.PREPARED,
+      id: { notIn: preparedExerciseIds },
+    },
+    data: { status: ContentStatus.DRAFT },
+  })
+
   for (const lesson of moduleOneLessons) {
     for (const exercise of lesson.exercises) {
       const answerSpec = {
@@ -382,6 +394,17 @@ async function seedExercise() {
 }
 
 async function seedExerciseTemplate() {
+  const templateIds = moduleOneLessons.flatMap((lesson) =>
+    lesson.templateId ? [lesson.templateId] : [],
+  )
+  await prisma.exerciseTemplate.updateMany({
+    where: {
+      courseId: COURSE_ID,
+      id: { notIn: templateIds },
+    },
+    data: { status: ContentStatus.DRAFT },
+  })
+
   for (const lesson of moduleOneLessons) {
     if (!lesson.template || !lesson.templateId) continue
     await prisma.exerciseTemplate.upsert({
@@ -389,7 +412,7 @@ async function seedExerciseTemplate() {
       update: {
         frame: lesson.template.frame,
         version: lesson.template.schemaVersion,
-        definition: lesson.template,
+        definition: lesson.template as unknown as Prisma.InputJsonValue,
         status: ContentStatus.CURATED,
       },
       create: {
@@ -397,7 +420,7 @@ async function seedExerciseTemplate() {
         courseId: COURSE_ID,
         frame: lesson.template.frame,
         version: lesson.template.schemaVersion,
-        definition: lesson.template,
+        definition: lesson.template as unknown as Prisma.InputJsonValue,
         status: ContentStatus.CURATED,
       },
     })

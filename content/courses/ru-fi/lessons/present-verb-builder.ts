@@ -78,6 +78,7 @@ export function buildPresentVerbExercises(input: {
   verbs: readonly CuratedPresentVerb[]
   vocabulary: readonly LessonVocabularySeed[]
   skillIdFor: (verb: CuratedPresentVerb) => string
+  umbrellaSkillId?: string
 }): PreparedExerciseSeed[] {
   const exercises: PreparedExerciseSeed[] = []
 
@@ -171,12 +172,23 @@ export function buildPresentVerbExercises(input: {
       const vocabulary = input.vocabulary[vocabularyIndex]!
       const skillId = input.skillIdFor(item)
       const values = create({ item, vocabulary, skillId })
+      const umbrellaSkillId = input.umbrellaSkillId
       exercises.push({
         id: `${input.idPrefix}.${category}.${serial(offset)}`,
         selectionOrder: exercises.length + 1,
         ...values,
+        slots: values.slots.map((slot) => ({
+          ...slot,
+          itemIds:
+            umbrellaSkillId && !slot.itemIds.includes(umbrellaSkillId)
+              ? [...slot.itemIds, umbrellaSkillId]
+              : slot.itemIds,
+        })),
         primaryItemId: skillId,
-        secondaryItemIds: [],
+        secondaryItemIds:
+          umbrellaSkillId && umbrellaSkillId !== skillId
+            ? [umbrellaSkillId]
+            : [],
         vocabularyItemId: vocabulary.itemId,
       })
     })

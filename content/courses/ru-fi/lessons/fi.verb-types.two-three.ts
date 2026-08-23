@@ -6,6 +6,7 @@ import {
 
 export const VERB_TYPE_TWO_SKILL_ID = 'grammar.fi.verb-type.2'
 export const VERB_TYPE_THREE_SKILL_ID = 'grammar.fi.verb-type.3'
+export const VERB_TYPES_TWO_THREE_SKILL_ID = 'grammar.fi.verb-types.two-three'
 
 const verbs: CuratedPresentVerb[] = [
   v(
@@ -477,6 +478,7 @@ export const verbTypesTwoThreeExercises = buildPresentVerbExercises({
   vocabulary: verbTypesTwoThreeVocabulary,
   skillIdFor: (item) =>
     item.verbType === '2' ? VERB_TYPE_TWO_SKILL_ID : VERB_TYPE_THREE_SKILL_ID,
+  umbrellaSkillId: VERB_TYPES_TWO_THREE_SKILL_ID,
 })
 
 export const verbTypesTwoThreeGoldenExerciseIds = [

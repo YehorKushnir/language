@@ -1,4 +1,5 @@
 import { ContentValidationError } from '@language/content-schema'
+import { validateFinnishPreparedVariationTemplate } from '@language/language-fi'
 
 import {
   moduleOneLessons,
@@ -153,6 +154,53 @@ function inspectLesson(lesson: CourseLessonSeed): MvpLessonReadiness {
     issues.push(
       `expected at least ${MINIMUM_VARIANT_EXERCISES} exercises with curated variants`,
     )
+  }
+  if (!lesson.template || !lesson.templateId) {
+    issues.push('lesson has no curated generation template')
+  } else if (lesson.lessonPosition > 1) {
+    try {
+      const template = lesson.template
+      validateFinnishPreparedVariationTemplate(template)
+      const expectedExerciseIds = new Set(
+        lesson.exercises.map((exercise) => exercise.id),
+      )
+      const expectedItemIds = [
+        ...lesson.skills.map((skill) => skill.id),
+        ...lesson.vocabulary.map((item) => item.itemId),
+      ]
+      const testedItemIds = new Set(
+        lesson.exercises.flatMap((exercise) => [
+          exercise.primaryItemId,
+          ...exercise.secondaryItemIds,
+          exercise.vocabularyItemId,
+        ]),
+      )
+      if (
+        template.exerciseIds.length !== expectedExerciseIds.size ||
+        !template.exerciseIds.every((exerciseId) =>
+          expectedExerciseIds.has(exerciseId),
+        )
+      ) {
+        issues.push('generation template does not cover every lesson exercise')
+      }
+      if (
+        expectedItemIds.some(
+          (itemId) =>
+            !template.supportedItemIds.includes(itemId) ||
+            !testedItemIds.has(itemId),
+        )
+      ) {
+        issues.push(
+          'generation template does not cover every lesson knowledge item',
+        )
+      }
+    } catch (error) {
+      issues.push(
+        `lesson has an invalid generation template: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      )
+    }
   }
 
   return { lessonId: lesson.id, ready: issues.length === 0, issues }
