@@ -14,7 +14,7 @@ export class CourseCatalogService {
 
   async getCourse(courseId: string): Promise<CourseOverviewResponse> {
     const course = await this.prisma.course.findUnique({
-      where: { id: courseId },
+      where: { id: courseId, status: ContentStatus.CURATED },
       include: {
         routeVersions: {
           where: { status: ContentStatus.CURATED },
@@ -22,12 +22,18 @@ export class CourseCatalogService {
           take: 1,
           include: {
             entries: {
+              where: { lesson: { status: ContentStatus.CURATED } },
               orderBy: [{ modulePosition: 'asc' }, { lessonPosition: 'asc' }],
               include: {
                 lesson: {
                   include: {
                     _count: {
-                      select: { exercises: true, knowledgeItems: true },
+                      select: {
+                        exercises: {
+                          where: { status: ContentStatus.CURATED },
+                        },
+                        knowledgeItems: true,
+                      },
                     },
                   },
                 },

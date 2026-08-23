@@ -9,11 +9,15 @@ import {
   Prisma,
 } from '../src/index.js'
 import {
-  assertLessonOneContent,
   lessonContent,
   lessonExercises,
   lessonVocabulary,
-} from './lesson-one-content.js'
+} from '../../../content/courses/ru-fi/lessons/fi.olla.basics.js'
+import { preparedTexts } from '../../../content/courses/ru-fi/texts/fi.olla.introductions.js'
+import {
+  validateCourseContent,
+  validateFinnishMorphologyContent,
+} from './content-validation.js'
 
 const prisma = new DatabaseClient()
 
@@ -390,6 +394,64 @@ async function seedExercise() {
   }
 }
 
+async function seedTexts() {
+  for (const text of preparedTexts) {
+    await prisma.text.upsert({
+      where: { id: text.id },
+      update: {
+        title: text.title,
+        level: text.level,
+        topics: text.topics,
+        body: text.body,
+        status: ContentStatus.CURATED,
+      },
+      create: {
+        id: text.id,
+        courseId: text.courseId,
+        title: text.title,
+        level: text.level,
+        topics: text.topics,
+        body: text.body,
+        status: ContentStatus.CURATED,
+      },
+    })
+
+    for (const token of text.tokens) {
+      await prisma.textToken.upsert({
+        where: {
+          textId_position: { textId: text.id, position: token.position },
+        },
+        update: {
+          surface: token.surface,
+          lemma: token.lemma,
+          lexicalSenseId: token.lexicalSenseId,
+          analysis: token.analysis,
+          charStart: token.charStart,
+          charEnd: token.charEnd,
+        },
+        create: {
+          textId: text.id,
+          position: token.position,
+          surface: token.surface,
+          lemma: token.lemma,
+          lexicalSenseId: token.lexicalSenseId,
+          analysis: token.analysis,
+          charStart: token.charStart,
+          charEnd: token.charEnd,
+        },
+      })
+    }
+
+    for (const itemId of text.knowledgeItemIds) {
+      await prisma.textKnowledgeItem.upsert({
+        where: { textId_itemId: { textId: text.id, itemId } },
+        update: {},
+        create: { textId: text.id, itemId },
+      })
+    }
+  }
+}
+
 async function seedLocalUser() {
   await prisma.user.upsert({
     where: { id: LOCAL_USER_ID },
@@ -421,11 +483,13 @@ async function seedLocalUser() {
 }
 
 async function main() {
-  assertLessonOneContent()
+  validateCourseContent()
+  await validateFinnishMorphologyContent()
   await seedCourse()
   await seedKnowledge()
   await seedVocabulary()
   await seedExercise()
+  await seedTexts()
   await seedLocalUser()
 }
 

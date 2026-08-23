@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   checkExactAnswer,
   checkStructuredAnswer,
+  checkStructuredAnswerItems,
   isReviewDue,
   normalizeExactAnswer,
   scheduleReview,
@@ -83,6 +84,32 @@ const negativeAnswerSpec = {
   ],
 }
 
+const itemAwareNegativeAnswerSpec = {
+  acceptedVariants: ['Hän ei ole opiskelija.'],
+  slots: [
+    {
+      role: 'subject',
+      accepted: ['hän'],
+      itemIds: ['grammar.fi.olla.negative'],
+    },
+    {
+      role: 'negativeVerb',
+      accepted: ['ei'],
+      itemIds: ['grammar.fi.olla.negative'],
+    },
+    {
+      role: 'mainVerb',
+      accepted: ['ole'],
+      itemIds: ['grammar.fi.olla.negative'],
+    },
+    {
+      role: 'complement',
+      accepted: ['opiskelija'],
+      itemIds: ['word.fi.opiskelija'],
+    },
+  ],
+}
+
 describe('structured answer checker', () => {
   it('accepts a positional slot match even without a curated exact variant', () => {
     expect(
@@ -144,55 +171,106 @@ describe('structured answer checker', () => {
       ],
     })
   })
+
+  it('distinguishes a likely typo from a grammar error', () => {
+    expect(
+      checkStructuredAnswer('Hän ei ole opiskleija.', negativeAnswerSpec),
+    ).toMatchObject({
+      isCorrect: false,
+      diagnostics: [
+        {
+          code: 'TYPO',
+          slot: 'complement',
+          actual: 'opiskleija',
+          expected: ['opiskelija'],
+        },
+      ],
+    })
+  })
+})
+
+describe('structured item evidence', () => {
+  it('keeps vocabulary successful when the grammar form is wrong', () => {
+    expect(
+      checkStructuredAnswerItems(
+        'Hän en ole opiskelija.',
+        itemAwareNegativeAnswerSpec,
+      ),
+    ).toEqual([
+      { itemId: 'grammar.fi.olla.negative', isCorrect: false },
+      { itemId: 'word.fi.opiskelija', isCorrect: true },
+    ])
+  })
+
+  it('keeps grammar successful when the vocabulary item is wrong', () => {
+    expect(
+      checkStructuredAnswerItems(
+        'Hän ei ole opettaja.',
+        itemAwareNegativeAnswerSpec,
+      ),
+    ).toEqual([
+      { itemId: 'grammar.fi.olla.negative', isCorrect: true },
+      { itemId: 'word.fi.opiskelija', isCorrect: false },
+    ])
+  })
 })
 
 describe('review scheduler', () => {
   const reviewedAt = new Date('2026-08-22T12:00:00.000Z')
 
-  it('schedules a new successful item for the next day', () => {
-    expect(scheduleReview(null, 'SUCCESS', reviewedAt)).toEqual({
-      difficulty: 4.85,
-      stability: 1,
+  it('graduates a new successful item with an FSRS interval', () => {
+    expect(scheduleReview(null, 'SUCCESS', reviewedAt)).toMatchObject({
       state: 'REVIEW',
-      dueAt: new Date('2026-08-23T12:00:00.000Z'),
+      dueAt: new Date('2026-08-24T12:00:00.000Z'),
       lastReviewAt: reviewedAt,
+      elapsedDays: 0,
+      scheduledDays: 2,
+      learningSteps: 0,
       repetitions: 1,
       lapses: 0,
     })
   })
 
   it('grows the interval after another success', () => {
-    expect(
-      scheduleReview(
-        { difficulty: 4.85, stability: 2, repetitions: 3, lapses: 0 },
-        'SUCCESS',
-        reviewedAt,
-      ),
-    ).toMatchObject({
-      difficulty: 4.7,
-      stability: 3.6,
-      state: 'REVIEW',
-      dueAt: new Date('2026-08-26T02:24:00.000Z'),
-      repetitions: 4,
+    const firstReview = scheduleReview(null, 'SUCCESS', reviewedAt)
+    const secondReview = scheduleReview(
+      firstReview,
+      'SUCCESS',
+      firstReview.dueAt,
+    )
+
+    expect(secondReview.state).toBe('REVIEW')
+    expect(secondReview.stability).toBeGreaterThan(firstReview.stability)
+    expect(secondReview.dueAt.getTime()).toBeGreaterThan(
+      firstReview.dueAt.getTime(),
+    )
+    expect(secondReview.repetitions).toBe(2)
+  })
+
+  it('moves a failed new item into a short learning step', () => {
+    expect(scheduleReview(null, 'FAILURE', reviewedAt)).toMatchObject({
+      state: 'LEARNING',
+      dueAt: new Date('2026-08-22T12:10:00.000Z'),
+      lastReviewAt: reviewedAt,
+      scheduledDays: 0,
+      repetitions: 1,
       lapses: 0,
     })
   })
 
-  it('moves a failed item into a short relearning step', () => {
-    expect(
-      scheduleReview(
-        { difficulty: 4.85, stability: 2, repetitions: 3, lapses: 1 },
-        'FAILURE',
-        reviewedAt,
-      ),
-    ).toEqual({
-      difficulty: 5.35,
-      stability: 1,
+  it('counts a failed review as a lapse and starts relearning', () => {
+    const firstReview = scheduleReview(null, 'SUCCESS', reviewedAt)
+    const failedReview = scheduleReview(
+      firstReview,
+      'FAILURE',
+      firstReview.dueAt,
+    )
+
+    expect(failedReview).toMatchObject({
       state: 'RELEARNING',
-      dueAt: new Date('2026-08-22T12:10:00.000Z'),
-      lastReviewAt: reviewedAt,
-      repetitions: 3,
-      lapses: 2,
+      dueAt: new Date('2026-08-24T12:10:00.000Z'),
+      repetitions: 2,
+      lapses: 1,
     })
   })
 })

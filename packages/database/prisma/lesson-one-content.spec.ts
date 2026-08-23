@@ -5,7 +5,8 @@ import {
   lessonExercises,
   lessonVocabulary,
   validateLessonOneContent,
-} from './lesson-one-content.js'
+} from '../../../content/courses/ru-fi/lessons/fi.olla.basics.js'
+import { validateFinnishMorphologyContent } from './content-validation.js'
 
 describe('lesson one content', () => {
   it('meets the curated MVP content checks', () => {
@@ -28,5 +29,12 @@ describe('lesson one content', () => {
       { id: 'exercise.fi.olla.negative.002', selectionOrder: 4 },
       { id: 'exercise.fi.olla.question.002', selectionOrder: 5 },
     ])
+  })
+
+  it('contains only forms recognized by Finnish morphology', async () => {
+    await expect(validateFinnishMorphologyContent()).resolves.toMatchObject({
+      checkedWordCount: expect.any(Number),
+      lemmaOverrideCount: expect.any(Number),
+    })
   })
 })

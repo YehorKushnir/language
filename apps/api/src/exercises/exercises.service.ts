@@ -2,6 +2,8 @@ import type {
   ExerciseAttemptDiagnostic,
   ExerciseAttemptRequest,
   ExerciseAttemptResponse,
+  ExerciseReportRequest,
+  ExerciseReportResponse,
   PreparedExerciseResponse,
 } from '@language/contracts'
 import {
@@ -15,10 +17,15 @@ import {
 } from '@language/database'
 import {
   checkStructuredAnswer,
+  checkStructuredAnswerItems,
   scheduleReview,
   type StructuredAnswerDiagnostic,
   type StructuredAnswerSlot,
 } from '@language/domain'
+import type {
+  FinnishFormComparison,
+  FinnishMorphologicalDifference,
+} from '@language/language-fi'
 import {
   ConflictException,
   Inject,
@@ -27,6 +34,7 @@ import {
 } from '@nestjs/common'
 
 import { PrismaService } from '../database/prisma.service'
+import { FinnishMorphologyService } from '../morphology/finnish-morphology.service'
 
 interface StoredAnswerSpec {
   acceptedVariants: string[]
@@ -48,7 +56,11 @@ interface StoredAttempt {
 
 @Injectable()
 export class ExercisesService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(FinnishMorphologyService)
+    private readonly morphology: FinnishMorphologyService,
+  ) {}
 
   async getNextExercise(
     userId: string,
@@ -102,8 +114,8 @@ export class ExercisesService {
       return this.mapIdempotentAttempt(existingAttempt, exerciseId)
     }
 
-    const exercise = await this.prisma.exercise.findUnique({
-      where: { id: exerciseId },
+    const exercise = await this.prisma.exercise.findFirst({
+      where: { id: exerciseId, status: ContentStatus.CURATED },
       include: { items: true },
     })
     if (!exercise) {
@@ -114,12 +126,12 @@ export class ExercisesService {
       throw new ConflictException('Exercise is not attached to a lesson')
     }
 
-    const routeEntry = await this.prisma.courseRouteEntry.findUnique({
+    const routeEntry = await this.prisma.courseRouteEntry.findFirst({
       where: {
-        routeVersionId_lessonId: {
-          routeVersionId: request.routeVersionId,
-          lessonId: exercise.lessonId,
-        },
+        routeVersionId: request.routeVersionId,
+        lessonId: exercise.lessonId,
+        routeVersion: { status: ContentStatus.CURATED },
+        lesson: { status: ContentStatus.CURATED },
       },
       select: { lessonId: true },
     })
@@ -131,21 +143,44 @@ export class ExercisesService {
 
     const answerSpec = toStoredAnswerSpec(exercise.answerSpec)
     const check = checkStructuredAnswer(request.answer, answerSpec)
+    const resultByItem = new Map(
+      checkStructuredAnswerItems(request.answer, answerSpec).map((result) => [
+        result.itemId,
+        result.isCorrect,
+      ]),
+    )
     const outcome = check.isCorrect
       ? AttemptOutcome.CORRECT
       : AttemptOutcome.INCORRECT
-    const diagnostics = check.diagnostics.map(toAttemptDiagnostic)
+    const diagnostics = await Promise.all(
+      check.diagnostics.map(async (diagnostic) => {
+        const comparison =
+          (diagnostic.code === 'TYPO' || diagnostic.code === 'WRONG_FORM') &&
+          diagnostic.actual &&
+          diagnostic.expected?.length
+            ? await this.morphology.compareForms(
+                diagnostic.actual,
+                diagnostic.expected,
+              )
+            : undefined
+        return toAttemptDiagnostic(diagnostic, comparison)
+      }),
+    )
     const evidence = exercise.items.map((item) => ({
       itemId: item.itemId,
       role: item.role,
       result:
         item.role === ExerciseItemRole.CONTEXT
           ? EvidenceResult.IGNORED
-          : check.isCorrect
+          : (resultByItem.get(item.itemId) ?? check.isCorrect)
             ? EvidenceResult.SUCCESS
             : EvidenceResult.FAILURE,
       score:
-        item.role === ExerciseItemRole.CONTEXT ? null : check.isCorrect ? 1 : 0,
+        item.role === ExerciseItemRole.CONTEXT
+          ? null
+          : (resultByItem.get(item.itemId) ?? check.isCorrect)
+            ? 1
+            : 0,
     }))
     const now = new Date()
 
@@ -161,7 +196,7 @@ export class ExercisesService {
             normalizedAnswerText: check.normalizedAnswer,
             outcome,
             diagnostics: diagnostics as unknown as Prisma.InputJsonValue,
-            checkerVersion: 'structured-v1',
+            checkerVersion: 'structured-v2-voikko',
             durationMs: request.durationMs,
             answeredAt: now,
             evidence: { create: evidence },
@@ -184,6 +219,12 @@ export class ExercisesService {
               ? {
                   difficulty: memory.difficulty,
                   stability: memory.stability,
+                  state: memory.state,
+                  dueAt: memory.dueAt,
+                  lastReviewAt: memory.lastReviewAt,
+                  elapsedDays: memory.elapsedDays,
+                  scheduledDays: memory.scheduledDays,
+                  learningSteps: memory.learningSteps,
                   repetitions: memory.repetitions,
                   lapses: memory.lapses,
                 }
@@ -196,12 +237,12 @@ export class ExercisesService {
           const memoryData = {
             difficulty: schedule.difficulty,
             stability: schedule.stability,
-            state:
-              schedule.state === 'REVIEW'
-                ? MemoryState.REVIEW
-                : MemoryState.RELEARNING,
+            state: MemoryState[schedule.state],
             dueAt: schedule.dueAt,
             lastReviewAt: schedule.lastReviewAt,
+            elapsedDays: schedule.elapsedDays,
+            scheduledDays: schedule.scheduledDays,
+            learningSteps: schedule.learningSteps,
             repetitions: schedule.repetitions,
             lapses: schedule.lapses,
           }
@@ -254,6 +295,50 @@ export class ExercisesService {
     }
   }
 
+  async reportExercise(
+    userId: string,
+    exerciseId: string,
+    request: ExerciseReportRequest,
+  ): Promise<ExerciseReportResponse> {
+    const attempt = await this.prisma.userAttempt.findFirst({
+      where: { id: request.attemptId, userId, exerciseId },
+      select: { id: true },
+    })
+    if (!attempt) {
+      throw new NotFoundException(
+        `Attempt ${request.attemptId} was not found for exercise ${exerciseId}`,
+      )
+    }
+
+    const comment = request.comment?.trim() || null
+    const report = await this.prisma.exerciseReport.upsert({
+      where: { attemptId: request.attemptId },
+      update: {
+        reason: request.reason,
+        comment,
+        status: 'OPEN',
+      },
+      create: {
+        userId,
+        exerciseId,
+        attemptId: request.attemptId,
+        reason: request.reason,
+        comment,
+      },
+    })
+
+    return {
+      id: report.id,
+      exerciseId: report.exerciseId,
+      attemptId: report.attemptId,
+      reason: report.reason,
+      comment: report.comment,
+      status: report.status,
+      createdAt: report.createdAt.toISOString(),
+      updatedAt: report.updatedAt.toISOString(),
+    }
+  }
+
   private findAttempt(userId: string, idempotencyKey: string) {
     return this.prisma.userAttempt.findUnique({
       where: { userId_idempotencyKey: { userId, idempotencyKey } },
@@ -300,8 +385,13 @@ function toStoredAnswerSpec(value: unknown): StoredAnswerSpec {
                 (variant): variant is string => typeof variant === 'string',
               )
             : []
+          const itemIds = Array.isArray(slotCandidate.itemIds)
+            ? slotCandidate.itemIds.filter(
+                (itemId): itemId is string => typeof itemId === 'string',
+              )
+            : []
           return typeof slotCandidate.role === 'string' && accepted.length > 0
-            ? [{ role: slotCandidate.role, accepted }]
+            ? [{ role: slotCandidate.role, accepted, itemIds }]
             : []
         })
       : [],
@@ -310,6 +400,7 @@ function toStoredAnswerSpec(value: unknown): StoredAnswerSpec {
 
 function toAttemptDiagnostic(
   diagnostic: StructuredAnswerDiagnostic,
+  comparison?: FinnishFormComparison,
 ): ExerciseAttemptDiagnostic {
   const expected = diagnostic.expected?.map((token) => `«${token}»`).join(' / ')
 
@@ -349,19 +440,163 @@ function toAttemptDiagnostic(
     }
   }
 
-  if (diagnostic.code === 'WRONG_FORM') {
+  if (diagnostic.code === 'TYPO') {
+    if (comparison?.relation === 'sameLemma') {
+      return wrongFormDiagnostic(diagnostic, expected, comparison)
+    }
+    if (comparison?.relation === 'differentLemma') {
+      return wrongLemmaDiagnostic(diagnostic, expected, comparison)
+    }
     return {
       code: diagnostic.code,
       message: {
-        ru: `Форма «${diagnostic.actual ?? '—'}» здесь не подходит${expected ? `. Ожидалось ${expected}` : ''}.`,
+        ru: `Похоже на опечатку в слове «${diagnostic.actual ?? '—'}»${expected ? `. Проверь написание: ${expected}` : ''}.`,
       },
+      ...(comparison ? { morphology: toMorphologyDiagnostic(comparison) } : {}),
     }
+  }
+
+  if (diagnostic.code === 'WRONG_FORM') {
+    if (comparison?.relation === 'spellingError') {
+      return {
+        code: 'TYPO',
+        message: {
+          ru: `Похоже на опечатку в слове «${diagnostic.actual ?? '—'}»${expected ? `. Проверь написание: ${expected}` : ''}.`,
+        },
+        morphology: toMorphologyDiagnostic(comparison),
+      }
+    }
+    if (comparison?.relation === 'differentLemma') {
+      return wrongLemmaDiagnostic(diagnostic, expected, comparison)
+    }
+    return wrongFormDiagnostic(diagnostic, expected, comparison)
   }
 
   return {
     code: 'ANSWER_MISMATCH',
     message: { ru: 'Пока не совпало. Проверь слова и их формы.' },
   }
+}
+
+function wrongFormDiagnostic(
+  diagnostic: StructuredAnswerDiagnostic,
+  expectedLabel: string | undefined,
+  comparison: FinnishFormComparison | undefined,
+): ExerciseAttemptDiagnostic {
+  const explanation = comparison
+    ? describeMorphologicalDifferences(comparison.differences)
+    : ''
+  return {
+    code: 'WRONG_FORM',
+    message: {
+      ru: `Форма «${diagnostic.actual ?? '—'}» здесь не подходит${expectedLabel ? `. Ожидалось ${expectedLabel}` : ''}.${explanation ? ` ${explanation}` : ''}`,
+    },
+    ...(comparison ? { morphology: toMorphologyDiagnostic(comparison) } : {}),
+  }
+}
+
+function wrongLemmaDiagnostic(
+  diagnostic: StructuredAnswerDiagnostic,
+  expectedLabel: string | undefined,
+  comparison: FinnishFormComparison,
+): ExerciseAttemptDiagnostic {
+  const actualLemma = comparison.actualAnalysis?.lemma
+  const expectedLemma = comparison.expectedAnalysis?.lemma
+  return {
+    code: 'WRONG_LEMMA',
+    message: {
+      ru: `Использовано другое слово «${diagnostic.actual ?? '—'}»${actualLemma ? ` (лемма «${actualLemma}»)` : ''}${expectedLabel ? `. Здесь нужно ${expectedLabel}` : ''}${expectedLemma ? ` — форма леммы «${expectedLemma}»` : ''}.`,
+    },
+    morphology: toMorphologyDiagnostic(comparison),
+  }
+}
+
+function toMorphologyDiagnostic(
+  comparison: FinnishFormComparison,
+): NonNullable<ExerciseAttemptDiagnostic['morphology']> {
+  return {
+    relation:
+      comparison.relation === 'sameForm' ? 'unknown' : comparison.relation,
+    actualLemma: comparison.actualAnalysis?.lemma,
+    expectedLemma: comparison.expectedAnalysis?.lemma,
+    differences: comparison.differences,
+    suggestions: comparison.suggestions,
+  }
+}
+
+function describeMorphologicalDifferences(
+  differences: FinnishMorphologicalDifference[],
+): string {
+  return differences
+    .slice(0, 2)
+    .map((difference) => {
+      const actual = localizeMorphologyValue(
+        difference.feature,
+        difference.actual,
+      )
+      const expected = localizeMorphologyValue(
+        difference.feature,
+        difference.expected,
+      )
+      const feature = morphologyFeatureLabels[difference.feature]
+      return feature && actual && expected
+        ? `${feature}: сейчас ${actual}, нужно ${expected}.`
+        : null
+    })
+    .filter((value): value is string => value !== null)
+    .join(' ')
+}
+
+const morphologyFeatureLabels: Record<string, string> = {
+  case: 'Падеж',
+  number: 'Число',
+  person: 'Лицо',
+  tense: 'Время',
+  mood: 'Наклонение',
+  possessive: 'Притяжательный суффикс',
+  questionClitic: 'Вопросительная частица',
+  comparison: 'Степень сравнения',
+  partOfSpeech: 'Часть речи',
+}
+
+const morphologyValueLabels: Record<string, string> = {
+  nominative: 'именительный',
+  genitive: 'генитив',
+  partitive: 'партитив',
+  inessive: 'инессив',
+  elative: 'элатив',
+  illative: 'иллатив',
+  adessive: 'адессив',
+  ablative: 'аблатив',
+  allative: 'аллатив',
+  essive: 'эссив',
+  translative: 'транслатив',
+  instructive: 'инструктив',
+  abessive: 'абессив',
+  comitative: 'комитатив',
+  accusative: 'аккузатив',
+  singular: 'единственное',
+  plural: 'множественное',
+  first: 'первое',
+  second: 'второе',
+  third: 'третье',
+  passive: 'пассив',
+  true: 'есть',
+  false: 'нет',
+}
+
+function localizeMorphologyValue(
+  feature: string,
+  value: string | boolean | undefined,
+): string | undefined {
+  if (value === undefined) return undefined
+  const normalized = String(value)
+  const localized = morphologyValueLabels[normalized] ?? normalized
+  if (feature === 'number') return `${localized} число`
+  if (feature === 'person' && normalized !== 'passive') {
+    return `${localized} лицо`
+  }
+  return localized
 }
 
 function compareExerciseCandidates(

@@ -25,15 +25,21 @@ async function bootstrap() {
   app.useBodyParser('json')
   app.useBodyParser('urlencoded', { extended: true })
 
-  const openApiConfig = new DocumentBuilder()
-    .setTitle('Language Learning API')
-    .setDescription('API курса русского → финского')
-    .setVersion('1.0')
-    .build()
-  const document = SwaggerModule.createDocument(app, openApiConfig)
-  SwaggerModule.setup('docs', app, document)
+  if (config.get('NODE_ENV') !== 'production') {
+    const openApiConfig = new DocumentBuilder()
+      .setTitle('Language Learning API')
+      .setDescription('API курса русского → финского')
+      .setVersion('1.0')
+      .build()
+    const document = SwaggerModule.createDocument(app, openApiConfig)
+    SwaggerModule.setup('docs', app, document)
+  }
 
-  await app.listen(config.get<number>('API_PORT', 3000))
+  app.enableShutdownHooks()
+  await app.listen(
+    config.get<number>('API_PORT', 3000),
+    config.get<string>('API_HOST', '0.0.0.0'),
+  )
 }
 
 void bootstrap()

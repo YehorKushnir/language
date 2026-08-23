@@ -1,14 +1,32 @@
 import type {
   CourseProgressResponse,
   LessonPart,
+  PracticeCompletionResponse,
   VocabularyStudyResponse,
   VocabularyStudyResult,
 } from '@language/contracts'
-import { KnowledgeItemKind, MemoryState } from '@language/database'
+import {
+  AttemptOutcome,
+  ContentStatus,
+  ExerciseKind,
+  KnowledgeItemKind,
+  MemoryState,
+} from '@language/database'
 import { scheduleReview } from '@language/domain'
-import { Inject, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 
 import { PrismaService } from '../database/prisma.service'
+
+const PRACTICE_EXERCISE_COUNT = 60
+const PRACTICE_PASS_RATE = 0.85
+const PRACTICE_REQUIRED_CORRECT = Math.ceil(
+  PRACTICE_EXERCISE_COUNT * PRACTICE_PASS_RATE,
+)
 
 @Injectable()
 export class CourseProgressService {
@@ -19,7 +37,7 @@ export class CourseProgressService {
     routeVersionId: string,
   ): Promise<CourseProgressResponse> {
     const route = await this.prisma.courseRouteVersion.findUnique({
-      where: { id: routeVersionId },
+      where: { id: routeVersionId, status: ContentStatus.CURATED },
       include: {
         entries: {
           orderBy: [{ modulePosition: 'asc' }, { lessonPosition: 'asc' }],
@@ -100,9 +118,12 @@ export class CourseProgressService {
     lessonId: string,
     part: LessonPart,
   ): Promise<CourseProgressResponse> {
-    const routeEntry = await this.prisma.courseRouteEntry.findUnique({
+    const routeEntry = await this.prisma.courseRouteEntry.findFirst({
       where: {
-        routeVersionId_lessonId: { routeVersionId, lessonId },
+        routeVersionId,
+        lessonId,
+        routeVersion: { status: ContentStatus.CURATED },
+        lesson: { status: ContentStatus.CURATED },
       },
     })
 
@@ -156,24 +177,132 @@ export class CourseProgressService {
         })
       }
 
+      let currentLessonId = lessonId
+      let courseCompleted = false
+      if (lessonCompleted) {
+        const [routeLessons, completedLessons] = await Promise.all([
+          transaction.courseRouteEntry.findMany({
+            where: { routeVersionId },
+            orderBy: [{ modulePosition: 'asc' }, { lessonPosition: 'asc' }],
+            select: { lessonId: true },
+          }),
+          transaction.userLessonProgress.findMany({
+            where: {
+              userId,
+              routeVersionId,
+              completedAt: { not: null },
+            },
+            select: { lessonId: true },
+          }),
+        ])
+        const completedIds = new Set(
+          completedLessons.map((item) => item.lessonId),
+        )
+        completedIds.add(lessonId)
+        const nextLesson = routeLessons.find(
+          (item) => !completedIds.has(item.lessonId),
+        )
+        currentLessonId = nextLesson?.lessonId ?? lessonId
+        courseCompleted = routeLessons.length > 0 && !nextLesson
+      }
+
       await transaction.userCourseProgress.upsert({
         where: {
           userId_routeVersionId: { userId, routeVersionId },
         },
         update: {
-          currentLessonId: lessonId,
+          currentLessonId,
           lastActivityAt: now,
+          ...(courseCompleted ? { completedAt: now } : {}),
         },
         create: {
           userId,
           routeVersionId,
-          currentLessonId: lessonId,
+          currentLessonId,
           lastActivityAt: now,
+          ...(courseCompleted ? { completedAt: now } : {}),
         },
       })
     })
 
     return this.getProgress(userId, routeVersionId)
+  }
+
+  async completePractice(
+    userId: string,
+    routeVersionId: string,
+    lessonId: string,
+    attemptIds: string[],
+  ): Promise<PracticeCompletionResponse> {
+    const routeEntry = await this.prisma.courseRouteEntry.findFirst({
+      where: {
+        routeVersionId,
+        lessonId,
+        routeVersion: { status: ContentStatus.CURATED },
+        lesson: { status: ContentStatus.CURATED },
+      },
+      select: { lessonId: true },
+    })
+    if (!routeEntry) {
+      throw new NotFoundException(
+        `Lesson ${lessonId} is not part of route ${routeVersionId}`,
+      )
+    }
+
+    if (
+      attemptIds.length !== PRACTICE_EXERCISE_COUNT ||
+      new Set(attemptIds).size !== PRACTICE_EXERCISE_COUNT
+    ) {
+      throw new BadRequestException(
+        `Для завершения практики нужны результаты ${PRACTICE_EXERCISE_COUNT} уникальных упражнений.`,
+      )
+    }
+
+    const attempts = await this.prisma.userAttempt.findMany({
+      where: {
+        id: { in: attemptIds },
+        userId,
+        routeVersionId,
+        exercise: {
+          lessonId,
+          kind: ExerciseKind.PREPARED,
+          status: ContentStatus.CURATED,
+        },
+      },
+      select: {
+        id: true,
+        exerciseId: true,
+        outcome: true,
+      },
+    })
+    const exerciseIds = new Set(attempts.map((attempt) => attempt.exerciseId))
+    if (
+      attempts.length !== PRACTICE_EXERCISE_COUNT ||
+      exerciseIds.size !== PRACTICE_EXERCISE_COUNT
+    ) {
+      throw new BadRequestException(
+        `Практика должна содержать ${PRACTICE_EXERCISE_COUNT} разных упражнений этого урока.`,
+      )
+    }
+
+    const correctAnswers = attempts.filter(
+      (attempt) => attempt.outcome === AttemptOutcome.CORRECT,
+    ).length
+    const passed = correctAnswers >= PRACTICE_REQUIRED_CORRECT
+    const scorePercent =
+      Math.round((correctAnswers / PRACTICE_EXERCISE_COUNT) * 1_000) / 10
+    const progress = passed
+      ? await this.completePart(userId, routeVersionId, lessonId, 'practice')
+      : await this.getProgress(userId, routeVersionId)
+
+    return {
+      totalExercises: PRACTICE_EXERCISE_COUNT,
+      correctAnswers,
+      requiredCorrectAnswers: PRACTICE_REQUIRED_CORRECT,
+      scorePercent,
+      passed,
+      progress,
+    }
   }
 
   async studyVocabularyItem(
@@ -188,7 +317,15 @@ export class CourseProgressService {
         lessonId,
         itemId,
         item: { kind: KnowledgeItemKind.LEXICAL_SENSE },
-        lesson: { routeEntries: { some: { routeVersionId } } },
+        lesson: {
+          status: ContentStatus.CURATED,
+          routeEntries: {
+            some: {
+              routeVersionId,
+              routeVersion: { status: ContentStatus.CURATED },
+            },
+          },
+        },
       },
       select: { itemId: true },
     })
@@ -209,6 +346,12 @@ export class CourseProgressService {
           ? {
               difficulty: existing.difficulty,
               stability: existing.stability,
+              state: existing.state,
+              dueAt: existing.dueAt,
+              lastReviewAt: existing.lastReviewAt,
+              elapsedDays: existing.elapsedDays,
+              scheduledDays: existing.scheduledDays,
+              learningSteps: existing.learningSteps,
               repetitions: existing.repetitions,
               lapses: existing.lapses,
             }
@@ -219,12 +362,12 @@ export class CourseProgressService {
       const memoryData = {
         difficulty: schedule.difficulty,
         stability: schedule.stability,
-        state:
-          schedule.state === 'REVIEW'
-            ? MemoryState.REVIEW
-            : MemoryState.RELEARNING,
+        state: MemoryState[schedule.state],
         dueAt: schedule.dueAt,
         lastReviewAt: schedule.lastReviewAt,
+        elapsedDays: schedule.elapsedDays,
+        scheduledDays: schedule.scheduledDays,
+        learningSteps: schedule.learningSteps,
         repetitions: schedule.repetitions,
         lapses: schedule.lapses,
       }

@@ -8,6 +8,8 @@ import {
 } from '@nestjs/common'
 import type { Request, Response } from 'express'
 
+import type { RequestWithId } from './request-logging.interceptor'
+
 const databaseUnavailableCodes = new Set(['P1000', 'P1001', 'P1002'])
 const databaseNotReadyCodes = new Set(['P1003', 'P2021', 'P2022'])
 
@@ -17,9 +19,10 @@ export class ApplicationExceptionFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {
     const http = host.switchToHttp()
-    const request = http.getRequest<Request>()
+    const request = http.getRequest<Request & RequestWithId>()
     const response = http.getResponse<Response>()
     const prismaCode = getPrismaErrorCode(exception)
+    const requestId = request.requestId
 
     if (prismaCode && databaseUnavailableCodes.has(prismaCode)) {
       this.logger.warn(
@@ -30,6 +33,7 @@ export class ApplicationExceptionFilter implements ExceptionFilter {
         code: 'DATABASE_UNAVAILABLE',
         message:
           'База данных недоступна. Для локального запуска выполните pnpm dev:setup.',
+        requestId,
       })
       return
     }
@@ -43,6 +47,7 @@ export class ApplicationExceptionFilter implements ExceptionFilter {
         code: 'DATABASE_NOT_READY',
         message:
           'База данных не подготовлена. Выполните миграции и seed командой pnpm dev:setup.',
+        requestId,
       })
       return
     }
@@ -50,12 +55,16 @@ export class ApplicationExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus()
       const payload = exception.getResponse()
+      const body =
+        typeof payload === 'string'
+          ? { statusCode: status, message: payload }
+          : payload
       response
         .status(status)
         .json(
-          typeof payload === 'string'
-            ? { statusCode: status, message: payload }
-            : payload,
+          typeof body === 'object' && body !== null
+            ? { ...body, requestId }
+            : { statusCode: status, message: body, requestId },
         )
       return
     }
@@ -67,6 +76,7 @@ export class ApplicationExceptionFilter implements ExceptionFilter {
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       message: 'Internal server error',
+      requestId,
     })
   }
 }

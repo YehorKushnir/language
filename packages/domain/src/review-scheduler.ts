@@ -1,61 +1,82 @@
+import { createEmptyCard, fsrs, Rating, State, type Card } from 'ts-fsrs'
+
 export type ReviewEvidenceResult = 'SUCCESS' | 'FAILURE'
+export type ReviewMemoryState = 'NEW' | 'LEARNING' | 'REVIEW' | 'RELEARNING'
 
 export interface ReviewMemorySnapshot {
   difficulty: number
   stability: number
+  state: ReviewMemoryState
+  dueAt: Date
+  lastReviewAt: Date | null
+  elapsedDays: number
+  scheduledDays: number
+  learningSteps: number
   repetitions: number
   lapses: number
 }
 
 export interface ReviewSchedule extends ReviewMemorySnapshot {
-  state: 'REVIEW' | 'RELEARNING'
-  dueAt: Date
   lastReviewAt: Date
 }
 
-const MINUTE_MS = 60_000
-const DAY_MS = 24 * 60 * MINUTE_MS
+const scheduler = fsrs({
+  request_retention: 0.9,
+  maximum_interval: 3_650,
+  enable_fuzz: false,
+  enable_short_term: true,
+  learning_steps: ['10m'],
+  relearning_steps: ['10m'],
+})
 
 export function scheduleReview(
   memory: ReviewMemorySnapshot | null,
   result: ReviewEvidenceResult,
   reviewedAt: Date,
 ): ReviewSchedule {
-  if (result === 'FAILURE') {
-    const difficulty = clamp((memory?.difficulty ?? 5) + 0.5, 1, 10)
-    const stability = clamp((memory?.stability ?? 0.5) * 0.5, 0.25, 365)
-
-    return {
-      difficulty: round(difficulty),
-      stability: round(stability),
-      state: 'RELEARNING',
-      dueAt: new Date(reviewedAt.getTime() + 10 * MINUTE_MS),
-      lastReviewAt: reviewedAt,
-      repetitions: memory?.repetitions ?? 0,
-      lapses: (memory?.lapses ?? 0) + 1,
-    }
-  }
-
-  const difficulty = clamp((memory?.difficulty ?? 5) - 0.15, 1, 10)
-  const stability = memory
-    ? clamp(Math.max(1, memory.stability * 1.8), 0.25, 365)
-    : 1
+  const card = memory ? toFsrsCard(memory) : createEmptyCard(reviewedAt)
+  const rating = result === 'SUCCESS' ? Rating.Good : Rating.Again
+  const nextCard = scheduler.next(card, reviewedAt, rating).card
 
   return {
-    difficulty: round(difficulty),
-    stability: round(stability),
-    state: 'REVIEW',
-    dueAt: new Date(reviewedAt.getTime() + stability * DAY_MS),
-    lastReviewAt: reviewedAt,
-    repetitions: (memory?.repetitions ?? 0) + 1,
-    lapses: memory?.lapses ?? 0,
+    difficulty: nextCard.difficulty,
+    stability: nextCard.stability,
+    state: fromFsrsState(nextCard.state),
+    dueAt: nextCard.due,
+    lastReviewAt: nextCard.last_review ?? reviewedAt,
+    elapsedDays: nextCard.elapsed_days,
+    scheduledDays: nextCard.scheduled_days,
+    learningSteps: nextCard.learning_steps,
+    repetitions: nextCard.reps,
+    lapses: nextCard.lapses,
   }
 }
 
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.min(maximum, Math.max(minimum, value))
+function toFsrsCard(memory: ReviewMemorySnapshot): Card {
+  return {
+    due: memory.dueAt,
+    stability: memory.stability,
+    difficulty: memory.difficulty,
+    elapsed_days: memory.elapsedDays,
+    scheduled_days: memory.scheduledDays,
+    learning_steps: memory.learningSteps,
+    reps: memory.repetitions,
+    lapses: memory.lapses,
+    state: toFsrsState(memory.state),
+    ...(memory.lastReviewAt ? { last_review: memory.lastReviewAt } : {}),
+  }
 }
 
-function round(value: number): number {
-  return Math.round(value * 1_000) / 1_000
+function toFsrsState(state: ReviewMemoryState): State {
+  if (state === 'LEARNING') return State.Learning
+  if (state === 'REVIEW') return State.Review
+  if (state === 'RELEARNING') return State.Relearning
+  return State.New
+}
+
+function fromFsrsState(state: State): ReviewMemoryState {
+  if (state === State.Learning) return 'LEARNING'
+  if (state === State.Review) return 'REVIEW'
+  if (state === State.Relearning) return 'RELEARNING'
+  return 'NEW'
 }

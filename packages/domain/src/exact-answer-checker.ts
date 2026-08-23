@@ -11,6 +11,7 @@ export interface ExactAnswerCheckResult {
 export interface StructuredAnswerSlot {
   role: string
   accepted: string[]
+  itemIds?: string[]
 }
 
 export interface StructuredAnswerSpec extends ExactAnswerSpec {
@@ -22,6 +23,7 @@ export type StructuredAnswerDiagnosticCode =
   | 'MISSING_TOKEN'
   | 'EXTRA_TOKEN'
   | 'WORD_ORDER'
+  | 'TYPO'
   | 'WRONG_FORM'
   | 'ANSWER_MISMATCH'
 
@@ -34,6 +36,11 @@ export interface StructuredAnswerDiagnostic {
 
 export interface StructuredAnswerCheckResult extends ExactAnswerCheckResult {
   diagnostics: StructuredAnswerDiagnostic[]
+}
+
+export interface StructuredAnswerItemResult {
+  itemId: string
+  isCorrect: boolean
 }
 
 export function normalizeExactAnswer(answer: string): string {
@@ -142,20 +149,106 @@ export function checkStructuredAnswer(
     return token === undefined || !slot.accepted.includes(token)
   })
   const mismatchedSlot = expectedSlots[mismatchIndex]
+  const actualToken = actualTokens[mismatchIndex]
+  const likelyTypo =
+    mismatchedSlot && actualToken
+      ? findLikelyTypo(actualToken, mismatchedSlot.accepted)
+      : null
 
   return {
     ...exact,
     diagnostics: mismatchedSlot
       ? [
           {
-            code: 'WRONG_FORM',
+            code: likelyTypo ? 'TYPO' : 'WRONG_FORM',
             slot: mismatchedSlot.role,
-            actual: actualTokens[mismatchIndex],
-            expected: mismatchedSlot.accepted,
+            actual: actualToken,
+            expected: likelyTypo ? [likelyTypo] : mismatchedSlot.accepted,
           },
         ]
       : [{ code: 'ANSWER_MISMATCH' }],
   }
+}
+
+function findLikelyTypo(actual: string, accepted: string[]): string | null {
+  return (
+    accepted.find((expected) => {
+      if (Math.abs(expected.length - actual.length) > 1) return false
+      const maximumDistance = expected.length >= 5 ? 1 : 0
+      return damerauLevenshteinDistance(actual, expected) <= maximumDistance
+    }) ?? null
+  )
+}
+
+function damerauLevenshteinDistance(left: string, right: string): number {
+  const rows = left.length + 1
+  const columns = right.length + 1
+  const matrix = Array.from({ length: rows }, () =>
+    Array<number>(columns).fill(0),
+  )
+
+  for (let row = 0; row < rows; row += 1) matrix[row]![0] = row
+  for (let column = 0; column < columns; column += 1) {
+    matrix[0]![column] = column
+  }
+
+  for (let row = 1; row < rows; row += 1) {
+    for (let column = 1; column < columns; column += 1) {
+      const substitutionCost = left[row - 1] === right[column - 1] ? 0 : 1
+      matrix[row]![column] = Math.min(
+        matrix[row - 1]![column]! + 1,
+        matrix[row]![column - 1]! + 1,
+        matrix[row - 1]![column - 1]! + substitutionCost,
+      )
+
+      if (
+        row > 1 &&
+        column > 1 &&
+        left[row - 1] === right[column - 2] &&
+        left[row - 2] === right[column - 1]
+      ) {
+        matrix[row]![column] = Math.min(
+          matrix[row]![column]!,
+          matrix[row - 2]![column - 2]! + 1,
+        )
+      }
+    }
+  }
+
+  return matrix[left.length]![right.length]!
+}
+
+export function checkStructuredAnswerItems(
+  answer: string,
+  spec: StructuredAnswerSpec,
+): StructuredAnswerItemResult[] {
+  const itemIds = [...new Set(spec.slots.flatMap((slot) => slot.itemIds ?? []))]
+  if (itemIds.length === 0) return []
+
+  if (checkExactAnswer(answer, spec).isCorrect) {
+    return itemIds.map((itemId) => ({ itemId, isCorrect: true }))
+  }
+
+  const unmatchedTokens = tokenizeNormalizedAnswer(normalizeExactAnswer(answer))
+  const resultByItem = new Map(itemIds.map((itemId) => [itemId, true]))
+
+  for (const slot of spec.slots) {
+    const accepted = slot.accepted.map(normalizeExactAnswer)
+    const tokenIndex = unmatchedTokens.findIndex((token) =>
+      accepted.includes(token),
+    )
+    const slotMatches = tokenIndex >= 0
+    if (slotMatches) unmatchedTokens.splice(tokenIndex, 1)
+
+    for (const itemId of slot.itemIds ?? []) {
+      resultByItem.set(itemId, Boolean(resultByItem.get(itemId)) && slotMatches)
+    }
+  }
+
+  return [...resultByItem].map(([itemId, isCorrect]) => ({
+    itemId,
+    isCorrect,
+  }))
 }
 
 function tokenizeNormalizedAnswer(answer: string): string[] {

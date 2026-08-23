@@ -7,7 +7,7 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "postinstall": "pnpm --filter @language/database build",
+    "postinstall": "pnpm --filter @language/contracts build && pnpm --filter @language/domain build && pnpm --filter @language/language-fi build && pnpm --filter @language/database build",
     "dev": "turbo dev",
     "dev:setup": "pnpm db:start && pnpm db:migrate:deploy && pnpm db:seed",
     "dev:full": "pnpm dev:setup && pnpm dev",
@@ -15,6 +15,7 @@
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "content:validate": "pnpm --filter @language/database content:validate",
     "db:validate": "pnpm --filter @language/database db:validate",
     "db:start": "node scripts/postgres.mjs start",
     "db:stop": "node scripts/postgres.mjs stop",

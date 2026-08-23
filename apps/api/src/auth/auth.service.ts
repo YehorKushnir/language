@@ -32,6 +32,11 @@ export class AuthService {
       emailAndPassword: {
         enabled: true,
       },
+      rateLimit: {
+        enabled: config.get('NODE_ENV') === 'production',
+        window: 60,
+        max: 100,
+      },
       secret: configuredSecret ?? DEVELOPMENT_AUTH_SECRET,
       trustedOrigins: [
         config.get<string>('WEB_ORIGIN', 'http://localhost:5173'),

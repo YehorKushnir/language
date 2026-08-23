@@ -1,6 +1,7 @@
 import type {
   CourseProgressResponse,
   LessonPart,
+  PracticeCompletionResponse,
   VocabularyStudyResponse,
 } from '@language/contracts'
 import {
@@ -10,6 +11,7 @@ import {
   HttpCode,
   Param,
   ParseEnumPipe,
+  Post,
   Put,
   UseGuards,
 } from '@nestjs/common'
@@ -18,12 +20,12 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { CurrentUserId } from '../identity/current-user.decorator'
 import { SessionIdentityGuard } from '../identity/session-identity.guard'
 import { CourseProgressService } from './course-progress.service'
+import { PracticeCompletionDto } from './practice-completion.dto'
 import { VocabularyStudyDto } from './vocabulary-study.dto'
 
 enum LessonPartParam {
   Explanation = 'explanation',
   Vocabulary = 'vocabulary',
-  Practice = 'practice',
 }
 
 @ApiTags('progress')
@@ -57,6 +59,28 @@ export class CourseProgressController {
       routeVersionId,
       lessonId,
       part as LessonPart,
+    )
+  }
+
+  @Post(':routeVersionId/lessons/:lessonId/practice-completion')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Проверить результат полной практики и завершить её',
+  })
+  @ApiOkResponse({
+    description: 'Результат сессии из 60 уникальных упражнений',
+  })
+  completePractice(
+    @CurrentUserId() userId: string,
+    @Param('routeVersionId') routeVersionId: string,
+    @Param('lessonId') lessonId: string,
+    @Body() body: PracticeCompletionDto,
+  ): Promise<PracticeCompletionResponse> {
+    return this.courseProgress.completePractice(
+      userId,
+      routeVersionId,
+      lessonId,
+      body.attemptIds,
     )
   }
 

@@ -1,9 +1,10 @@
+import type { PracticeCompletionResponse } from '@language/contracts'
 import type { FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 
-import { completeLessonPart, submitExerciseAttempt } from '@/api/language-api'
+import { completePractice, submitExerciseAttempt } from '@/api/language-api'
 import {
   courseProgressQuery,
   courseQuery,
@@ -14,22 +15,24 @@ import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
-import { startAppViewTransition } from '@/lib/view-transition'
 
 export const Route = createFileRoute('/lessons/$lessonId_/practice')({
   component: LessonPracticePage,
 })
 
-const SESSION_SIZE = 3
+const SESSION_SIZE = 60
 
 function LessonPracticePage() {
   const { lessonId } = Route.useParams()
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [answer, setAnswer] = useState('')
   const [round, setRound] = useState(1)
   const [completedExerciseIds, setCompletedExerciseIds] = useState<string[]>([])
+  const [attemptIds, setAttemptIds] = useState<string[]>([])
+  const [correctAnswers, setCorrectAnswers] = useState(0)
+  const [showSummary, setShowSummary] = useState(false)
   const answerInput = useRef<HTMLInputElement>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
   const openedAt = useRef(Date.now())
@@ -47,18 +50,29 @@ function LessonPracticePage() {
         routeVersionId,
         durationMs: Date.now() - openedAt.current,
       })
-      const updatedProgress =
+      const nextAttemptIds = [...attemptIds, result.attemptId]
+      const nextCorrectAnswers = correctAnswers + (result.isCorrect ? 1 : 0)
+      const completion =
         round === SESSION_SIZE
-          ? await completeLessonPart(routeVersionId, lessonId, 'practice')
+          ? await completePractice(routeVersionId, lessonId, {
+              attemptIds: nextAttemptIds,
+            })
           : null
 
-      return { result, updatedProgress }
+      return {
+        result,
+        completion,
+        nextAttemptIds,
+        nextCorrectAnswers,
+      }
     },
-    onSuccess: ({ updatedProgress }) => {
-      if (updatedProgress) {
+    onSuccess: ({ completion, nextAttemptIds, nextCorrectAnswers }) => {
+      setAttemptIds(nextAttemptIds)
+      setCorrectAnswers(nextCorrectAnswers)
+      if (completion) {
         queryClient.setQueryData(
           courseProgressQuery(routeVersionId).queryKey,
-          updatedProgress,
+          completion.progress,
         )
       }
       idempotencyKey.current = crypto.randomUUID()
@@ -82,6 +96,7 @@ function LessonPracticePage() {
   }
 
   const result = attempt.data?.result
+  const completion = attempt.data?.completion
   const activeExerciseId = exercise.data.id
   const isLastQuestion = round === SESSION_SIZE
   const canSubmit = Boolean(
@@ -97,12 +112,7 @@ function LessonPracticePage() {
 
     if (result) {
       if (isLastQuestion) {
-        startAppViewTransition(() =>
-          navigate({
-            to: '/lessons/$lessonId',
-            params: { lessonId },
-          }),
-        )
+        setShowSummary(true)
       } else {
         nextExercise()
       }
@@ -110,6 +120,18 @@ function LessonPracticePage() {
     }
 
     attempt.mutate()
+  }
+
+  function restartPractice() {
+    setAnswer('')
+    setRound(1)
+    setCompletedExerciseIds([])
+    setAttemptIds([])
+    setCorrectAnswers(0)
+    setShowSummary(false)
+    attempt.reset()
+    idempotencyKey.current = crypto.randomUUID()
+    openedAt.current = Date.now()
   }
 
   function nextExercise() {
@@ -130,6 +152,18 @@ function LessonPracticePage() {
     : null
   const prompt = exercise.data.prompt.replace(/^Переведи на финский:\s*/u, '')
 
+  if (showSummary && completion) {
+    return (
+      <PracticeSummary
+        completion={completion}
+        lessonId={lessonId}
+        lessonTitle={localizedText(lesson.data.title)}
+        lessonSummary={localizedText(lesson.data.summary)}
+        onRestart={restartPractice}
+      />
+    )
+  }
+
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-5 sm:py-10">
       <LessonWorkspaceHeader
@@ -140,9 +174,18 @@ function LessonPracticePage() {
       />
 
       <section className="mt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-          Задание {round} из {SESSION_SIZE}
-        </p>
+        <div className="flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-wider">
+          <p className="text-primary">
+            Задание {round} из {SESSION_SIZE}
+          </p>
+          <p className="text-muted-foreground">
+            Верных: {correctAnswers} из {result ? round : round - 1}
+          </p>
+        </div>
+        <Progress
+          className="mt-3 h-1.5"
+          value={((round - (result ? 0 : 1)) / SESSION_SIZE) * 100}
+        />
         <h2
           className={`mt-2 font-serif text-2xl font-semibold leading-snug transition-opacity sm:text-3xl ${
             exercise.isFetching ? 'opacity-40' : ''
@@ -180,7 +223,7 @@ function LessonPracticePage() {
             >
               {result
                 ? isLastQuestion
-                  ? 'К уроку'
+                  ? 'Результаты'
                   : 'Следующий'
                 : attempt.isPending
                   ? 'Проверяем…'
@@ -206,6 +249,61 @@ function LessonPracticePage() {
           {attempt.isError ? (
             <QueryError message={attempt.error.message} />
           ) : null}
+        </div>
+      </section>
+    </main>
+  )
+}
+
+function PracticeSummary({
+  completion,
+  lessonId,
+  lessonTitle,
+  lessonSummary,
+  onRestart,
+}: {
+  completion: PracticeCompletionResponse
+  lessonId: string
+  lessonTitle: string
+  lessonSummary: string
+  onRestart: () => void
+}) {
+  const requiredPercent =
+    (completion.requiredCorrectAnswers / completion.totalExercises) * 100
+
+  return (
+    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-5 sm:py-10">
+      <LessonWorkspaceHeader
+        lessonId={lessonId}
+        lessonTitle={lessonTitle}
+        lessonSummary={lessonSummary}
+        activePart="practice"
+      />
+      <section className="mt-8 border-t pt-7">
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+          Практика завершена
+        </p>
+        <h2 className="mt-2 font-serif text-2xl font-semibold sm:text-3xl">
+          {completion.passed ? 'Урок пройден' : 'Нужно попробовать ещё раз'}
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          {completion.correctAnswers} правильных ответов из{' '}
+          {completion.totalExercises} — {completion.scorePercent}%. Для
+          прохождения нужно не меньше {requiredPercent}% (
+          {completion.requiredCorrectAnswers} правильных ответов).
+        </p>
+        <Progress className="mt-5 h-2" value={completion.scorePercent} />
+        <div className="mt-6 flex flex-wrap gap-2">
+          {!completion.passed ? (
+            <Button size="sm" onClick={onRestart}>
+              Пройти ещё раз
+            </Button>
+          ) : null}
+          <Button asChild size="sm" variant="outline">
+            <Link to="/lessons/$lessonId" params={{ lessonId }}>
+              Вернуться к уроку
+            </Link>
+          </Button>
         </div>
       </section>
     </main>

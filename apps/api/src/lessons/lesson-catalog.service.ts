@@ -1,24 +1,29 @@
 import type {
   LessonDetailResponse,
   LessonVocabularyResponse,
-  LexicalFeatureValue,
 } from '@language/contracts'
+import { ContentStatus } from '@language/database'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 
 import {
   toLessonContent,
+  toLexicalFeatures,
   toLocalizedText,
   toNullableLocalizedText,
 } from '../common/content-mapper'
 import { PrismaService } from '../database/prisma.service'
+import { MediaUrlService } from '../media/media-url.service'
 
 @Injectable()
 export class LessonCatalogService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(MediaUrlService) private readonly media: MediaUrlService,
+  ) {}
 
   async getLesson(lessonId: string): Promise<LessonDetailResponse> {
     const lesson = await this.prisma.lesson.findUnique({
-      where: { id: lessonId },
+      where: { id: lessonId, status: ContentStatus.CURATED },
       include: {
         knowledgeItems: {
           orderBy: { position: 'asc' },
@@ -62,13 +67,20 @@ export class LessonCatalogService {
   async getVocabulary(lessonId: string): Promise<LessonVocabularyResponse> {
     const [lesson, lessonItems] = await Promise.all([
       this.prisma.lesson.findUnique({
-        where: { id: lessonId },
+        where: { id: lessonId, status: ContentStatus.CURATED },
         select: { id: true },
       }),
       this.prisma.lessonKnowledgeItem.findMany({
         where: {
           lessonId,
-          item: { lexicalSense: { isNot: null } },
+          item: {
+            lexicalSense: {
+              is: {
+                status: ContentStatus.CURATED,
+                lexicalEntry: { status: ContentStatus.CURATED },
+              },
+            },
+          },
         },
         orderBy: { position: 'asc' },
         include: {
@@ -77,7 +89,12 @@ export class LessonCatalogService {
               lexicalSense: {
                 include: {
                   lexicalEntry: {
-                    include: { forms: { orderBy: { id: 'asc' } } },
+                    include: {
+                      forms: {
+                        orderBy: { id: 'asc' },
+                        include: { audioAsset: true },
+                      },
+                    },
                   },
                 },
               },
@@ -110,6 +127,7 @@ export class LessonCatalogService {
               id: form.id,
               surface: form.surface,
               features: toLexicalFeatures(form.features),
+              audioUrl: this.media.resolve(form.audioAsset?.storageKey),
             })),
             status: sense.status,
           },
@@ -117,21 +135,4 @@ export class LessonCatalogService {
       }),
     }
   }
-}
-
-function toLexicalFeatures(
-  value: unknown,
-): Record<string, LexicalFeatureValue> {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return {}
-  }
-
-  return Object.fromEntries(
-    Object.entries(value).filter(
-      (entry): entry is [string, LexicalFeatureValue] =>
-        typeof entry[1] === 'string' ||
-        typeof entry[1] === 'number' ||
-        typeof entry[1] === 'boolean',
-    ),
-  )
 }

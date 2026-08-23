@@ -1,4 +1,5 @@
 import type {
+  AccountDataExportResponse,
   CourseOverviewResponse,
   CourseProgressResponse,
   ExerciseAttemptRequest,
@@ -7,8 +8,13 @@ import type {
   LessonPart,
   LessonVocabularyResponse,
   NextReviewResponse,
+  PracticeCompletionRequest,
+  PracticeCompletionResponse,
   PreparedExerciseResponse,
+  PreparedTextCatalogResponse,
+  PreparedTextDetailResponse,
   ReviewQueueResponse,
+  UserVocabularyResponse,
   VocabularyStudyRequest,
   VocabularyStudyResponse,
 } from '@language/contracts'
@@ -48,6 +54,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       response.status,
     )
   }
+
+  if (response.status === 204) return undefined as T
 
   return response.json() as Promise<T>
 }
@@ -99,6 +107,39 @@ export function getReviewQueue(routeVersionId: string) {
   return request<ReviewQueueResponse>(`/me/reviews/${routeVersionId}`)
 }
 
+export function getUserVocabulary(routeVersionId: string) {
+  return request<UserVocabularyResponse>(`/me/vocabulary/${routeVersionId}`)
+}
+
+export function addVocabularyItem(routeVersionId: string, itemId: string) {
+  return request<VocabularyStudyResponse>(
+    `/me/vocabulary/${routeVersionId}/${itemId}`,
+    { method: 'PUT' },
+  )
+}
+
+export function getPreparedTexts(routeVersionId: string) {
+  return request<PreparedTextCatalogResponse>(`/me/texts/${routeVersionId}`)
+}
+
+export function getPreparedText(routeVersionId: string, textId: string) {
+  return request<PreparedTextDetailResponse>(
+    `/me/texts/${routeVersionId}/${textId}`,
+  )
+}
+
+export function exportAccountData() {
+  return request<AccountDataExportResponse>('/me/data-export')
+}
+
+export function deleteAccount() {
+  return request<void>('/me', {
+    method: 'DELETE',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ confirmation: 'УДАЛИТЬ' }),
+  })
+}
+
 export function getNextReview(
   routeVersionId: string,
   sourceLanguage = 'ru',
@@ -122,6 +163,21 @@ export function completeLessonPart(
   return request<CourseProgressResponse>(
     `/me/course-progress/${routeVersionId}/lessons/${lessonId}/parts/${part}`,
     { method: 'PUT' },
+  )
+}
+
+export function completePractice(
+  routeVersionId: string,
+  lessonId: string,
+  completion: PracticeCompletionRequest,
+) {
+  return request<PracticeCompletionResponse>(
+    `/me/course-progress/${routeVersionId}/lessons/${lessonId}/practice-completion`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(completion),
+    },
   )
 }
 

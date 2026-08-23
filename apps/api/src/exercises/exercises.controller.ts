@@ -1,5 +1,6 @@
 import type {
   ExerciseAttemptResponse,
+  ExerciseReportResponse,
   PreparedExerciseResponse,
 } from '@language/contracts'
 import {
@@ -7,12 +8,14 @@ import {
   Controller,
   Get,
   HttpCode,
+  HttpStatus,
   Param,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common'
 import {
+  ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -22,6 +25,7 @@ import {
 import { CurrentUserId } from '../identity/current-user.decorator'
 import { SessionIdentityGuard } from '../identity/session-identity.guard'
 import { ExerciseAttemptDto } from './exercise-attempt.dto'
+import { ExerciseReportDto } from './exercise-report.dto'
 import { ExercisesService } from './exercises.service'
 
 @ApiTags('exercises')
@@ -44,7 +48,7 @@ export class ExercisesController {
       .split(',')
       .map((id) => id.trim())
       .filter(Boolean)
-      .slice(0, 20)
+      .slice(0, 60)
 
     return this.exercises.getNextExercise(
       userId,
@@ -65,5 +69,18 @@ export class ExercisesController {
     @Body() attempt: ExerciseAttemptDto,
   ): Promise<ExerciseAttemptResponse> {
     return this.exercises.submitAttempt(userId, exerciseId, attempt)
+  }
+
+  @Post('exercises/:exerciseId/reports')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Сообщить о проблеме в упражнении' })
+  @ApiCreatedResponse({ description: 'Созданная или обновлённая жалоба' })
+  @ApiNotFoundResponse({ description: 'Попытка или упражнение не найдено' })
+  reportExercise(
+    @CurrentUserId() userId: string,
+    @Param('exerciseId') exerciseId: string,
+    @Body() report: ExerciseReportDto,
+  ): Promise<ExerciseReportResponse> {
+    return this.exercises.reportExercise(userId, exerciseId, report)
   }
 }

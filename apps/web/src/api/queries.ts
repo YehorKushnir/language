@@ -7,7 +7,10 @@ import {
   getLessonVocabulary,
   getNextExercise,
   getNextReview,
+  getPreparedText,
+  getPreparedTexts,
   getReviewQueue,
+  getUserVocabulary,
 } from './language-api'
 
 export const courseQuery = queryOptions({
@@ -51,6 +54,27 @@ export function reviewQueueQuery(routeVersionId: string) {
   return queryOptions({
     queryKey: ['review-queue', routeVersionId],
     queryFn: () => getReviewQueue(routeVersionId),
+  })
+}
+
+export function userVocabularyQuery(routeVersionId: string) {
+  return queryOptions({
+    queryKey: ['user-vocabulary', routeVersionId],
+    queryFn: () => getUserVocabulary(routeVersionId),
+  })
+}
+
+export function preparedTextsQuery(routeVersionId: string) {
+  return queryOptions({
+    queryKey: ['prepared-texts', routeVersionId],
+    queryFn: () => getPreparedTexts(routeVersionId),
+  })
+}
+
+export function preparedTextQuery(routeVersionId: string, textId: string) {
+  return queryOptions({
+    queryKey: ['prepared-text', routeVersionId, textId],
+    queryFn: () => getPreparedText(routeVersionId, textId),
   })
 }
 

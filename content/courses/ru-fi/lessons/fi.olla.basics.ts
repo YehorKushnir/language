@@ -23,6 +23,7 @@ export interface LessonVocabularySeed {
 interface ExerciseSlotSeed {
   role: string
   accepted: string[]
+  itemIds: string[]
 }
 
 export interface PreparedExerciseSeed {
@@ -659,11 +660,15 @@ function createStandardExercise(
           ? [`${capitalize(person.affirmative)} ${complement}.`]
           : []),
       ],
-      slots: [
-        { role: 'subject', accepted: [person.pronoun] },
-        { role: 'mainVerb', accepted: [person.affirmative] },
-        { role: 'complement', accepted: [complement] },
-      ],
+      slots: attachEvidenceItems(
+        [
+          { role: 'subject', accepted: [person.pronoun] },
+          { role: 'mainVerb', accepted: [person.affirmative] },
+          { role: 'complement', accepted: [complement] },
+        ],
+        ['grammar.fi.olla.affirmative'],
+        vocabulary.itemId,
+      ),
       primaryItemId: 'grammar.fi.olla.affirmative',
       secondaryItemIds: [],
       vocabularyItemId: vocabulary.itemId,
@@ -682,12 +687,16 @@ function createStandardExercise(
           ? [`${capitalize(person.negative)} ole ${complement}.`]
           : []),
       ],
-      slots: [
-        { role: 'subject', accepted: [person.pronoun] },
-        { role: 'negativeVerb', accepted: [person.negative] },
-        { role: 'mainVerb', accepted: ['ole'] },
-        { role: 'complement', accepted: [complement] },
-      ],
+      slots: attachEvidenceItems(
+        [
+          { role: 'subject', accepted: [person.pronoun] },
+          { role: 'negativeVerb', accepted: [person.negative] },
+          { role: 'mainVerb', accepted: ['ole'] },
+          { role: 'complement', accepted: [complement] },
+        ],
+        ['grammar.fi.olla.negative'],
+        vocabulary.itemId,
+      ),
       primaryItemId: 'grammar.fi.olla.negative',
       secondaryItemIds: [],
       vocabularyItemId: vocabulary.itemId,
@@ -705,11 +714,15 @@ function createStandardExercise(
         ? [`${capitalize(person.question)} ${complement}?`]
         : []),
     ],
-    slots: [
-      { role: 'questionVerb', accepted: [person.question] },
-      { role: 'subject', accepted: [person.pronoun] },
-      { role: 'complement', accepted: [complement] },
-    ],
+    slots: attachEvidenceItems(
+      [
+        { role: 'questionVerb', accepted: [person.question] },
+        { role: 'subject', accepted: [person.pronoun] },
+        { role: 'complement', accepted: [complement] },
+      ],
+      ['grammar.fi.olla.question'],
+      vocabulary.itemId,
+    ),
     primaryItemId: 'grammar.fi.olla.question',
     secondaryItemIds: [],
     vocabularyItemId: vocabulary.itemId,
@@ -720,19 +733,35 @@ function createSpokenExercise(input: {
   id: string
   prompt: string
   targetText: string
-  slots: ExerciseSlotSeed[]
+  slots: Array<Omit<ExerciseSlotSeed, 'itemIds'>>
   vocabularyKey: string
 }): Omit<PreparedExerciseSeed, 'selectionOrder'> {
+  const vocabulary = getVocabulary(input.vocabularyKey)
   return {
     id: input.id,
     prompt: input.prompt,
     targetText: input.targetText,
     acceptedVariants: [input.targetText],
-    slots: input.slots,
+    slots: attachEvidenceItems(
+      input.slots,
+      ['register.fi.puhekieli.olla', 'grammar.fi.olla.affirmative'],
+      vocabulary.itemId,
+    ),
     primaryItemId: 'register.fi.puhekieli.olla',
     secondaryItemIds: ['grammar.fi.olla.affirmative'],
-    vocabularyItemId: getVocabulary(input.vocabularyKey).itemId,
+    vocabularyItemId: vocabulary.itemId,
   }
+}
+
+function attachEvidenceItems(
+  slots: Array<Omit<ExerciseSlotSeed, 'itemIds'>>,
+  grammarItemIds: string[],
+  vocabularyItemId: string,
+): ExerciseSlotSeed[] {
+  return slots.map((slot) => ({
+    ...slot,
+    itemIds: slot.role === 'complement' ? [vocabularyItemId] : grammarItemIds,
+  }))
 }
 
 function signatureFromExercise(

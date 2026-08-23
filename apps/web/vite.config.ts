@@ -6,6 +6,31 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('/node_modules/')) return
+          if (
+            id.includes('/node_modules/react/') ||
+            id.includes('/node_modules/react-dom/') ||
+            id.includes('/node_modules/scheduler/')
+          ) {
+            return 'react-vendor'
+          }
+          if (id.includes('/node_modules/@tanstack/')) return 'tanstack-vendor'
+          if (id.includes('/node_modules/better-auth/')) return 'auth-vendor'
+          if (
+            id.includes('/node_modules/radix-ui/') ||
+            id.includes('/node_modules/@radix-ui/')
+          ) {
+            return 'ui-vendor'
+          }
+          return 'vendor'
+        },
+      },
+    },
+  },
   envDir: '../..',
   plugins: [
     tanstackRouter({ target: 'react', autoCodeSplitting: true }),

@@ -70,6 +70,20 @@ enum EvidenceResult {
   IGNORED
 }
 
+enum ExerciseReportReason {
+  WRONG_PROMPT
+  WRONG_ANSWER
+  UNNATURAL_LANGUAGE
+  TECHNICAL_PROBLEM
+  OTHER
+}
+
+enum ExerciseReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
 model Course {
   id             String        @id
   sourceLanguage String
@@ -308,6 +322,7 @@ model Exercise {
   generated   GeneratedExercise?
   attempts    UserAttempt[]
   userHistory UserExerciseHistory[]
+  reports     ExerciseReport[]
 
   @@index([courseId, kind, status])
   @@index([lessonId])
@@ -367,6 +382,7 @@ model User {
   memories        UserMemory[]
   attempts        UserAttempt[]
   exerciseHistory UserExerciseHistory[]
+  exerciseReports ExerciseReport[]
 }
 
 model Session {
@@ -454,16 +470,19 @@ model UserLessonProgress {
 }
 
 model UserMemory {
-  userId       String
-  itemId       String
-  difficulty   Float
-  stability    Float
-  state        MemoryState @default(NEW)
-  dueAt        DateTime
-  lastReviewAt DateTime?
-  repetitions  Int         @default(0)
-  lapses       Int         @default(0)
-  updatedAt    DateTime    @updatedAt
+  userId        String
+  itemId        String
+  difficulty    Float
+  stability     Float
+  state         MemoryState @default(NEW)
+  dueAt         DateTime
+  lastReviewAt  DateTime?
+  elapsedDays   Int         @default(0)
+  scheduledDays Int         @default(0)
+  learningSteps Int         @default(0)
+  repetitions   Int         @default(0)
+  lapses        Int         @default(0)
+  updatedAt     DateTime    @updatedAt
 
   user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   item KnowledgeItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
@@ -492,6 +511,7 @@ model UserAttempt {
   exercise     Exercise              @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
   routeVersion CourseRouteVersion    @relation(fields: [routeVersionId], references: [id], onDelete: Restrict)
   evidence     UserAttemptEvidence[]
+  report       ExerciseReport?
 
   @@unique([userId, idempotencyKey])
   @@index([userId, answeredAt])
@@ -527,6 +547,25 @@ model UserExerciseHistory {
   @@id([userId, exerciseId])
   @@index([exerciseId])
   @@index([userId, lastSeenAt])
+}
+
+model ExerciseReport {
+  id         String               @id @default(cuid())
+  userId     String
+  exerciseId String
+  attemptId  String               @unique
+  reason     ExerciseReportReason
+  comment    String?
+  status     ExerciseReportStatus @default(OPEN)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  attempt  UserAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([exerciseId, status, createdAt])
+  @@index([userId, createdAt])
 }
 
 model Text {

@@ -3,6 +3,7 @@ import type {
   LessonExplanationScreen,
   LessonExplanationTable,
   LessonPart,
+  LexicalFeatureValue,
   LocalizedText,
 } from '@language/contracts'
 
@@ -27,6 +28,23 @@ export function toLocalizedText(value: unknown): LocalizedText {
 export function toNullableLocalizedText(value: unknown): LocalizedText | null {
   const text = toLocalizedText(value)
   return Object.keys(text).length > 0 ? text : null
+}
+
+export function toLexicalFeatures(
+  value: unknown,
+): Record<string, LexicalFeatureValue> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      (entry): entry is [string, LexicalFeatureValue] =>
+        typeof entry[1] === 'string' ||
+        typeof entry[1] === 'number' ||
+        typeof entry[1] === 'boolean',
+    ),
+  )
 }
 
 export function toLessonContent(value: unknown): {

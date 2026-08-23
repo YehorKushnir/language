@@ -6,7 +6,16 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { BookOpenTextIcon, LogOutIcon } from 'lucide-react'
+import {
+  BookOpenCheckIcon,
+  BookOpenTextIcon,
+  BrainIcon,
+  HomeIcon,
+  LanguagesIcon,
+  LogOutIcon,
+  ScrollTextIcon,
+  SettingsIcon,
+} from 'lucide-react'
 
 import { AuthRequired } from '@/components/auth-required'
 import { PageLoading } from '@/components/query-state'
@@ -37,7 +46,11 @@ function RootLayout() {
   })
   const session = authClient.useSession()
   const requiresSession =
-    pathname.startsWith('/lessons') || pathname.startsWith('/reviews')
+    pathname.startsWith('/lessons') ||
+    pathname.startsWith('/reviews') ||
+    pathname.startsWith('/vocabulary') ||
+    pathname.startsWith('/texts') ||
+    pathname.startsWith('/settings')
 
   async function signOut() {
     await authClient.signOut()
@@ -65,18 +78,38 @@ function RootLayout() {
             >
               <Button asChild variant="ghost" size="sm">
                 <Link
-                  className="hidden sm:inline-flex"
                   to="/"
                   activeOptions={{ exact: true }}
+                  aria-label="Главная"
+                  title="Главная"
                 >
-                  Главная
+                  <HomeIcon />
+                  <span className="hidden lg:inline">Главная</span>
                 </Link>
               </Button>
               <Button asChild variant="ghost" size="sm">
-                <Link to="/lessons">Уроки</Link>
+                <Link to="/lessons" aria-label="Уроки" title="Уроки">
+                  <BookOpenCheckIcon />
+                  <span className="hidden lg:inline">Уроки</span>
+                </Link>
               </Button>
               <Button asChild variant="ghost" size="sm">
-                <Link to="/reviews">Повторение</Link>
+                <Link to="/vocabulary" aria-label="Словарь" title="Словарь">
+                  <LanguagesIcon />
+                  <span className="hidden lg:inline">Словарь</span>
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/texts" aria-label="Тексты" title="Тексты">
+                  <ScrollTextIcon />
+                  <span className="hidden lg:inline">Тексты</span>
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/reviews" aria-label="Повторение" title="Повторение">
+                  <BrainIcon />
+                  <span className="hidden lg:inline">Повторение</span>
+                </Link>
               </Button>
             </nav>
             {session.data ? (
@@ -84,6 +117,11 @@ function RootLayout() {
                 <span className="hidden max-w-36 truncate text-sm font-medium sm:inline">
                   {session.data.user.name}
                 </span>
+                <Button asChild size="icon-sm" variant="ghost">
+                  <Link aria-label="Настройки" title="Настройки" to="/settings">
+                    <SettingsIcon />
+                  </Link>
+                </Button>
                 <Button
                   aria-label="Выйти"
                   onClick={signOut}

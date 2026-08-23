@@ -4,12 +4,14 @@ import {
   VersioningType,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import helmet from 'helmet'
 
 import { ApplicationExceptionFilter } from './common/application-exception.filter'
 
 export function configureApp(app: INestApplication) {
   const config = app.get(ConfigService)
 
+  app.use(helmet())
   app.setGlobalPrefix('api')
   app.enableVersioning({
     defaultVersion: '1',

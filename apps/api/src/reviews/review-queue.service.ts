@@ -21,7 +21,7 @@ export class ReviewQueueService {
     routeVersionId: string,
   ): Promise<ReviewQueueResponse> {
     const route = await this.prisma.courseRouteVersion.findUnique({
-      where: { id: routeVersionId },
+      where: { id: routeVersionId, status: ContentStatus.CURATED },
       select: { id: true },
     })
     if (!route) {
@@ -93,7 +93,7 @@ export class ReviewQueueService {
     excludedExerciseIds: string[],
   ): Promise<NextReviewResponse> {
     const route = await this.prisma.courseRouteVersion.findUnique({
-      where: { id: routeVersionId },
+      where: { id: routeVersionId, status: ContentStatus.CURATED },
       select: { id: true },
     })
     if (!route) {
