@@ -286,6 +286,14 @@ function WordInspector({
           <p className="mt-1 text-xs text-muted-foreground">
             {token.lexical.forms.map((form) => form.surface).join(' · ')}
           </p>
+          {token.lexical.example ? (
+            <div className="mt-3 border-l-2 border-primary/30 pl-3 text-xs">
+              <p className="font-medium">{token.lexical.example.target}</p>
+              <p className="mt-0.5 text-muted-foreground">
+                {localizedText(token.lexical.example.source)}
+              </p>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

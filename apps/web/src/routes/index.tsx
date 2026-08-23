@@ -1,8 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ArrowRightIcon, BookOpenIcon, CalendarClockIcon } from 'lucide-react'
+import {
+  ArrowRightIcon,
+  BookOpenIcon,
+  CalendarClockIcon,
+  ScrollTextIcon,
+} from 'lucide-react'
 
-import { courseProgressQuery, courseQuery } from '@/api/queries'
+import {
+  courseProgressQuery,
+  courseQuery,
+  preparedTextsQuery,
+} from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
@@ -27,6 +36,10 @@ function HomePage() {
     ...courseProgressQuery(routeVersionId),
     enabled: Boolean(routeVersionId && session.data),
   })
+  const texts = useQuery({
+    ...preparedTextsQuery(routeVersionId),
+    enabled: Boolean(routeVersionId && session.data),
+  })
 
   if (course.isPending) return <PageState loading />
   if (course.isError) return <PageState message={course.error.message} />
@@ -34,6 +47,9 @@ function HomePage() {
   const currentLessonId =
     progress.data?.currentLessonId ?? course.data.route?.lessons[0]?.id
   const completedLessons = progress.data?.completedLessons ?? 0
+  const recommendedText = texts.data?.items.find(
+    (text) => text.id === texts.data.recommendedTextId,
+  )
 
   return (
     <PageShell className="py-10 sm:py-14">
@@ -73,7 +89,7 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="mt-7 grid gap-3 sm:grid-cols-[1fr_220px]">
+      <section className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_220px_1fr]">
         <div className="rounded-lg border bg-card p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
@@ -96,7 +112,11 @@ function HomePage() {
         </div>
 
         <Link
-          to="/reviews"
+          to={
+            (progress.data?.dueReviews ?? 0) > 0
+              ? '/reviews/session'
+              : '/reviews'
+          }
           className="flex items-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:border-primary/35 hover:bg-accent/40"
         >
           <span className="grid size-8 shrink-0 place-items-center rounded-md bg-secondary text-primary">
@@ -104,13 +124,36 @@ function HomePage() {
           </span>
           <span>
             <span className="block text-xs text-muted-foreground">
-              Повторение
+              Смешанная тренировка
             </span>
             <span className="mt-0.5 block text-sm font-semibold">
               {progress.data?.dueReviews ?? 0} на сегодня
             </span>
           </span>
         </Link>
+
+        {recommendedText ? (
+          <Link
+            to="/texts/$textId"
+            params={{ textId: recommendedText.id }}
+            className="flex items-center gap-3 rounded-lg border bg-card p-4 transition-colors hover:border-primary/35 hover:bg-accent/40"
+          >
+            <span className="grid size-8 shrink-0 place-items-center rounded-md bg-secondary text-primary">
+              <ScrollTextIcon className="size-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-xs text-muted-foreground">
+                Подходящий текст · {recommendedText.level}
+              </span>
+              <span className="mt-0.5 block truncate text-sm font-semibold">
+                {localizedText(recommendedText.title)}
+              </span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                знакомо {recommendedText.knownPercent}%
+              </span>
+            </span>
+          </Link>
+        ) : null}
       </section>
     </PageShell>
   )

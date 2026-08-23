@@ -27,6 +27,7 @@ import type {
   FinnishMorphologicalDifference,
 } from '@language/language-fi'
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -34,6 +35,7 @@ import {
 } from '@nestjs/common'
 
 import { PrismaService } from '../database/prisma.service'
+import { assertLessonAvailable } from '../common/lesson-access'
 import { FinnishMorphologyService } from '../morphology/finnish-morphology.service'
 
 interface StoredAnswerSpec {
@@ -64,10 +66,15 @@ export class ExercisesService {
 
   async getNextExercise(
     userId: string,
+    routeVersionId: string,
     lessonId: string,
     sourceLanguage: string,
     excludedExerciseIds: string[],
   ): Promise<PreparedExerciseResponse> {
+    if (!routeVersionId) {
+      throw new BadRequestException('routeVersionId is required')
+    }
+    await assertLessonAvailable(this.prisma, userId, routeVersionId, lessonId)
     const candidates = await this.prisma.exercise.findMany({
       where: {
         lessonId,
@@ -152,6 +159,12 @@ export class ExercisesService {
         `Exercise ${exerciseId} is not part of route ${request.routeVersionId}`,
       )
     }
+    await assertLessonAvailable(
+      this.prisma,
+      userId,
+      request.routeVersionId,
+      exercise.lessonId,
+    )
 
     const answerSpec = toStoredAnswerSpec(exercise.answerSpec)
     const check = checkStructuredAnswer(request.answer, answerSpec)

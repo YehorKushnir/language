@@ -269,6 +269,16 @@ function LessonVocabularyPage() {
               <span className="mt-2 font-serif text-3xl font-semibold">
                 {localizedText(item.gloss)}
               </span>
+              {item.example ? (
+                <span className="mt-4 border-l-2 border-primary/30 pl-3 text-left">
+                  <span className="block text-sm font-medium">
+                    {item.example.target}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {localizedText(item.example.source)}
+                  </span>
+                </span>
+              ) : null}
               <span className="mt-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Формы
               </span>

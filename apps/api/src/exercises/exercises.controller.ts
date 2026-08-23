@@ -41,6 +41,7 @@ export class ExercisesController {
   getNextExercise(
     @CurrentUserId() userId: string,
     @Param('lessonId') lessonId: string,
+    @Query('routeVersionId') routeVersionId: string,
     @Query('sourceLanguage') sourceLanguage = 'ru',
     @Query('exclude') exclude = '',
   ): Promise<PreparedExerciseResponse> {
@@ -52,6 +53,7 @@ export class ExercisesController {
 
     return this.exercises.getNextExercise(
       userId,
+      routeVersionId,
       lessonId,
       sourceLanguage,
       excludedExerciseIds,

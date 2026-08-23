@@ -10,6 +10,7 @@ import {
   toLexicalFeatures,
   toLocalizedText,
   toNullableLocalizedText,
+  toVocabularyExample,
 } from '../common/content-mapper'
 import { PrismaService } from '../database/prisma.service'
 import { MediaUrlService } from '../media/media-url.service'
@@ -123,6 +124,7 @@ export class LessonCatalogService {
             lemma: sense.lexicalEntry.lemma,
             partOfSpeech: sense.lexicalEntry.partOfSpeech,
             gloss: toLocalizedText(sense.gloss),
+            example: toVocabularyExample(sense.metadata),
             forms: sense.lexicalEntry.forms.map((form) => ({
               id: form.id,
               surface: form.surface,

@@ -16,6 +16,7 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "content:validate": "pnpm --filter @language/database content:validate",
+    "content:audit:mvp": "pnpm --filter @language/database content:audit:mvp",
     "publication:validate": "pnpm --filter @language/database publication:validate",
     "api:smoke:production": "node scripts/api-production-smoke.mjs",
     "db:validate": "pnpm --filter @language/database db:validate",

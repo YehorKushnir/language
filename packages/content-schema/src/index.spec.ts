@@ -29,6 +29,10 @@ const validBundle = {
       lemma: 'oppija',
       partOfSpeech: 'noun',
       gloss: 'ученик',
+      example: {
+        target: 'Hän on oppija.',
+        source: { ru: 'Он или она — ученик.' },
+      },
       semanticTypes: ['person'],
       singular: 'oppija',
       plural: 'oppijoita',

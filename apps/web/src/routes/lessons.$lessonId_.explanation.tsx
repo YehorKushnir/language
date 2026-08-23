@@ -144,6 +144,34 @@ function LessonExplanationPage() {
                 </div>
               ) : null}
 
+              {screen.quickChecks?.length ? (
+                <div className="mt-5 grid gap-2">
+                  {screen.quickChecks.map((quickCheck, index) => (
+                    <details
+                      key={`${screen.id}-check-${index}`}
+                      className="group rounded-md border bg-muted/20 px-3 py-2.5"
+                    >
+                      <summary className="cursor-pointer list-none text-sm font-medium marker:hidden">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                          Быстрая проверка
+                        </span>
+                        <span className="mt-1 block">
+                          {localizedText(quickCheck.prompt)}
+                        </span>
+                      </summary>
+                      <div className="mt-3 border-t pt-3 text-sm">
+                        <p className="font-semibold">{quickCheck.answer}</p>
+                        {quickCheck.explanation ? (
+                          <p className="mt-1 text-muted-foreground">
+                            {localizedText(quickCheck.explanation)}
+                          </p>
+                        ) : null}
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              ) : null}
+
               {screen.callout ? (
                 <Alert className="mt-5 py-3">
                   <LightbulbIcon />

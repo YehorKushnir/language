@@ -21,6 +21,9 @@ export class CourseCatalogService {
           orderBy: { version: 'desc' },
           take: 1,
           include: {
+            dependencies: {
+              select: { lessonId: true, prerequisiteLessonId: true },
+            },
             entries: {
               where: { lesson: { status: ContentStatus.CURATED } },
               orderBy: [{ modulePosition: 'asc' }, { lessonPosition: 'asc' }],
@@ -49,6 +52,13 @@ export class CourseCatalogService {
     }
 
     const activeRoute = course.routeVersions[0]
+    const prerequisitesByLesson = new Map<string, string[]>()
+    for (const dependency of activeRoute?.dependencies ?? []) {
+      const prerequisiteIds =
+        prerequisitesByLesson.get(dependency.lessonId) ?? []
+      prerequisiteIds.push(dependency.prerequisiteLessonId)
+      prerequisitesByLesson.set(dependency.lessonId, prerequisiteIds)
+    }
 
     return {
       id: course.id,
@@ -70,6 +80,7 @@ export class CourseCatalogService {
               status: lesson.status,
               knowledgeItemCount: lesson._count.knowledgeItems,
               exerciseCount: lesson._count.exercises,
+              prerequisiteLessonIds: prerequisitesByLesson.get(lesson.id) ?? [],
             })),
           }
         : null,

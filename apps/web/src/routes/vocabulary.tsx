@@ -143,6 +143,14 @@ function VocabularyRow({ item }: { item: UserVocabularyItemResponse }) {
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {item.forms.map((form) => form.surface).join(' · ')}
         </p>
+        {item.example ? (
+          <p className="mt-1 truncate text-xs">
+            {item.example.target}{' '}
+            <span className="text-muted-foreground">
+              — {localizedText(item.example.source)}
+            </span>
+          </p>
+        ) : null}
       </div>
       <div className="flex items-center justify-between gap-3 sm:justify-end">
         <Button asChild size="sm" variant="ghost">
@@ -168,6 +176,8 @@ function matchesSearch(item: UserVocabularyItemResponse, search: string) {
   return [
     item.lemma,
     localizedText(item.gloss),
+    item.example?.target ?? '',
+    item.example ? localizedText(item.example.source) : '',
     ...item.forms.map((form) => form.surface),
   ].some((value) => value.toLocaleLowerCase('ru').includes(normalizedSearch))
 }

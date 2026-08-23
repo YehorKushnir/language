@@ -12,6 +12,10 @@ export interface LessonVocabularySeed {
   lemma: string
   partOfSpeech: 'noun' | 'verb' | 'adjective' | 'adverb'
   gloss: string
+  example: {
+    target: string
+    source: { ru: string }
+  }
   semanticTypes: string[]
   singular: string
   plural: string
@@ -95,6 +99,15 @@ export const lessonContent = {
         },
         { target: 'He ovat kotona.', source: { ru: 'Они дома.' } },
       ],
+      quickChecks: [
+        {
+          prompt: { ru: 'Вставь форму olla: Me ___ täällä.' },
+          answer: 'olemme',
+          explanation: {
+            ru: 'Подлежащее me требует формы первого лица множественного числа olemme.',
+          },
+        },
+      ],
     },
     {
       id: 'predicative-complements',
@@ -148,6 +161,17 @@ export const lessonContent = {
         { target: 'En ole väsynyt.', source: { ru: 'Я не устал.' } },
         { target: 'He eivät ole kotona.', source: { ru: 'Они не дома.' } },
       ],
+      quickChecks: [
+        {
+          prompt: {
+            ru: 'Вставь отрицательный глагол: Hän ___ ole opiskelija.',
+          },
+          answer: 'ei',
+          explanation: {
+            ru: 'С hän используется отрицательный глагол ei, а olla принимает форму ole.',
+          },
+        },
+      ],
     },
     {
       id: 'olla-questions',
@@ -171,6 +195,17 @@ export const lessonContent = {
         },
         { target: 'Onko hän lääkäri?', source: { ru: 'Он врач?' } },
         { target: 'Ovatko he täällä?', source: { ru: 'Они здесь?' } },
+      ],
+      quickChecks: [
+        {
+          prompt: {
+            ru: 'Поставь вопросительную форму первой: ___ hän lääkäri?',
+          },
+          answer: 'Onko',
+          explanation: {
+            ru: 'В общем вопросе личная форма on получает частицу -ko и переходит в начало.',
+          },
+        },
       ],
     },
     {
@@ -849,6 +884,10 @@ function createNominalVocabulary(input: {
     ...input,
     lexicalEntryId,
     partOfSpeech: 'noun',
+    example: {
+      target: `Hän on ${input.singular}.`,
+      source: { ru: `Он или она — ${input.sourceSingular}.` },
+    },
     forms: [
       {
         id: `form.fi.${input.key}.nominative.sg`,
@@ -878,6 +917,10 @@ function createAdjectiveVocabulary(input: {
     ...input,
     lexicalEntryId: `lex.fi.${input.lemma}`,
     partOfSpeech: 'adjective',
+    example: {
+      target: `Hän on ${input.lemma}.`,
+      source: { ru: `Он или она ${input.sourceSingular}.` },
+    },
     singular: input.lemma,
     semanticTypes: ['state', 'quality'],
     forms: [
@@ -912,6 +955,10 @@ function createInvariantVocabulary(input: {
     lemma: input.lemma,
     partOfSpeech: 'adverb',
     gloss: input.gloss,
+    example: {
+      target: `Hän on ${input.lemma}.`,
+      source: { ru: `Он или она ${input.source}.` },
+    },
     semanticTypes: input.semanticTypes,
     singular: input.lemma,
     plural: input.lemma,

@@ -18,6 +18,7 @@
     "typecheck": "pnpm generate && tsc --project tsconfig.json --noEmit",
     "test": "vitest run",
     "content:validate": "tsx prisma/validate-content.ts",
+    "content:audit:mvp": "tsx prisma/audit-mvp-content.ts",
     "publication:validate": "tsx prisma/validate-publication.ts",
     "db:validate": "prisma validate",
     "db:format": "prisma format",

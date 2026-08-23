@@ -92,6 +92,11 @@ export function CourseOutline({
   const progressByLesson = new Map(
     progress?.lessons.map((lesson) => [lesson.lessonId, lesson]) ?? [],
   )
+  const completedLessonIds = new Set(
+    progress?.lessons
+      .filter((lesson) => lesson.completedAt)
+      .map((lesson) => lesson.lessonId) ?? [],
+  )
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -130,7 +135,12 @@ export function CourseOutline({
                 ? progressByLesson.get(lesson.id)
                 : undefined
               const isExpanded = lesson?.id === expandedLessonId
-              const isAvailable = Boolean(lesson)
+              const isAvailable = Boolean(
+                lesson &&
+                lesson.prerequisiteLessonIds.every((prerequisiteLessonId) =>
+                  completedLessonIds.has(prerequisiteLessonId),
+                ),
+              )
               const title = lesson
                 ? localizedText(lesson.title)
                 : moduleIndex === 0
@@ -153,9 +163,11 @@ export function CourseOutline({
                         ? 'hover:bg-muted/45'
                         : 'cursor-default text-muted-foreground/65',
                     )}
-                    disabled={!lesson}
+                    disabled={!isAvailable}
                     aria-expanded={isAvailable ? isExpanded : undefined}
-                    onClick={() => lesson && toggleLesson(lesson.id)}
+                    onClick={() =>
+                      isAvailable && lesson && toggleLesson(lesson.id)
+                    }
                   >
                     <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-xs font-medium tabular-nums text-muted-foreground">
                       {absolutePosition}
@@ -189,7 +201,7 @@ export function CourseOutline({
                     )}
                   </button>
 
-                  {lesson ? (
+                  {lesson && isAvailable ? (
                     <div
                       className={cn(
                         'grid transition-[grid-template-rows,opacity] duration-200 ease-out',

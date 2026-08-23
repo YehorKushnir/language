@@ -21,6 +21,7 @@ import {
 } from '@nestjs/common'
 
 import { PrismaService } from '../database/prisma.service'
+import { assertLessonAvailable } from '../common/lesson-access'
 
 const PRACTICE_EXERCISE_COUNT = 60
 const PRACTICE_PASS_RATE = 0.85
@@ -118,6 +119,7 @@ export class CourseProgressService {
     lessonId: string,
     part: LessonPart,
   ): Promise<CourseProgressResponse> {
+    await assertLessonAvailable(this.prisma, userId, routeVersionId, lessonId)
     const routeEntry = await this.prisma.courseRouteEntry.findFirst({
       where: {
         routeVersionId,
@@ -234,6 +236,7 @@ export class CourseProgressService {
     lessonId: string,
     attemptIds: string[],
   ): Promise<PracticeCompletionResponse> {
+    await assertLessonAvailable(this.prisma, userId, routeVersionId, lessonId)
     const routeEntry = await this.prisma.courseRouteEntry.findFirst({
       where: {
         routeVersionId,
@@ -312,6 +315,7 @@ export class CourseProgressService {
     itemId: string,
     result: VocabularyStudyResult,
   ): Promise<VocabularyStudyResponse> {
+    await assertLessonAvailable(this.prisma, userId, routeVersionId, lessonId)
     const vocabularyItem = await this.prisma.lessonKnowledgeItem.findFirst({
       where: {
         lessonId,

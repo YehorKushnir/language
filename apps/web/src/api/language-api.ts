@@ -4,6 +4,8 @@ import type {
   CourseProgressResponse,
   ExerciseAttemptRequest,
   ExerciseAttemptResponse,
+  ExerciseReportRequest,
+  ExerciseReportResponse,
   LessonDetailResponse,
   LessonPart,
   LessonVocabularyResponse,
@@ -74,10 +76,11 @@ export function getLessonVocabulary(lessonId: string) {
 
 export function getNextExercise(
   lessonId: string,
+  routeVersionId: string,
   sourceLanguage = 'ru',
   excludedExerciseIds: string[] = [],
 ) {
-  const search = new URLSearchParams({ sourceLanguage })
+  const search = new URLSearchParams({ sourceLanguage, routeVersionId })
   if (excludedExerciseIds.length > 0) {
     search.set('exclude', excludedExerciseIds.join(','))
   }
@@ -94,6 +97,17 @@ export function submitExerciseAttempt(
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(attempt),
+  })
+}
+
+export function reportExercise(
+  exerciseId: string,
+  report: ExerciseReportRequest,
+) {
+  return request<ExerciseReportResponse>(`/exercises/${exerciseId}/reports`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(report),
   })
 }
 

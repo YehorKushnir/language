@@ -11,6 +11,7 @@ describe('TextsService', () => {
   const prisma = {
     courseRouteVersion: { findUnique: vi.fn() },
     text: { findMany: vi.fn(), findFirst: vi.fn() },
+    userLessonProgress: { findMany: vi.fn() },
   }
   const morphology = { analyzeText: vi.fn() }
   const media = { resolve: vi.fn(() => null) }
@@ -28,6 +29,12 @@ describe('TextsService', () => {
     body: 'Minä olen opiskelija.',
     status: ContentStatus.CURATED,
     audioAsset: null,
+    knowledgeItems: [
+      {
+        itemId: 'grammar.fi.olla.affirmative',
+        item: { skill: { name: { ru: 'Утверждение с olla' } } },
+      },
+    ],
     tokens: [
       {
         position: 0,
@@ -119,6 +126,7 @@ describe('TextsService', () => {
         },
       ],
     })
+    prisma.userLessonProgress.findMany.mockResolvedValue([])
   })
 
   it('returns compact catalog entries with known-word coverage', async () => {
@@ -126,12 +134,19 @@ describe('TextsService', () => {
 
     await expect(service.getCatalog('user.1', 'route.1')).resolves.toEqual({
       routeVersionId: 'route.1',
+      recommendedTextId: 'text.fi.test',
       items: [
         {
           id: 'text.fi.test',
           title: { ru: 'Знакомство' },
           level: 'A1',
           topics: ['знакомство'],
+          grammarItems: [
+            {
+              itemId: 'grammar.fi.olla.affirmative',
+              label: { ru: 'Утверждение с olla' },
+            },
+          ],
           preview: 'Minä olen opiskelija.',
           wordCount: 2,
           linkedWordCount: 1,

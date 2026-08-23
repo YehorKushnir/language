@@ -1,4 +1,25 @@
 import {
+  consonantGradationContent,
+  consonantGradationExercises,
+  consonantGradationGoldenExerciseIds,
+  consonantGradationSkills,
+  consonantGradationVocabulary,
+} from './lessons/fi.consonant-gradation.js'
+import {
+  genitivePossessionContent,
+  genitivePossessionExercises,
+  genitivePossessionGoldenExerciseIds,
+  genitivePossessionSkills,
+  genitivePossessionVocabulary,
+} from './lessons/fi.genitive.possession.js'
+import {
+  infinitiveChainsContent,
+  infinitiveChainsExercises,
+  infinitiveChainsGoldenExerciseIds,
+  infinitiveChainsSkills,
+  infinitiveChainsVocabulary,
+} from './lessons/fi.infinitive.chains.js'
+import {
   lessonContent as firstLessonContent,
   lessonExercises as firstLessonExercises,
   lessonIdentityTemplateDefinition,
@@ -6,6 +27,37 @@ import {
   type LessonVocabularySeed,
   type PreparedExerciseSeed,
 } from './lessons/fi.olla.basics.js'
+import {
+  presentCommonContent,
+  presentCommonExercises,
+  presentCommonGoldenExerciseIds,
+  presentCommonVocabulary,
+} from './lessons/fi.present.common.js'
+import {
+  PRESENT_NEGATIVE_SKILL_ID,
+  PRESENT_QUESTION_SKILL_ID,
+  questionsWordOrderContent,
+  questionsWordOrderExercises,
+  questionsWordOrderGoldenExerciseIds,
+  questionsWordOrderVocabulary,
+} from './lessons/fi.questions.word-order.js'
+import {
+  VERB_TYPE_THREE_SKILL_ID,
+  VERB_TYPE_TWO_SKILL_ID,
+  verbTypesTwoThreeContent,
+  verbTypesTwoThreeExercises,
+  verbTypesTwoThreeGoldenExerciseIds,
+  verbTypesTwoThreeVocabulary,
+} from './lessons/fi.verb-types.two-three.js'
+import {
+  VERB_TYPE_FIVE_SKILL_ID,
+  VERB_TYPE_FOUR_SKILL_ID,
+  VERB_TYPE_SIX_SKILL_ID,
+  verbTypesFourSixContent,
+  verbTypesFourSixExercises,
+  verbTypesFourSixGoldenExerciseIds,
+  verbTypesFourSixVocabulary,
+} from './lessons/fi.verb-types.four-six.js'
 
 type PartOfSpeech = LessonVocabularySeed['partOfSpeech']
 
@@ -18,6 +70,11 @@ export interface CourseExplanationScreenSeed {
     target: string
     source: { ru: string }
     note?: { ru: string }
+  }[]
+  quickChecks?: readonly {
+    prompt: { ru: string }
+    answer: string
+    explanation?: { ru: string }
   }[]
   table?: {
     headers: readonly { ru: string }[]
@@ -51,6 +108,11 @@ export interface CourseLessonSeed {
   vocabulary: LessonVocabularySeed[]
   exercises: PreparedExerciseSeed[]
   skills: CourseSkillSeed[]
+  mvpQuality: {
+    content: 'CURATED' | 'SCAFFOLD'
+    linguisticReview: 'PASSED' | 'PENDING'
+    goldenExerciseIds: readonly string[]
+  }
   template?: typeof lessonIdentityTemplateDefinition
   templateId?: string
 }
@@ -171,13 +233,13 @@ uida|плавать|verb
 tupakoida|курить|verb
 imuroida|пылесосить|verb
 pysäköidä|парковать|verb
-häiritä|мешать|verb
-valita|выбирать|verb
-paeta|убегать|verb
+viedä|относить|verb
+tuoda|приносить|verb
+myydä|продавать|verb
 pestä|мыть|verb
 nousta|вставать|verb
 purra|кусать|verb
-surra|горевать|verb
+kuunnella|слушать|verb
 mennä|идти|verb
 tulla|приходить|verb
 tehdä|делать|verb
@@ -212,7 +274,7 @@ osata|уметь|verb
 pelata|играть|verb
 siivota|убирать|verb
 lainata|одалживать|verb
-rakastaa|любить|verb
+tykätä|нравиться|verb
 vihata|ненавидеть|verb
 tarvita|нуждаться|verb
 pakata|упаковывать|verb
@@ -221,16 +283,16 @@ maalata|красить|verb
 tilata|заказывать|verb
 pudota|падать|verb
 levätä|отдыхать|verb
-maata|лежать|verb
+häiritä|мешать|verb
 luvata|обещать|verb
 palata|возвращаться|verb
 pelätä|бояться|verb
 lämmetä|теплеть|verb
 kylmetä|холодать|verb
 vanheta|стареть|verb
-selvitä|справляться|verb
-hävitä|проигрывать|verb
-vaieta|замолкать|verb`,
+valita|выбирать|verb
+avata|открывать|verb
+vastata|отвечать|verb`,
   },
   {
     id: 'fi.consonant-gradation',
@@ -736,6 +798,13 @@ export const moduleOneLessons: CourseLessonSeed[] = [
     skills: firstLessonSkills,
     template: lessonIdentityTemplateDefinition,
     templateId: 'template.fi.olla.identity@1',
+    mvpQuality: {
+      content: 'CURATED',
+      linguisticReview: 'PASSED',
+      goldenExerciseIds: firstLessonExercises
+        .slice(0, 6)
+        .map((exercise) => exercise.id),
+    },
   },
   ...generatedLessons,
 ]
@@ -765,7 +834,7 @@ function createLesson(
     prerequisiteSkillIds: [prerequisiteSkillId],
   }
 
-  return {
+  const lesson: CourseLessonSeed = {
     id: specification.id,
     modulePosition: 1,
     lessonPosition,
@@ -775,7 +844,187 @@ function createLesson(
     vocabulary,
     exercises: createExercises(specification, vocabulary),
     skills: [skill],
+    mvpQuality: {
+      content: 'SCAFFOLD',
+      linguisticReview: 'PENDING',
+      goldenExerciseIds: [],
+    },
   }
+
+  if (specification.id === 'fi.present.common') {
+    return {
+      ...lesson,
+      title: { ru: 'Настоящее время: глаголы первого типа' },
+      summary: {
+        ru: 'Основа, личные окончания и чередование частых глаголов первого типа.',
+      },
+      content: presentCommonContent,
+      vocabulary: presentCommonVocabulary,
+      exercises: presentCommonExercises,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: presentCommonGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.questions.word-order') {
+    return {
+      ...lesson,
+      content: questionsWordOrderContent,
+      vocabulary: questionsWordOrderVocabulary,
+      exercises: questionsWordOrderExercises,
+      skills: [
+        skill,
+        {
+          id: PRESENT_NEGATIVE_SKILL_ID,
+          kind: 'SPECIFIC_SKILL',
+          name: { ru: 'Отрицание в настоящем времени' },
+          description: {
+            ru: 'Личные формы отрицательного глагола и отрицательная форма смыслового глагола.',
+          },
+          prerequisiteSkillIds: ['grammar.fi.present.common'],
+        },
+        {
+          id: PRESENT_QUESTION_SKILL_ID,
+          kind: 'SPECIFIC_SKILL',
+          name: { ru: 'Общие вопросы в настоящем времени' },
+          description: {
+            ru: 'Частица -ko/-kö и вопросительный порядок слов.',
+          },
+          prerequisiteSkillIds: ['grammar.fi.present.common'],
+        },
+      ],
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: questionsWordOrderGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.verb-types.two-three') {
+    return {
+      ...lesson,
+      content: verbTypesTwoThreeContent,
+      vocabulary: verbTypesTwoThreeVocabulary,
+      exercises: verbTypesTwoThreeExercises,
+      skills: [
+        skill,
+        {
+          id: VERB_TYPE_TWO_SKILL_ID,
+          kind: 'SPECIFIC_SKILL',
+          name: { ru: 'Глаголы второго типа' },
+          description: { ru: 'Основа после удаления -da/-dä.' },
+          prerequisiteSkillIds: ['grammar.fi.present.common'],
+        },
+        {
+          id: VERB_TYPE_THREE_SKILL_ID,
+          kind: 'SPECIFIC_SKILL',
+          name: { ru: 'Глаголы третьего типа' },
+          description: {
+            ru: 'Основа на -e- после замены окончания инфинитива.',
+          },
+          prerequisiteSkillIds: ['grammar.fi.present.common'],
+        },
+      ],
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: verbTypesTwoThreeGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.verb-types.four-six') {
+    return {
+      ...lesson,
+      content: verbTypesFourSixContent,
+      vocabulary: verbTypesFourSixVocabulary,
+      exercises: verbTypesFourSixExercises,
+      skills: [
+        skill,
+        {
+          id: VERB_TYPE_FOUR_SKILL_ID,
+          kind: 'SPECIFIC_SKILL',
+          name: { ru: 'Глаголы четвёртого типа' },
+          description: { ru: 'Основа на долгую гласную после удаления t.' },
+          prerequisiteSkillIds: ['grammar.fi.present.common'],
+        },
+        {
+          id: VERB_TYPE_FIVE_SKILL_ID,
+          kind: 'SPECIFIC_SKILL',
+          name: { ru: 'Глаголы пятого типа' },
+          description: { ru: 'Основа на -itse-.' },
+          prerequisiteSkillIds: ['grammar.fi.present.common'],
+        },
+        {
+          id: VERB_TYPE_SIX_SKILL_ID,
+          kind: 'SPECIFIC_SKILL',
+          name: { ru: 'Глаголы шестого типа' },
+          description: { ru: 'Основа на -ne- у глаголов изменения состояния.' },
+          prerequisiteSkillIds: ['grammar.fi.present.common'],
+        },
+      ],
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: verbTypesFourSixGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.consonant-gradation') {
+    return {
+      ...lesson,
+      title: { ru: 'Чередование согласных в глаголах' },
+      summary: {
+        ru: 'Сильная и слабая ступень k, p и t в уже знакомых глагольных типах.',
+      },
+      content: consonantGradationContent,
+      vocabulary: consonantGradationVocabulary,
+      exercises: consonantGradationExercises,
+      skills: consonantGradationSkills,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: consonantGradationGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.infinitive.chains') {
+    return {
+      ...lesson,
+      content: infinitiveChainsContent,
+      vocabulary: infinitiveChainsVocabulary,
+      exercises: infinitiveChainsExercises,
+      skills: infinitiveChainsSkills,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: infinitiveChainsGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.genitive.possession') {
+    return {
+      ...lesson,
+      content: genitivePossessionContent,
+      vocabulary: genitivePossessionVocabulary,
+      exercises: genitivePossessionExercises,
+      skills: genitivePossessionSkills,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: genitivePossessionGoldenExerciseIds,
+      },
+    }
+  }
+
+  return lesson
 }
 
 function parseVocabulary(
@@ -804,6 +1053,21 @@ function parseVocabulary(
         lemma,
         partOfSpeech,
         gloss,
+        example:
+          partOfSpeech === 'verb'
+            ? {
+                target: `Haluan ${lemma}.`,
+                source: { ru: `Я хочу ${gloss}.` },
+              }
+            : partOfSpeech === 'adjective'
+              ? {
+                  target: `Se on ${lemma}.`,
+                  source: { ru: `Это ${gloss}.` },
+                }
+              : {
+                  target: `Tämä on ${lemma}.`,
+                  source: { ru: `Это ${gloss}.` },
+                },
         semanticTypes: ['module-one', partOfSpeech],
         singular: lemma,
         plural: lemma,

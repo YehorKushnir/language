@@ -126,6 +126,12 @@ export interface LessonExplanationTable {
   rows: LocalizedText[][]
 }
 
+export interface LessonExplanationQuickCheck {
+  prompt: LocalizedText
+  answer: string
+  explanation?: LocalizedText
+}
+
 export interface LessonExplanationScreen {
   id: string
   eyebrow?: LocalizedText
@@ -133,6 +139,7 @@ export interface LessonExplanationScreen {
   paragraphs: LocalizedText[]
   table?: LessonExplanationTable
   examples?: LessonExplanationExample[]
+  quickChecks?: LessonExplanationQuickCheck[]
   callout?: LocalizedText
 }
 
@@ -145,6 +152,7 @@ export interface CourseLessonSummary {
   status: ContentStatus
   knowledgeItemCount: number
   exerciseCount: number
+  prerequisiteLessonIds: string[]
 }
 
 export interface CourseOverviewResponse {
@@ -245,12 +253,18 @@ export interface LessonVocabularyFormResponse {
   audioUrl: string | null
 }
 
+export interface VocabularyExampleResponse {
+  target: string
+  source: LocalizedText
+}
+
 export interface LessonVocabularyItemResponse {
   itemId: string
   lexicalEntryId: string
   lemma: string
   partOfSpeech: string
   gloss: LocalizedText
+  example: VocabularyExampleResponse | null
   forms: LessonVocabularyFormResponse[]
   status: ContentStatus
 }
@@ -286,6 +300,10 @@ export interface PreparedTextSummaryResponse {
   title: LocalizedText
   level: string
   topics: string[]
+  grammarItems: Array<{
+    itemId: string
+    label: LocalizedText
+  }>
   preview: string
   wordCount: number
   linkedWordCount: number
@@ -296,12 +314,14 @@ export interface PreparedTextSummaryResponse {
 
 export interface PreparedTextCatalogResponse {
   routeVersionId: string
+  recommendedTextId: string | null
   items: PreparedTextSummaryResponse[]
 }
 
 export interface PreparedTextTokenLexicalResponse {
   itemId: string
   gloss: LocalizedText
+  example: VocabularyExampleResponse | null
   partOfSpeech: string
   forms: LessonVocabularyFormResponse[]
   memory: {

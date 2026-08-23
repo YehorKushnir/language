@@ -12,6 +12,7 @@ import {
   nextExerciseQuery,
 } from '@/api/queries'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
+import { ExerciseReport } from '@/components/exercise-report'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Button } from '@/components/ui/button'
@@ -42,10 +43,13 @@ function LessonPracticePage() {
   const answerInput = useRef<HTMLInputElement>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
   const openedAt = useRef(Date.now())
-  const exercise = useQuery(nextExerciseQuery(lessonId, completedExerciseIds))
   const lesson = useQuery(lessonQuery(lessonId))
   const course = useQuery(courseQuery)
   const routeVersionId = course.data?.route?.id ?? ''
+  const exercise = useQuery({
+    ...nextExerciseQuery(lessonId, routeVersionId, completedExerciseIds),
+    enabled: Boolean(routeVersionId),
+  })
   const attempt = useMutation({
     mutationFn: async () => {
       if (!exercise.data) throw new Error('Упражнение ещё не загружено')
@@ -256,6 +260,13 @@ function LessonPracticePage() {
             <QueryError message={attempt.error.message} />
           ) : null}
         </div>
+        {result ? (
+          <ExerciseReport
+            className="mt-2"
+            exerciseId={activeExerciseId}
+            attemptId={result.attemptId}
+          />
+        ) : null}
       </section>
     </PageShell>
   )

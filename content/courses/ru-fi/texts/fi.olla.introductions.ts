@@ -252,7 +252,7 @@ export const preparedTexts: PreparedTextSeed[] = [
   createText({
     id: 'text.fi.module-one.12.market-day',
     title: { ru: 'День на рынке' },
-    level: 'A1',
+    level: 'A1+',
     topics: ['уроки 9–12', 'еда', 'город', 'свободное время'],
     body: 'Lauantaina menemme torille. Ostamme leipää, maitoa, juustoa, kalaa, perunoita ja omenoita. Sen jälkeen juon kahvia kahvilassa ja ystävä ottaa teetä. Iltapäivällä käymme kirjastossa ja museossa. Minä pidän musiikista ja lukemisesta. Päivässä on iloa, vaikka kaupungissa on kiire.',
     skillItemIds: [
@@ -265,7 +265,7 @@ export const preparedTexts: PreparedTextSeed[] = [
   createText({
     id: 'text.fi.module-one.16.journey',
     title: { ru: 'Поездка к морю' },
-    level: 'A1',
+    level: 'A2',
     topics: ['уроки 13–16', 'транспорт', 'природа', 'прошедшее время'],
     body: 'Eilen lähdimme rautatieasemalta. Minulla oli matkalaukku, passi, matkalippu ja kartta. Juna oli nopea, mutta matka oli pitkä. Ikkunasta näin metsän, järven, joen ja suuren vuoren. Illalla tulimme hotelliin ja söimme ravintolassa. Seuraavana päivänä aurinko lämmitti, eikä sade tullut.',
     skillItemIds: [
@@ -278,7 +278,7 @@ export const preparedTexts: PreparedTextSeed[] = [
   createText({
     id: 'text.fi.module-one.final.new-life',
     title: { ru: 'Первый месяц в Финляндии' },
-    level: 'A1',
+    level: 'A2',
     topics: ['финал модуля 1', 'повседневная жизнь', 'повторение'],
     body: 'Kuukausi sitten tulin Suomeen. Aluksi olin väsynyt, mutta uusi koti ja kaupunki olivat hyvä alku. Aamulla menin yliopistoon bussilla ja illalla opiskelin kirjastossa. Opin uuden sanan joka päivä, puhuimme suomea ja kirjoitin viestin ystävälle. Viikonloppuna ostin ruokaa torilta, katsoimme elokuvan ja kävelimme puistossa. Kerran matkustin junalla meren rannalle. Sää oli kylmä ja tuuli oli voimakas, mutta aurinko tuli esiin. Nyt ymmärrän enemmän ja haluan jatkaa opiskelua.',
     skillItemIds: [

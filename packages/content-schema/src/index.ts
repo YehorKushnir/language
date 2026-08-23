@@ -39,6 +39,12 @@ const explanationTableSchema = z
     })
   })
 
+const explanationQuickCheckSchema = z.object({
+  prompt: localizedTextSchema,
+  answer: z.string().trim().min(1),
+  explanation: localizedTextSchema.optional(),
+})
+
 const explanationScreenSchema = z.object({
   id: identifierSchema,
   eyebrow: localizedTextSchema.optional(),
@@ -46,6 +52,7 @@ const explanationScreenSchema = z.object({
   paragraphs: z.array(localizedTextSchema).min(1),
   table: explanationTableSchema.optional(),
   examples: z.array(explanationExampleSchema).min(1).optional(),
+  quickChecks: z.array(explanationQuickCheckSchema).min(1).optional(),
   callout: localizedTextSchema.optional(),
 })
 
@@ -71,6 +78,10 @@ export const lessonVocabularyItemSchema = z.object({
   lemma: z.string().trim().min(1),
   partOfSpeech: z.enum(['noun', 'adjective', 'adverb', 'pronoun', 'verb']),
   gloss: z.string().trim().min(1),
+  example: z.object({
+    target: z.string().trim().min(1),
+    source: localizedTextSchema,
+  }),
   semanticTypes: z.array(z.string().trim().min(1)).min(1),
   singular: z.string().trim().min(1),
   plural: z.string().trim().min(1),

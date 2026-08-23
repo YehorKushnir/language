@@ -46,6 +46,12 @@ describe('VocabularyService', () => {
                   lexicalSense: {
                     status: ContentStatus.CURATED,
                     gloss: { ru: 'студент' },
+                    metadata: {
+                      example: {
+                        target: 'Hän on opiskelija.',
+                        source: { ru: 'Он или она — студент.' },
+                      },
+                    },
                     lexicalEntry: {
                       id: 'lex.fi.opiskelija',
                       lemma: 'opiskelija',
@@ -83,6 +89,10 @@ describe('VocabularyService', () => {
           lemma: 'opiskelija',
           partOfSpeech: 'noun',
           gloss: { ru: 'студент' },
+          example: {
+            target: 'Hän on opiskelija.',
+            source: { ru: 'Он или она — студент.' },
+          },
           forms: [
             {
               id: 'form.fi.opiskelija.nominative.sg',

@@ -34,11 +34,19 @@ export function lessonVocabularyQuery(lessonId: string) {
 
 export function nextExerciseQuery(
   lessonId: string,
+  routeVersionId: string,
   excludedExerciseIds: string[] = [],
 ) {
   return queryOptions({
-    queryKey: ['next-exercise', lessonId, 'ru', excludedExerciseIds],
-    queryFn: () => getNextExercise(lessonId, 'ru', excludedExerciseIds),
+    queryKey: [
+      'next-exercise',
+      routeVersionId,
+      lessonId,
+      'ru',
+      excludedExerciseIds,
+    ],
+    queryFn: () =>
+      getNextExercise(lessonId, routeVersionId, 'ru', excludedExerciseIds),
     placeholderData: (previousExercise) => previousExercise,
   })
 }

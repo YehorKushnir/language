@@ -16,6 +16,8 @@ describe('ExercisesService morphology diagnostics', () => {
     userExerciseHistory: { upsert: vi.fn() },
   }
   const prisma = {
+    courseRouteDependency: { findMany: vi.fn() },
+    userLessonProgress: { count: vi.fn() },
     userAttempt: { findUnique: vi.fn(), findFirst: vi.fn() },
     exercise: { findFirst: vi.fn() },
     exerciseReport: { upsert: vi.fn() },
@@ -33,6 +35,7 @@ describe('ExercisesService morphology diagnostics', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    prisma.courseRouteDependency.findMany.mockResolvedValue([])
     prisma.userAttempt.findUnique.mockResolvedValue(null)
     prisma.exercise.findFirst.mockResolvedValue({
       id: 'exercise.1',

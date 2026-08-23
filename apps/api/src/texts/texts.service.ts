@@ -9,7 +9,11 @@ import type {
 import { ContentStatus } from '@language/database'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 
-import { toLexicalFeatures, toLocalizedText } from '../common/content-mapper'
+import {
+  toLexicalFeatures,
+  toLocalizedText,
+  toVocabularyExample,
+} from '../common/content-mapper'
 import { PrismaService } from '../database/prisma.service'
 import { MediaUrlService } from '../media/media-url.service'
 import { FinnishMorphologyService } from '../morphology/finnish-morphology.service'
@@ -21,6 +25,12 @@ interface TextWithTokens {
   topics: string[]
   body: string
   audioAsset: { storageKey: string } | null
+  knowledgeItems: Array<{
+    itemId: string
+    item: {
+      skill: { name: unknown } | null
+    }
+  }>
   tokens: Array<{
     position: number
     surface: string
@@ -31,6 +41,7 @@ interface TextWithTokens {
     lexicalSense: {
       id: string
       gloss: unknown
+      metadata: unknown
       lexicalEntry: {
         partOfSpeech: string
         forms: Array<{
@@ -53,6 +64,9 @@ interface TextWithTokens {
 
 const textInclude = (userId: string) => ({
   audioAsset: { select: { storageKey: true } },
+  knowledgeItems: {
+    include: { item: { include: { skill: true } } },
+  },
   tokens: {
     orderBy: { position: 'asc' as const },
     include: {
@@ -91,15 +105,39 @@ export class TextsService {
     routeVersionId: string,
   ): Promise<PreparedTextCatalogResponse> {
     const route = await this.getRoute(routeVersionId)
-    const texts = await this.prisma.text.findMany({
-      where: { courseId: route.courseId, status: ContentStatus.CURATED },
-      orderBy: [{ level: 'asc' }, { id: 'asc' }],
-      include: textInclude(userId),
-    })
+    const [texts, completedLessons] = await Promise.all([
+      this.prisma.text.findMany({
+        where: { courseId: route.courseId, status: ContentStatus.CURATED },
+        orderBy: [{ level: 'asc' }, { id: 'asc' }],
+        include: textInclude(userId),
+      }),
+      this.prisma.userLessonProgress.findMany({
+        where: { userId, routeVersionId, completedAt: { not: null } },
+        include: {
+          lesson: {
+            include: {
+              knowledgeItems: { select: { itemId: true } },
+            },
+          },
+        },
+      }),
+    ])
+    const values = texts as TextWithTokens[]
+    const summaries = values.map((text) => this.toSummary(text))
+    const unlockedItemIds = new Set(
+      completedLessons.flatMap((progress) =>
+        progress.lesson.knowledgeItems.map((item) => item.itemId),
+      ),
+    )
 
     return {
       routeVersionId,
-      items: texts.map((text) => this.toSummary(text as TextWithTokens)),
+      recommendedTextId: selectRecommendedText(
+        values,
+        summaries,
+        unlockedItemIds,
+      ),
+      items: summaries,
     }
   }
 
@@ -170,6 +208,9 @@ export class TextsService {
       title: toLocalizedText(text.title),
       level: text.level,
       topics: text.topics,
+      grammarItems: text.knowledgeItems.flatMap(({ itemId, item }) =>
+        item.skill ? [{ itemId, label: toLocalizedText(item.skill.name) }] : [],
+      ),
       preview:
         text.body.length > 140 ? `${text.body.slice(0, 137)}…` : text.body,
       wordCount: text.tokens.length,
@@ -202,6 +243,7 @@ export class TextsService {
         ? {
             itemId: sense.id,
             gloss: toLocalizedText(sense.gloss),
+            example: toVocabularyExample(sense.metadata),
             partOfSpeech: sense.lexicalEntry.partOfSpeech,
             forms: sense.lexicalEntry.forms.map((form) => ({
               id: form.id,
@@ -227,5 +269,32 @@ function toAnalysis(value: unknown): Record<string, string> {
     Object.entries(value).flatMap(([key, item]) =>
       typeof item === 'string' ? [[key, item]] : [],
     ),
+  )
+}
+
+function selectRecommendedText(
+  texts: TextWithTokens[],
+  summaries: PreparedTextSummaryResponse[],
+  unlockedItemIds: Set<string>,
+): string | null {
+  const ranked = texts.map((text, index) => {
+    const summary = summaries[index]!
+    const itemCount = text.knowledgeItems.length
+    const unlockedCount = text.knowledgeItems.filter((item) =>
+      unlockedItemIds.has(item.itemId),
+    ).length
+    const unlockedPercent =
+      itemCount === 0 ? 100 : (unlockedCount / itemCount) * 100
+    return {
+      id: text.id,
+      score: unlockedPercent * 0.7 + summary.knownPercent * 0.3,
+      index,
+    }
+  })
+
+  return (
+    ranked.sort(
+      (left, right) => right.score - left.score || left.index - right.index,
+    )[0]?.id ?? null
   )
 }

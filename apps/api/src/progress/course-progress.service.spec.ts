@@ -16,6 +16,8 @@ describe('CourseProgressService vocabulary study', () => {
     },
   }
   const prisma = {
+    courseRouteDependency: { findMany: vi.fn() },
+    userLessonProgress: { count: vi.fn() },
     courseRouteEntry: {
       findFirst: vi.fn(),
     },
@@ -34,6 +36,7 @@ describe('CourseProgressService vocabulary study', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    prisma.courseRouteDependency.findMany.mockResolvedValue([])
     prisma.lessonKnowledgeItem.findFirst.mockResolvedValue({ itemId: 'word.1' })
     transaction.userMemory.findUnique.mockResolvedValue(null)
     transaction.userCourseProgress.upsert.mockResolvedValue({})
@@ -91,6 +94,8 @@ describe('CourseProgressService lesson and course completion', () => {
     courseRouteEntry: { findMany: vi.fn() },
   }
   const prisma = {
+    courseRouteDependency: { findMany: vi.fn() },
+    userLessonProgress: { count: vi.fn() },
     courseRouteEntry: { findFirst: vi.fn() },
     $transaction: vi.fn(
       (operation: (client: typeof transaction) => Promise<unknown>) =>
@@ -101,6 +106,7 @@ describe('CourseProgressService lesson and course completion', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    prisma.courseRouteDependency.findMany.mockResolvedValue([])
     prisma.courseRouteEntry.findFirst.mockResolvedValue({
       lessonId: 'lesson.1',
     })
@@ -148,6 +154,8 @@ describe('CourseProgressService lesson and course completion', () => {
 
 describe('CourseProgressService practice completion', () => {
   const prisma = {
+    courseRouteDependency: { findMany: vi.fn() },
+    userLessonProgress: { count: vi.fn() },
     courseRouteEntry: {
       findFirst: vi.fn(),
     },
@@ -168,6 +176,7 @@ describe('CourseProgressService practice completion', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    prisma.courseRouteDependency.findMany.mockResolvedValue([])
     prisma.courseRouteEntry.findFirst.mockResolvedValue({
       lessonId: 'lesson.1',
     })

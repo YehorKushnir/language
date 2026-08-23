@@ -22,6 +22,7 @@ import {
 } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { PageShell } from '@/components/page-shell'
+import { ExerciseReport } from '@/components/exercise-report'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -244,6 +245,14 @@ function ReviewSessionPage() {
             ))}
           </AlertDescription>
         </Alert>
+      ) : null}
+
+      {result ? (
+        <ExerciseReport
+          className="mt-3"
+          exerciseId={exercise.id}
+          attemptId={result.attemptId}
+        />
       ) : null}
 
       {attempt.isError ? (

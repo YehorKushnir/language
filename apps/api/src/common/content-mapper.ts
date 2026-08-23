@@ -1,10 +1,12 @@
 import type {
   LessonExplanationExample,
+  LessonExplanationQuickCheck,
   LessonExplanationScreen,
   LessonExplanationTable,
   LessonPart,
   LexicalFeatureValue,
   LocalizedText,
+  VocabularyExampleResponse,
 } from '@language/contracts'
 
 const lessonParts = new Set<LessonPart>([
@@ -45,6 +47,31 @@ export function toLexicalFeatures(
         typeof entry[1] === 'boolean',
     ),
   )
+}
+
+export function toVocabularyExample(
+  metadata: unknown,
+): VocabularyExampleResponse | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null
+  }
+
+  const example = (metadata as Record<string, unknown>).example
+  if (!example || typeof example !== 'object' || Array.isArray(example)) {
+    return null
+  }
+
+  const candidate = example as Record<string, unknown>
+  const source = toLocalizedText(candidate.source)
+  if (
+    typeof candidate.target !== 'string' ||
+    candidate.target.trim().length === 0 ||
+    Object.keys(source).length === 0
+  ) {
+    return null
+  }
+
+  return { target: candidate.target, source }
 }
 
 export function toLessonContent(value: unknown): {
@@ -98,6 +125,14 @@ function toExplanationScreen(value: unknown): LessonExplanationScreen | null {
           (example): example is LessonExplanationExample => example !== null,
         )
     : []
+  const quickChecks = Array.isArray(candidate.quickChecks)
+    ? candidate.quickChecks
+        .map(toExplanationQuickCheck)
+        .filter(
+          (quickCheck): quickCheck is LessonExplanationQuickCheck =>
+            quickCheck !== null,
+        )
+    : []
   const callout = toNullableLocalizedText(candidate.callout)
 
   return {
@@ -109,7 +144,28 @@ function toExplanationScreen(value: unknown): LessonExplanationScreen | null {
       : [],
     ...(table ? { table } : {}),
     ...(examples.length > 0 ? { examples } : {}),
+    ...(quickChecks.length > 0 ? { quickChecks } : {}),
     ...(callout ? { callout } : {}),
+  }
+}
+
+function toExplanationQuickCheck(
+  value: unknown,
+): LessonExplanationQuickCheck | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+
+  const candidate = value as Record<string, unknown>
+  if (typeof candidate.answer !== 'string') {
+    return null
+  }
+
+  const explanation = toNullableLocalizedText(candidate.explanation)
+  return {
+    prompt: toLocalizedText(candidate.prompt),
+    answer: candidate.answer,
+    ...(explanation ? { explanation } : {}),
   }
 }
 
