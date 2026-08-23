@@ -20,6 +20,20 @@ import {
   infinitiveChainsVocabulary,
 } from './lessons/fi.infinitive.chains.js'
 import {
+  imperfectAffirmativeContent,
+  imperfectAffirmativeExercises,
+  imperfectAffirmativeGoldenExerciseIds,
+  imperfectAffirmativeSkills,
+  imperfectAffirmativeVocabulary,
+} from './lessons/fi.imperfect.affirmative.js'
+import {
+  imperfectNegativeQuestionContent,
+  imperfectNegativeQuestionExercises,
+  imperfectNegativeQuestionGoldenExerciseIds,
+  imperfectNegativeQuestionSkills,
+  imperfectNegativeQuestionVocabulary,
+} from './lessons/fi.imperfect.negative-question.js'
+import {
   lessonContent as firstLessonContent,
   lessonExercises as firstLessonExercises,
   lessonIdentityTemplateDefinition,
@@ -27,6 +41,48 @@ import {
   type LessonVocabularySeed,
   type PreparedExerciseSeed,
 } from './lessons/fi.olla.basics.js'
+import {
+  internalCasesContent,
+  internalCasesExercises,
+  internalCasesGoldenExerciseIds,
+  internalCasesSkills,
+  internalCasesVocabulary,
+} from './lessons/fi.local-cases.internal.js'
+import {
+  externalCasesContent,
+  externalCasesExercises,
+  externalCasesGoldenExerciseIds,
+  externalCasesSkills,
+  externalCasesVocabulary,
+} from './lessons/fi.local-cases.external.js'
+import {
+  nounsGradationContent,
+  nounsGradationExercises,
+  nounsGradationGoldenExerciseIds,
+  nounsGradationSkills,
+  nounsGradationVocabulary,
+} from './lessons/fi.nouns.gradation.js'
+import {
+  partitiveFormationContent,
+  partitiveFormationExercises,
+  partitiveFormationGoldenExerciseIds,
+  partitiveFormationSkills,
+  partitiveFormationVocabulary,
+} from './lessons/fi.partitive.formation.js'
+import {
+  partitiveUsageContent,
+  partitiveUsageExercises,
+  partitiveUsageGoldenExerciseIds,
+  partitiveUsageSkills,
+  partitiveUsageVocabulary,
+} from './lessons/fi.partitive.usage.js'
+import {
+  pluralAgreementContent,
+  pluralAgreementExercises,
+  pluralAgreementGoldenExerciseIds,
+  pluralAgreementSkills,
+  pluralAgreementVocabulary,
+} from './lessons/fi.plural.agreement.js'
 import {
   presentCommonContent,
   presentCommonExercises,
@@ -1020,6 +1076,126 @@ function createLesson(
         content: 'CURATED',
         linguisticReview: 'PASSED',
         goldenExerciseIds: genitivePossessionGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.nouns.gradation') {
+    return {
+      ...lesson,
+      content: nounsGradationContent,
+      vocabulary: nounsGradationVocabulary,
+      exercises: nounsGradationExercises,
+      skills: nounsGradationSkills,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: nounsGradationGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.partitive.formation') {
+    return {
+      ...lesson,
+      content: partitiveFormationContent,
+      vocabulary: partitiveFormationVocabulary,
+      exercises: partitiveFormationExercises,
+      skills: partitiveFormationSkills,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: partitiveFormationGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.partitive.usage') {
+    return {
+      ...lesson,
+      content: partitiveUsageContent,
+      vocabulary: partitiveUsageVocabulary,
+      exercises: partitiveUsageExercises,
+      skills: partitiveUsageSkills,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: partitiveUsageGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.local-cases.internal') {
+    return {
+      ...lesson,
+      content: internalCasesContent,
+      vocabulary: internalCasesVocabulary,
+      exercises: internalCasesExercises,
+      skills: internalCasesSkills,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: internalCasesGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.local-cases.external') {
+    return {
+      ...lesson,
+      content: externalCasesContent,
+      vocabulary: externalCasesVocabulary,
+      exercises: externalCasesExercises,
+      skills: externalCasesSkills,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: externalCasesGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.plural.agreement') {
+    return {
+      ...lesson,
+      content: pluralAgreementContent,
+      vocabulary: pluralAgreementVocabulary,
+      exercises: pluralAgreementExercises,
+      skills: pluralAgreementSkills,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: pluralAgreementGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.imperfect.affirmative') {
+    return {
+      ...lesson,
+      content: imperfectAffirmativeContent,
+      vocabulary: imperfectAffirmativeVocabulary,
+      exercises: imperfectAffirmativeExercises,
+      skills: imperfectAffirmativeSkills,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: imperfectAffirmativeGoldenExerciseIds,
+      },
+    }
+  }
+
+  if (specification.id === 'fi.imperfect.negative-question') {
+    return {
+      ...lesson,
+      content: imperfectNegativeQuestionContent,
+      vocabulary: imperfectNegativeQuestionVocabulary,
+      exercises: imperfectNegativeQuestionExercises,
+      skills: imperfectNegativeQuestionSkills,
+      mvpQuality: {
+        content: 'CURATED',
+        linguisticReview: 'PASSED',
+        goldenExerciseIds: imperfectNegativeQuestionGoldenExerciseIds,
       },
     }
   }

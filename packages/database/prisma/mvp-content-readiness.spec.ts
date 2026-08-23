@@ -6,25 +6,27 @@ import {
 } from './mvp-content-readiness.js'
 
 describe('strict MVP content readiness', () => {
-  it('keeps scaffold lessons out of the ready count', () => {
+  it('marks every module-one lesson as release-ready', () => {
     const report = inspectMvpContentReadiness()
-    const firstLesson = report.lessons.find(
-      (lesson) => lesson.lessonId === 'fi.olla.basics',
-    )
-    const scaffoldLesson = report.lessons.find((lesson) => !lesson.ready)
 
-    expect(firstLesson).toMatchObject({ ready: true, issues: [] })
-    expect(scaffoldLesson?.ready).toBe(false)
-    expect(scaffoldLesson?.issues).toContain(
-      'content is still marked as scaffold',
+    expect(report).toMatchObject({
+      ready: true,
+      readyLessonCount: 16,
+      lessonCount: 16,
+      courseIssues: [],
+    })
+    expect(report.lessons).toHaveLength(16)
+    expect(report.lessons.every((lesson) => lesson.ready)).toBe(true)
+    expect(report.lessons.every((lesson) => lesson.issues.length === 0)).toBe(
+      true,
     )
-    expect(report.readyLessonCount).toBeGreaterThanOrEqual(3)
-    expect(report.ready).toBe(false)
   })
 
-  it('fails the strict release gate while content gaps remain', () => {
-    expect(() => assertMvpContentReadiness()).toThrow(
-      /content is still marked as scaffold/u,
-    )
+  it('passes the strict release gate', () => {
+    expect(assertMvpContentReadiness()).toMatchObject({
+      ready: true,
+      readyLessonCount: 16,
+      lessonCount: 16,
+    })
   })
 })
