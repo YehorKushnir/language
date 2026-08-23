@@ -42,10 +42,13 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm content:validate
+      - run: pnpm content:audit:mvp
       - run: pnpm db:migrate:deploy
       - run: pnpm db:seed
         env:
           NODE_ENV: production
       - run: pnpm publication:validate
       - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e
       - run: pnpm api:smoke:production

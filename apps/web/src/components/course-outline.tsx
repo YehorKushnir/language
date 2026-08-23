@@ -203,6 +203,8 @@ export function CourseOutline({
 
                   {lesson && isAvailable ? (
                     <div
+                      aria-hidden={!isExpanded}
+                      inert={!isExpanded}
                       className={cn(
                         'grid transition-[grid-template-rows,opacity] duration-200 ease-out',
                         isExpanded
@@ -263,6 +265,7 @@ export function CourseOutlineSummary({
       <Progress
         value={(completedLessons / 80) * 100}
         className="h-1.5 flex-1"
+        aria-label="Прогресс курса"
       />
       <span className="shrink-0 tabular-nums">{completedLessons} / 80</span>
     </div>

@@ -101,7 +101,11 @@ function HomePage() {
             <BookOpenIcon className="size-4 text-primary" />
           </div>
           <div className="mt-4 flex items-center gap-3">
-            <Progress value={(completedLessons / 80) * 100} className="h-1.5" />
+            <Progress
+              value={(completedLessons / 80) * 100}
+              className="h-1.5"
+              aria-label="Прогресс курса"
+            />
             <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
               {completedLessons} / 80
             </span>

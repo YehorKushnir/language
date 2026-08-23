@@ -26,12 +26,21 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm content:validate
+pnpm content:audit:mvp
 pnpm build
 pnpm db:migrate:deploy
 NODE_ENV=production pnpm db:seed
 pnpm publication:validate
+pnpm e2e
 pnpm api:smoke:production
 ```
+
+Перед первым локальным E2E-запуском установите Chromium командой
+`pnpm exec playwright install chromium`. Команда `pnpm e2e` запускает собранные
+API и web preview на изолированных портах, создаёт отдельного пользователя,
+проверяет входной барьер, урок, flashcards, практику, тексты, управление с
+клавиатуры и WCAG через axe, после чего удаляет тестовый аккаунт. Полный
+локальный shortcut с подготовкой базы и сборкой — `pnpm e2e:local`.
 
 `db:seed` в production публикует только версионированный контент и не создаёт локального пользователя. Устаревшие упражнения и шаблоны переводятся в `DRAFT`, чтобы сохранить связанную пользовательскую историю и исключить их из новых сессий. `publication:validate` проверяет уже сохранённое состояние PostgreSQL: маршрут, статусы, зависимости, порядок введения знаний, ровно 60 подготовленных упражнений и один активный шаблон на урок, русские prompts, `AnswerSpec`, покрытие знаний и подготовленные тексты.
 

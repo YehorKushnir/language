@@ -161,7 +161,11 @@ function TextsPage() {
                 </Button>
               </div>
               <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-3">
-                <Progress className="h-1.5" value={text.knownPercent} />
+                <Progress
+                  className="h-1.5"
+                  value={text.knownPercent}
+                  aria-label={`Знакомые слова в тексте ${localizedText(text.title)}`}
+                />
                 <span className="text-xs tabular-nums text-muted-foreground">
                   знакомо {text.knownWordCount}/{text.linkedWordCount}
                 </span>

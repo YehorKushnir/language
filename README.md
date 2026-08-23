@@ -37,8 +37,11 @@ pnpm dev:setup
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm e2e
+pnpm e2e:local
 pnpm build
 pnpm content:validate
+pnpm content:audit:mvp
 pnpm publication:validate
 pnpm api:smoke:production
 pnpm format:check
@@ -48,6 +51,12 @@ pnpm db:stop
 pnpm db:migrate:dev
 pnpm db:seed
 ```
+
+`pnpm e2e:local` подготавливает локальную PostgreSQL, собирает приложения и
+проверяет основные пользовательские пути в Chromium. Перед первым запуском
+установите браузер командой `pnpm exec playwright install chromium`. Сценарий
+создаёт изолированный тестовый аккаунт, проверяет keyboard-навигацию и WCAG с
+axe, а затем удаляет аккаунт.
 
 ## Структура
 
@@ -83,4 +92,4 @@ TanStack Router предзагружает видимые ссылки и их r
 
 В production API проверяет обязательные переменные окружения, требует HTTPS для публичных URL, включает security-заголовки, rate limiting, `x-request-id` и структурированный HTTP-лог, скрывает Swagger и корректно завершает соединения при остановке процесса. `MEDIA_BASE_URL` позволяет заранее подключить публичный CDN/S3-домен для будущих подготовленных аудиофайлов. В настройках пользователь может выгрузить свои учебные данные или удалить аккаунт; жалоба на упражнение привязывается к собственной попытке и также входит в экспорт.
 
-Порядок production-выпуска, readiness, резервного копирования и отката описан в [операционном runbook](docs/operations.md). CI поднимает настоящий PostgreSQL, применяет миграции, выполняет production seed, проверяет опубликованное состояние и запускает собранный API smoke-тестом.
+Порядок production-выпуска, readiness, резервного копирования и отката описан в [операционном runbook](docs/operations.md). CI поднимает настоящий PostgreSQL, применяет миграции, выполняет production seed, проверяет опубликованное состояние, прогоняет браузерные E2E с accessibility-аудитом и запускает собранный API smoke-тестом.

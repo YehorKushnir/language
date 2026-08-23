@@ -208,7 +208,11 @@ function LessonVocabularyPage() {
             {Math.round(progress)}%
           </span>
         </header>
-        <Progress value={progress} className="mt-3 h-1.5" />
+        <Progress
+          value={progress}
+          className="mt-3 h-1.5"
+          aria-label="Прогресс изучения слов"
+        />
 
         <div className="relative mt-6">
           <span

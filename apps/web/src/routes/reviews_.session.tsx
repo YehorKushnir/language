@@ -182,7 +182,11 @@ function ReviewSessionPage() {
         <p className="mt-4 leading-7 text-muted-foreground">
           Задание выбрано по навыку, срок повторения которого уже наступил.
         </p>
-        <Progress className="mt-7 h-2" value={progress} />
+        <Progress
+          className="mt-7 h-2"
+          value={progress}
+          aria-label="Прогресс повторения"
+        />
       </header>
 
       <Card className="mt-8">

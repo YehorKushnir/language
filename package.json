@@ -12,9 +12,11 @@
     "dev:setup": "pnpm db:start && pnpm db:migrate:deploy && pnpm db:seed",
     "dev:full": "pnpm dev:setup && pnpm dev",
     "build": "turbo build",
-    "lint": "turbo lint",
+    "lint": "turbo lint && eslint e2e playwright.config.ts",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "e2e": "playwright test",
+    "e2e:local": "pnpm dev:setup && pnpm build && pnpm e2e",
     "content:validate": "pnpm --filter @language/database content:validate",
     "content:audit:mvp": "pnpm --filter @language/database content:audit:mvp",
     "publication:validate": "pnpm --filter @language/database publication:validate",
@@ -30,7 +32,9 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^9.33.0",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^24.3.0",
     "eslint": "^9.33.0",
     "globals": "^16.3.0",

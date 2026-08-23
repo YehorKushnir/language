@@ -195,6 +195,7 @@ function LessonPracticePage() {
         <Progress
           className="mt-3 h-1.5"
           value={((round - (result ? 0 : 1)) / SESSION_SIZE) * 100}
+          aria-label="Прогресс практики"
         />
         <h2
           className={`mt-2 font-serif text-2xl font-semibold leading-snug transition-opacity sm:text-3xl ${
@@ -309,7 +310,11 @@ function PracticeSummary({
           прохождения нужно не меньше {requiredPercent}% (
           {completion.requiredCorrectAnswers} правильных ответов).
         </p>
-        <Progress className="mt-5 h-2" value={completion.scorePercent} />
+        <Progress
+          className="mt-5 h-2"
+          value={completion.scorePercent}
+          aria-label="Результат практики"
+        />
         <div className="mt-6 flex flex-wrap gap-2">
           {!completion.passed ? (
             <Button size="sm" onClick={onRestart}>
