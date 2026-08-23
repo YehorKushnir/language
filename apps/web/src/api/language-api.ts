@@ -12,6 +12,7 @@ import type {
   NextReviewResponse,
   PracticeCompletionRequest,
   PracticeCompletionResponse,
+  PracticeSessionResponse,
   PreparedExerciseResponse,
   PreparedTextCatalogResponse,
   PreparedTextDetailResponse,
@@ -187,6 +188,16 @@ export function completePractice(
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(completion),
     },
+  )
+}
+
+export function startOrResumePractice(
+  routeVersionId: string,
+  lessonId: string,
+) {
+  return request<PracticeSessionResponse>(
+    `/me/course-progress/${routeVersionId}/lessons/${lessonId}/practice-session`,
+    { method: 'PUT' },
   )
 }
 

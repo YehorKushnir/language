@@ -252,6 +252,10 @@ async function seedVocabulary() {
                 status: ContentStatus.CURATED,
               },
               update: {
+                lexicalEntry: {
+                  connect: { id: vocabulary.lexicalEntryId },
+                },
+                concept: { connect: { id: vocabulary.conceptId } },
                 gloss: { ru: vocabulary.gloss },
                 metadata: { example: vocabulary.example },
                 status: ContentStatus.CURATED,

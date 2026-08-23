@@ -2,6 +2,7 @@ import type {
   CourseProgressResponse,
   LessonPart,
   PracticeCompletionResponse,
+  PracticeSessionResponse,
   VocabularyStudyResponse,
   VocabularyStudyResult,
 } from '@language/contracts'
@@ -252,6 +253,22 @@ export class CourseProgressService {
       )
     }
 
+    const lessonProgress = await this.prisma.userLessonProgress.findUnique({
+      where: {
+        userId_routeVersionId_lessonId: {
+          userId,
+          routeVersionId,
+          lessonId,
+        },
+      },
+      select: { practiceStartedAt: true },
+    })
+    if (!lessonProgress?.practiceStartedAt) {
+      throw new BadRequestException(
+        'Активная практика не найдена. Открой практику урока ещё раз.',
+      )
+    }
+
     if (
       attemptIds.length !== PRACTICE_EXERCISE_COUNT ||
       new Set(attemptIds).size !== PRACTICE_EXERCISE_COUNT
@@ -266,6 +283,7 @@ export class CourseProgressService {
         id: { in: attemptIds },
         userId,
         routeVersionId,
+        answeredAt: { gte: lessonProgress.practiceStartedAt },
         exercise: {
           lessonId,
           kind: ExerciseKind.PREPARED,
@@ -298,6 +316,17 @@ export class CourseProgressService {
       ? await this.completePart(userId, routeVersionId, lessonId, 'practice')
       : await this.getProgress(userId, routeVersionId)
 
+    await this.prisma.userLessonProgress.update({
+      where: {
+        userId_routeVersionId_lessonId: {
+          userId,
+          routeVersionId,
+          lessonId,
+        },
+      },
+      data: { practiceStartedAt: null },
+    })
+
     return {
       totalExercises: PRACTICE_EXERCISE_COUNT,
       correctAnswers,
@@ -305,6 +334,101 @@ export class CourseProgressService {
       scorePercent,
       passed,
       progress,
+    }
+  }
+
+  async startOrResumePractice(
+    userId: string,
+    routeVersionId: string,
+    lessonId: string,
+  ): Promise<PracticeSessionResponse> {
+    await assertLessonAvailable(this.prisma, userId, routeVersionId, lessonId)
+    const routeEntry = await this.prisma.courseRouteEntry.findFirst({
+      where: {
+        routeVersionId,
+        lessonId,
+        routeVersion: { status: ContentStatus.CURATED },
+        lesson: { status: ContentStatus.CURATED },
+      },
+      select: { lessonId: true },
+    })
+    if (!routeEntry) {
+      throw new NotFoundException(
+        `Lesson ${lessonId} is not part of route ${routeVersionId}`,
+      )
+    }
+
+    const now = new Date()
+    const { startedAt, attempts } = await this.prisma.$transaction(
+      async (transaction) => {
+        const existing = await transaction.userLessonProgress.findUnique({
+          where: {
+            userId_routeVersionId_lessonId: {
+              userId,
+              routeVersionId,
+              lessonId,
+            },
+          },
+          select: { practiceStartedAt: true },
+        })
+        const progress = existing?.practiceStartedAt
+          ? existing
+          : await transaction.userLessonProgress.upsert({
+              where: {
+                userId_routeVersionId_lessonId: {
+                  userId,
+                  routeVersionId,
+                  lessonId,
+                },
+              },
+              update: { practiceStartedAt: now },
+              create: {
+                userId,
+                routeVersionId,
+                lessonId,
+                practiceStartedAt: now,
+              },
+              select: { practiceStartedAt: true },
+            })
+        const startedAt = progress.practiceStartedAt ?? now
+        const attempts = await transaction.userAttempt.findMany({
+          where: {
+            userId,
+            routeVersionId,
+            answeredAt: { gte: startedAt },
+            exercise: {
+              lessonId,
+              kind: ExerciseKind.PREPARED,
+              status: ContentStatus.CURATED,
+            },
+          },
+          orderBy: { answeredAt: 'asc' },
+          select: {
+            id: true,
+            exerciseId: true,
+            outcome: true,
+          },
+        })
+        return { startedAt, attempts }
+      },
+    )
+
+    const uniqueAttempts = Array.from(
+      new Map(
+        attempts.map((attempt) => [attempt.exerciseId, attempt]),
+      ).values(),
+    ).slice(0, PRACTICE_EXERCISE_COUNT)
+
+    return {
+      startedAt: startedAt.toISOString(),
+      totalExercises: PRACTICE_EXERCISE_COUNT,
+      requiredCorrectAnswers: PRACTICE_REQUIRED_CORRECT,
+      answeredExercises: uniqueAttempts.length,
+      correctAnswers: uniqueAttempts.filter(
+        (attempt) => attempt.outcome === AttemptOutcome.CORRECT,
+      ).length,
+      attemptIds: uniqueAttempts.map((attempt) => attempt.id),
+      completedExerciseIds: uniqueAttempts.map((attempt) => attempt.exerciseId),
     }
   }
 

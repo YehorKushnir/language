@@ -31,7 +31,7 @@ test('mobile layout keeps navigation reachable without horizontal overflow', asy
   await expect(
     page.getByRole('heading', {
       level: 1,
-      name: 'Финский как система, а не набор фраз',
+      name: 'Финский с нуля',
     }),
   ).toBeVisible()
   await expect(
@@ -200,6 +200,10 @@ test('learner can move through the first lesson with keyboard controls', async (
   await expect(page.getByText('Задание 2 из 60')).toBeVisible()
   await expect(answer).toBeFocused()
   await expect(page.locator('main')).toHaveCount(1)
+
+  await page.reload()
+  await expect(page.getByText('Задание 2 из 60')).toBeVisible()
+  await expect(page.getByLabel('Ответ на финском')).toBeFocused()
 
   const textsNavigationStartedAt = Date.now()
   await page.getByRole('link', { name: 'Тексты' }).click()

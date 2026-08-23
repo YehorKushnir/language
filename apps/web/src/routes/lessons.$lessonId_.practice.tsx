@@ -1,4 +1,7 @@
-import type { PracticeCompletionResponse } from '@language/contracts'
+import type {
+  PracticeCompletionResponse,
+  PracticeSessionResponse,
+} from '@language/contracts'
 import type { FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -11,6 +14,7 @@ import {
   courseQuery,
   lessonQuery,
   nextExerciseQuery,
+  practiceSessionQuery,
 } from '@/api/queries'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
 import { ExerciseReport } from '@/components/exercise-report'
@@ -20,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
+import { appendPracticeAttempt } from '@/lib/practice-session'
 
 export const Route = createFileRoute('/lessons/$lessonId_/practice')({
   loader: ({ context, params }) =>
@@ -41,15 +46,40 @@ function LessonPracticePage() {
   const [attemptIds, setAttemptIds] = useState<string[]>([])
   const [correctAnswers, setCorrectAnswers] = useState(0)
   const [showSummary, setShowSummary] = useState(false)
+  const [hydratedSessionStartedAt, setHydratedSessionStartedAt] = useState<
+    string | null
+  >(null)
   const answerInput = useRef<HTMLInputElement>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
   const openedAt = useRef(Date.now())
+  const recoveredSessionCompletionStartedAt = useRef<string | null>(null)
   const lesson = useQuery(lessonQuery(lessonId))
   const course = useQuery(courseQuery)
   const routeVersionId = course.data?.route?.id ?? ''
+  const practiceSession = useQuery({
+    ...practiceSessionQuery(lessonId, routeVersionId),
+    enabled: Boolean(routeVersionId),
+  })
+  const sessionIsHydrated =
+    Boolean(practiceSession.data) &&
+    hydratedSessionStartedAt === practiceSession.data?.startedAt
   const exercise = useQuery({
     ...nextExerciseQuery(lessonId, routeVersionId, completedExerciseIds),
-    enabled: Boolean(routeVersionId),
+    enabled: Boolean(
+      routeVersionId &&
+      sessionIsHydrated &&
+      completedExerciseIds.length < SESSION_SIZE,
+    ),
+  })
+  const completion = useMutation({
+    mutationFn: (ids: string[]) =>
+      completePractice(routeVersionId, lessonId, { attemptIds: ids }),
+    onSuccess: (result) => {
+      queryClient.setQueryData(
+        courseProgressQuery(routeVersionId).queryKey,
+        result.progress,
+      )
+    },
   })
   const attempt = useMutation({
     mutationFn: async () => {
@@ -63,56 +93,139 @@ function LessonPracticePage() {
       })
       const nextAttemptIds = [...attemptIds, result.attemptId]
       const nextCorrectAnswers = correctAnswers + (result.isCorrect ? 1 : 0)
-      const completion =
-        round === SESSION_SIZE
-          ? await completePractice(routeVersionId, lessonId, {
-              attemptIds: nextAttemptIds,
-            })
-          : null
 
       return {
         result,
-        completion,
         nextAttemptIds,
         nextCorrectAnswers,
       }
     },
-    onSuccess: ({ completion, nextAttemptIds, nextCorrectAnswers }) => {
+    onSuccess: ({ result, nextAttemptIds, nextCorrectAnswers }) => {
       setAttemptIds(nextAttemptIds)
       setCorrectAnswers(nextCorrectAnswers)
-      if (completion) {
-        queryClient.setQueryData(
-          courseProgressQuery(routeVersionId).queryKey,
-          completion.progress,
+      if (exercise.data) {
+        queryClient.setQueryData<PracticeSessionResponse>(
+          practiceSessionQuery(lessonId, routeVersionId).queryKey,
+          (session) =>
+            session
+              ? appendPracticeAttempt(
+                  session,
+                  exercise.data.id,
+                  result.attemptId,
+                  result.isCorrect,
+                )
+              : session,
         )
+      }
+      if (round === SESSION_SIZE) {
+        completion.mutate(nextAttemptIds)
       }
       idempotencyKey.current = crypto.randomUUID()
     },
   })
 
   useEffect(() => {
+    const session = practiceSession.data
+    if (!session || session.startedAt === hydratedSessionStartedAt) return
+
+    setAnswer('')
+    setRound(Math.min(session.answeredExercises + 1, SESSION_SIZE))
+    setCompletedExerciseIds(session.completedExerciseIds)
+    setAttemptIds(session.attemptIds)
+    setCorrectAnswers(session.correctAnswers)
+    setHydratedSessionStartedAt(session.startedAt)
+    idempotencyKey.current = crypto.randomUUID()
+    openedAt.current = Date.now()
+  }, [hydratedSessionStartedAt, practiceSession.data])
+
+  useEffect(() => {
+    const session = practiceSession.data
+    if (
+      !session ||
+      session.answeredExercises !== SESSION_SIZE ||
+      exercise.data ||
+      completion.isPending ||
+      completion.data ||
+      recoveredSessionCompletionStartedAt.current === session.startedAt
+    ) {
+      return
+    }
+
+    recoveredSessionCompletionStartedAt.current = session.startedAt
+    completion.mutate(session.attemptIds, {
+      onSuccess: () => setShowSummary(true),
+    })
+  }, [completion, exercise.data, practiceSession.data])
+
+  useEffect(() => {
     if (!exercise.isFetching && !attempt.data) answerInput.current?.focus()
   }, [attempt.data, exercise.data?.id, exercise.isFetching])
 
-  if (exercise.isPending || lesson.isPending || course.isPending) {
-    return <PartPageState loading />
-  }
+  const recoveredCompletedSession = Boolean(
+    practiceSession.data?.answeredExercises === SESSION_SIZE && !exercise.data,
+  )
 
-  if (exercise.isError || lesson.isError || course.isError) {
+  if (
+    exercise.isError ||
+    lesson.isError ||
+    course.isError ||
+    practiceSession.isError
+  ) {
     return (
       <PartPageState
-        message={(exercise.error ?? lesson.error ?? course.error)?.message}
+        message={
+          (
+            exercise.error ??
+            lesson.error ??
+            course.error ??
+            practiceSession.error
+          )?.message
+        }
       />
     )
   }
 
+  if (
+    lesson.isPending ||
+    course.isPending ||
+    practiceSession.isPending ||
+    (!recoveredCompletedSession && exercise.isPending)
+  ) {
+    return <PartPageState loading />
+  }
+
+  if (recoveredCompletedSession) {
+    if (completion.data && showSummary) {
+      return (
+        <PracticeSummary
+          completion={completion.data}
+          lessonId={lessonId}
+          lessonTitle={localizedText(lesson.data.title)}
+          lessonSummary={localizedText(lesson.data.summary)}
+          onRestart={restartPractice}
+        />
+      )
+    }
+    if (completion.isError) {
+      return (
+        <PracticeCompletionState
+          message={completion.error.message}
+          onRetry={() => completion.mutate(attemptIds)}
+        />
+      )
+    }
+    return <PartPageState loading />
+  }
+
+  if (!exercise.data) return <PartPageState loading />
+
   const result = attempt.data?.result
-  const completion = attempt.data?.completion
   const activeExerciseId = exercise.data.id
   const isLastQuestion = round === SESSION_SIZE
   const canSubmit = Boolean(
     routeVersionId &&
     !attempt.isPending &&
+    !completion.isPending &&
     !exercise.isFetching &&
     (result || answer.trim()),
   )
@@ -123,7 +236,11 @@ function LessonPracticePage() {
 
     if (result) {
       if (isLastQuestion) {
-        setShowSummary(true)
+        if (completion.isError) {
+          completion.mutate(attemptIds)
+        } else if (completion.data) {
+          setShowSummary(true)
+        }
       } else {
         nextExercise()
       }
@@ -134,15 +251,13 @@ function LessonPracticePage() {
   }
 
   function restartPractice() {
-    setAnswer('')
-    setRound(1)
-    setCompletedExerciseIds([])
-    setAttemptIds([])
-    setCorrectAnswers(0)
-    setShowSummary(false)
-    attempt.reset()
-    idempotencyKey.current = crypto.randomUUID()
-    openedAt.current = Date.now()
+    void practiceSession.refetch().then(({ data }) => {
+      if (!data) return
+      setHydratedSessionStartedAt(null)
+      setShowSummary(false)
+      attempt.reset()
+      completion.reset()
+    })
   }
 
   function nextExercise() {
@@ -163,10 +278,10 @@ function LessonPracticePage() {
     : null
   const prompt = exercise.data.prompt.replace(/^Переведи на финский:\s*/u, '')
 
-  if (showSummary && completion) {
+  if (showSummary && completion.data) {
     return (
       <PracticeSummary
-        completion={completion}
+        completion={completion.data}
         lessonId={lessonId}
         lessonTitle={localizedText(lesson.data.title)}
         lessonSummary={localizedText(lesson.data.summary)}
@@ -233,11 +348,15 @@ function LessonPracticePage() {
               className="h-11 w-full"
               type="submit"
               disabled={!canSubmit}
-              aria-busy={attempt.isPending}
+              aria-busy={attempt.isPending || completion.isPending}
             >
               {result
                 ? isLastQuestion
-                  ? 'Результаты'
+                  ? completion.isPending
+                    ? 'Сохраняем…'
+                    : completion.isError
+                      ? 'Повторить'
+                      : 'Результаты'
                   : 'Следующий'
                 : attempt.isPending
                   ? 'Проверяем…'
@@ -263,14 +382,20 @@ function LessonPracticePage() {
               <p>
                 {feedback}{' '}
                 <span className="text-muted-foreground">
-                  Нажми Enter, чтобы{' '}
-                  {isLastQuestion ? 'вернуться' : 'продолжить'}.
+                  {isLastQuestion && completion.isPending
+                    ? 'Сохраняем результат практики.'
+                    : `Нажми Enter, чтобы ${
+                        isLastQuestion ? 'увидеть результат' : 'продолжить'
+                      }.`}
                 </span>
               </p>
             </div>
           ) : null}
           {attempt.isError ? (
             <QueryError message={attempt.error.message} />
+          ) : null}
+          {completion.isError ? (
+            <QueryError message={completion.error.message} />
           ) : null}
         </div>
         {result ? (
@@ -338,6 +463,23 @@ function PracticeSummary({
           </Button>
         </div>
       </section>
+    </PageShell>
+  )
+}
+
+function PracticeCompletionState({
+  message,
+  onRetry,
+}: {
+  message: string
+  onRetry: () => void
+}) {
+  return (
+    <PageShell>
+      <QueryError message={message} />
+      <Button className="mt-4" size="sm" onClick={onRetry}>
+        Повторить сохранение
+      </Button>
     </PageShell>
   )
 }

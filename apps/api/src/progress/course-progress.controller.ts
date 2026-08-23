@@ -2,6 +2,7 @@ import type {
   CourseProgressResponse,
   LessonPart,
   PracticeCompletionResponse,
+  PracticeSessionResponse,
   VocabularyStudyResponse,
 } from '@language/contracts'
 import {
@@ -59,6 +60,24 @@ export class CourseProgressController {
       routeVersionId,
       lessonId,
       part as LessonPart,
+    )
+  }
+
+  @Put(':routeVersionId/lessons/:lessonId/practice-session')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Начать или продолжить практику урока' })
+  @ApiOkResponse({
+    description: 'Сохранённое состояние текущей практики',
+  })
+  startOrResumePractice(
+    @CurrentUserId() userId: string,
+    @Param('routeVersionId') routeVersionId: string,
+    @Param('lessonId') lessonId: string,
+  ): Promise<PracticeSessionResponse> {
+    return this.courseProgress.startOrResumePractice(
+      userId,
+      routeVersionId,
+      lessonId,
     )
   }
 

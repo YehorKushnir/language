@@ -64,7 +64,17 @@ function createFixture() {
         languageCode: 'fi',
         lexicalSense: {
           status: ContentStatus.CURATED,
-          lexicalEntry: { status: ContentStatus.CURATED, forms: [] },
+          metadata: {
+            example: {
+              target: 'Minä olen opiskelija.',
+              source: { ru: 'Я студент.' },
+            },
+          },
+          lexicalEntry: {
+            lemma: 'opiskelija',
+            status: ContentStatus.CURATED,
+            forms: [{ surface: 'opiskelija', audioAssetId: null }],
+          },
         },
       },
     },
@@ -137,7 +147,18 @@ function createFixture() {
         id: 'text.1',
         body: 'Opiskelija.',
         audioAssetId: null,
-        knowledgeItems: [{ itemId: wordItemId }],
+        knowledgeItems: [
+          {
+            itemId: wordItemId,
+            item: {
+              languageCode: 'fi',
+              lexicalSense: {
+                status: ContentStatus.CURATED,
+                lexicalEntry: { status: ContentStatus.CURATED },
+              },
+            },
+          },
+        ],
         tokens: [
           {
             position: 0,
@@ -203,6 +224,24 @@ describe('validatePublishedCourse', () => {
         issues: expect.arrayContaining([
           expect.stringContaining('depends on itself'),
           expect.stringContaining('does not accept its target text'),
+        ]),
+      }),
+    )
+  })
+
+  it('rejects a vocabulary example linked to forms of another lemma', async () => {
+    const fixture = createFixture()
+    const lexicalSense = fixture.lessonItems.at(-1)!.item.lexicalSense!
+    lexicalSense.metadata.example.target = 'Minä olen lääkäri.'
+
+    await expect(
+      validatePublishedCourse(createPrisma(fixture), 'route.1'),
+    ).rejects.toEqual(
+      expect.objectContaining({
+        issues: expect.arrayContaining([
+          expect.stringContaining(
+            'word.student example does not contain a form of opiskelija',
+          ),
         ]),
       }),
     )

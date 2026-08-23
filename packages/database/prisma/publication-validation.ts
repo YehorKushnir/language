@@ -134,6 +134,19 @@ export async function validatePublishedCourse(
     ) {
       issues.push(`${lessonItem.itemId} has unpublished lexical content`)
     }
+    const exampleTarget = readVocabularyExampleTarget(lexicalSense?.metadata)
+    if (
+      lexicalSense &&
+      exampleTarget &&
+      lexicalSense.lexicalEntry.forms.length > 0 &&
+      !lexicalSense.lexicalEntry.forms.some((form) =>
+        containsFinnishForm(exampleTarget, form.surface),
+      )
+    ) {
+      issues.push(
+        `${lessonItem.itemId} example does not contain a form of ${lexicalSense.lexicalEntry.lemma}`,
+      )
+    }
   }
 
   const skillItemIds = lessonItems
@@ -356,12 +369,29 @@ export async function validatePublishedCourse(
 
   const texts = await prisma.text.findMany({
     where: { courseId: route.courseId, status: ContentStatus.CURATED },
-    include: { tokens: { orderBy: { position: 'asc' } }, knowledgeItems: true },
+    include: {
+      tokens: { orderBy: { position: 'asc' } },
+      knowledgeItems: {
+        include: {
+          item: {
+            include: { lexicalSense: { include: { lexicalEntry: true } } },
+          },
+        },
+      },
+    },
   })
   const routeItemIds = new Set(introducedAt.keys())
   for (const text of texts) {
     for (const textItem of text.knowledgeItems) {
-      if (!routeItemIds.has(textItem.itemId)) {
+      if (routeItemIds.has(textItem.itemId)) continue
+
+      const lexicalSense = textItem.item.lexicalSense
+      if (
+        textItem.item.languageCode !== route.course.targetLanguage ||
+        !lexicalSense ||
+        lexicalSense.status !== ContentStatus.CURATED ||
+        lexicalSense.lexicalEntry.status !== ContentStatus.CURATED
+      ) {
         issues.push(`${text.id} uses knowledge outside the published route`)
       }
     }
@@ -421,6 +451,29 @@ export async function validatePublishedCourse(
     linkedAudioCount,
     warnings,
   }
+}
+
+function readVocabularyExampleTarget(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null
+  }
+  const example = (metadata as Record<string, unknown>).example
+  if (!example || typeof example !== 'object' || Array.isArray(example)) {
+    return null
+  }
+  const target = (example as Record<string, unknown>).target
+  return typeof target === 'string' && target.trim() ? target : null
+}
+
+function containsFinnishForm(example: string, surface: string): boolean {
+  const normalize = (value: string) =>
+    ` ${value
+      .normalize('NFC')
+      .toLocaleLowerCase('fi')
+      .replace(/[^\p{L}\p{M}-]+/gu, ' ')
+      .trim()} `
+
+  return normalize(example).includes(normalize(surface))
 }
 
 function validateLessonDependencies(

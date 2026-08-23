@@ -205,6 +205,16 @@ export interface PracticeCompletionRequest {
   attemptIds: string[]
 }
 
+export interface PracticeSessionResponse {
+  startedAt: string
+  totalExercises: number
+  requiredCorrectAnswers: number
+  answeredExercises: number
+  correctAnswers: number
+  attemptIds: string[]
+  completedExerciseIds: string[]
+}
+
 export interface PracticeCompletionResponse {
   totalExercises: number
   correctAnswers: number

@@ -456,6 +456,7 @@ model UserLessonProgress {
   lessonId               String
   explanationCompletedAt DateTime?
   vocabularyCompletedAt  DateTime?
+  practiceStartedAt      DateTime?
   practiceCompletedAt    DateTime?
   completedAt            DateTime?
   updatedAt              DateTime  @updatedAt

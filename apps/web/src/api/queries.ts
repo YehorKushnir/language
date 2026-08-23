@@ -10,6 +10,7 @@ import {
   getPreparedText,
   getPreparedTexts,
   getUserVocabulary,
+  startOrResumePractice,
 } from './language-api'
 
 export const courseQuery = queryOptions({
@@ -54,6 +55,16 @@ export function courseProgressQuery(routeVersionId: string) {
   return queryOptions({
     queryKey: ['course-progress', routeVersionId],
     queryFn: () => getCourseProgress(routeVersionId),
+  })
+}
+
+export function practiceSessionQuery(lessonId: string, routeVersionId: string) {
+  return queryOptions({
+    queryKey: ['practice-session', routeVersionId, lessonId],
+    queryFn: () => startOrResumePractice(routeVersionId, lessonId),
+    staleTime: 0,
+    gcTime: 1_000,
+    refetchOnMount: 'always',
   })
 }
 

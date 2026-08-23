@@ -155,7 +155,11 @@ describe('CourseProgressService lesson and course completion', () => {
 describe('CourseProgressService practice completion', () => {
   const prisma = {
     courseRouteDependency: { findMany: vi.fn() },
-    userLessonProgress: { count: vi.fn() },
+    userLessonProgress: {
+      count: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
     courseRouteEntry: {
       findFirst: vi.fn(),
     },
@@ -180,6 +184,10 @@ describe('CourseProgressService practice completion', () => {
     prisma.courseRouteEntry.findFirst.mockResolvedValue({
       lessonId: 'lesson.1',
     })
+    prisma.userLessonProgress.findUnique.mockResolvedValue({
+      practiceStartedAt: new Date('2026-08-23T18:00:00.000Z'),
+    })
+    prisma.userLessonProgress.update.mockResolvedValue({})
   })
 
   afterEach(() => {
@@ -214,6 +222,9 @@ describe('CourseProgressService practice completion', () => {
       'lesson.1',
       'practice',
     )
+    expect(prisma.userLessonProgress.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { practiceStartedAt: null } }),
+    )
   })
 
   it('does not complete practice below the 85 percent threshold', async () => {
@@ -233,6 +244,9 @@ describe('CourseProgressService practice completion', () => {
     expect(result.correctAnswers).toBe(50)
     expect(result.scorePercent).toBe(83.3)
     expect(completePart).not.toHaveBeenCalled()
+    expect(prisma.userLessonProgress.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { practiceStartedAt: null } }),
+    )
   })
 
   it('rejects an incomplete set of attempts', async () => {
@@ -242,6 +256,22 @@ describe('CourseProgressService practice completion', () => {
         'route.1',
         'lesson.1',
         Array.from({ length: 59 }, (_, index) => `attempt.${index + 1}`),
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(prisma.userAttempt.findMany).not.toHaveBeenCalled()
+  })
+
+  it('rejects historical attempts outside an active practice session', async () => {
+    prisma.userLessonProgress.findUnique.mockResolvedValue({
+      practiceStartedAt: null,
+    })
+
+    await expect(
+      service.completePractice(
+        'user.1',
+        'route.1',
+        'lesson.1',
+        createPracticeAttempts(60).map((attempt) => attempt.id),
       ),
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(prisma.userAttempt.findMany).not.toHaveBeenCalled()
@@ -264,6 +294,82 @@ describe('CourseProgressService practice completion', () => {
         attempts.map((attempt) => attempt.id),
       ),
     ).rejects.toBeInstanceOf(BadRequestException)
+  })
+})
+
+describe('CourseProgressService resumable practice', () => {
+  const startedAt = new Date('2026-08-23T18:00:00.000Z')
+  const transaction = {
+    userLessonProgress: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
+    userAttempt: { findMany: vi.fn() },
+  }
+  const prisma = {
+    courseRouteDependency: { findMany: vi.fn() },
+    userLessonProgress: { count: vi.fn() },
+    courseRouteEntry: { findFirst: vi.fn() },
+    $transaction: vi.fn(
+      (operation: (client: typeof transaction) => Promise<unknown>) =>
+        operation(transaction),
+    ),
+  }
+  const service = new CourseProgressService(prisma as unknown as PrismaService)
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    prisma.courseRouteDependency.findMany.mockResolvedValue([])
+    prisma.courseRouteEntry.findFirst.mockResolvedValue({
+      lessonId: 'lesson.1',
+    })
+    transaction.userLessonProgress.findUnique.mockResolvedValue({
+      practiceStartedAt: startedAt,
+    })
+    transaction.userAttempt.findMany.mockResolvedValue(
+      createPracticeAttempts(30).slice(0, 36),
+    )
+  })
+
+  it('returns the saved attempts and score after reopening practice', async () => {
+    const result = await service.startOrResumePractice(
+      'user.1',
+      'route.1',
+      'lesson.1',
+    )
+
+    expect(result).toMatchObject({
+      startedAt: startedAt.toISOString(),
+      totalExercises: 60,
+      requiredCorrectAnswers: 51,
+      answeredExercises: 36,
+      correctAnswers: 30,
+    })
+    expect(result.attemptIds).toHaveLength(36)
+    expect(result.completedExerciseIds).toHaveLength(36)
+  })
+
+  it('starts a new persisted session when none is active', async () => {
+    transaction.userLessonProgress.findUnique.mockResolvedValue({
+      practiceStartedAt: null,
+    })
+    transaction.userLessonProgress.upsert.mockImplementation(({ update }) =>
+      Promise.resolve(update),
+    )
+    transaction.userAttempt.findMany.mockResolvedValue([])
+
+    const result = await service.startOrResumePractice(
+      'user.1',
+      'route.1',
+      'lesson.1',
+    )
+
+    expect(result.answeredExercises).toBe(0)
+    expect(transaction.userLessonProgress.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: { practiceStartedAt: expect.any(Date) },
+      }),
+    )
   })
 })
 
