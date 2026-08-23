@@ -57,6 +57,24 @@ export function buildPresentVerbVocabulary(input: {
           person: 'third',
           number: 'singular',
         }),
+        lexicalForm(serial, 'present-2sg', item.forms[1], {
+          mood: 'indicative',
+          tense: 'present',
+          person: 'second',
+          number: 'singular',
+        }),
+        lexicalForm(serial, 'present-1pl', item.forms[3], {
+          mood: 'indicative',
+          tense: 'present',
+          person: 'first',
+          number: 'plural',
+        }),
+        lexicalForm(serial, 'present-2pl', item.forms[4], {
+          mood: 'indicative',
+          tense: 'present',
+          person: 'second',
+          number: 'plural',
+        }),
         lexicalForm(serial, 'present-3pl', item.forms[5], {
           mood: 'indicative',
           tense: 'present',
@@ -68,9 +86,45 @@ export function buildPresentVerbVocabulary(input: {
           tense: 'present',
           form: 'connegative',
         }),
+        ...supplementalVerbForms(serial, item.lemma),
       ],
     }
   })
+}
+
+function supplementalVerbForms(
+  serial: string,
+  lemma: string,
+): LessonVocabularySeed['forms'] {
+  if (lemma !== 'tavata') return []
+
+  return [
+    lexicalForm(serial, 'imperfect-1sg', 'tapasin', {
+      mood: 'indicative',
+      tense: 'imperfect',
+      person: 'first',
+      number: 'singular',
+    }),
+    lexicalForm(serial, 'past-participle', 'tavannut', {
+      form: 'past_participle',
+      voice: 'active',
+    }),
+    lexicalForm(serial, 'passive-present', 'tavataan', {
+      mood: 'indicative',
+      tense: 'present',
+      voice: 'passive',
+    }),
+    lexicalForm(serial, 'conditional-1sg', 'tapaisin', {
+      mood: 'conditional',
+      person: 'first',
+      number: 'singular',
+    }),
+    lexicalForm(serial, 'imperative-2sg', 'tapaa', {
+      mood: 'imperative',
+      person: 'second',
+      number: 'singular',
+    }),
+  ]
 }
 
 export function buildPresentVerbExercises(input: {

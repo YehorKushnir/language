@@ -290,6 +290,13 @@ export interface UserVocabularyResponse {
   routeVersionId: string
   totalCount: number
   dueCount: number
+  counts: {
+    all: number
+    due: number
+    new: number
+    learning: number
+    review: number
+  }
   items: UserVocabularyItemResponse[]
 }
 

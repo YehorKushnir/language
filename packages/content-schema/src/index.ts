@@ -320,8 +320,8 @@ export function validateLessonBundle(
   }
   for (const item of bundle.vocabulary) {
     if (
-      !bundle.exercises.some(
-        (exercise) => exercise.vocabularyItemId === item.itemId,
+      !bundle.exercises.some((exercise) =>
+        exercise.slots.some((slot) => slot.itemIds.includes(item.itemId)),
       )
     ) {
       issues.push(`${item.itemId} is not covered by a prepared exercise`)

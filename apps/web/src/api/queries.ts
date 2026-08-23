@@ -9,7 +9,6 @@ import {
   getNextReview,
   getPreparedText,
   getPreparedTexts,
-  getReviewQueue,
   getUserVocabulary,
 } from './language-api'
 
@@ -55,13 +54,6 @@ export function courseProgressQuery(routeVersionId: string) {
   return queryOptions({
     queryKey: ['course-progress', routeVersionId],
     queryFn: () => getCourseProgress(routeVersionId),
-  })
-}
-
-export function reviewQueueQuery(routeVersionId: string) {
-  return queryOptions({
-    queryKey: ['review-queue', routeVersionId],
-    queryFn: () => getReviewQueue(routeVersionId),
   })
 }
 

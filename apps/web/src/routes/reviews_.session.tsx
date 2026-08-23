@@ -18,7 +18,7 @@ import {
   courseProgressQuery,
   courseQuery,
   nextReviewQuery,
-  reviewQueueQuery,
+  userVocabularyQuery,
 } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { PageShell } from '@/components/page-shell'
@@ -73,10 +73,10 @@ function ReviewSessionPage() {
       openedAt.current = Date.now()
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: reviewQueueQuery(routeVersionId).queryKey,
+          queryKey: courseProgressQuery(routeVersionId).queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: courseProgressQuery(routeVersionId).queryKey,
+          queryKey: userVocabularyQuery(routeVersionId).queryKey,
         }),
       ])
     },
@@ -137,8 +137,8 @@ function ReviewSessionPage() {
     return (
       <PageShell className="py-14">
         <Button asChild variant="ghost" size="sm" className="-ml-3 mb-8">
-          <Link to="/reviews">
-            <ArrowLeftIcon /> К очереди
+          <Link to="/vocabulary">
+            <ArrowLeftIcon /> К словарю
           </Link>
         </Button>
         <Card className="border-dashed">
@@ -161,7 +161,7 @@ function ReviewSessionPage() {
                 : 'Новых просроченных навыков нет. Следующая дата уже сохранена в расписании.'}
             </p>
             <Button asChild className="mt-7">
-              <Link to="/reviews">Вернуться к расписанию</Link>
+              <Link to="/vocabulary">Вернуться к словарю</Link>
             </Button>
           </CardContent>
         </Card>
@@ -172,7 +172,7 @@ function ReviewSessionPage() {
   return (
     <PageShell>
       <Button asChild variant="ghost" size="sm" className="-ml-3 mb-5">
-        <Link to="/reviews">
+        <Link to="/vocabulary">
           <ArrowLeftIcon /> Завершить сессию
         </Link>
       </Button>

@@ -22,6 +22,7 @@ import {
   assertLessonOneContent,
   lessonIdentityTemplateDefinition,
 } from '../../../content/courses/ru-fi/lessons/fi.olla.basics.js'
+import { finnishGeneratedParadigms } from '../../../content/courses/ru-fi/finnish-paradigms.generated.js'
 import {
   moduleOneLessons,
   moduleOneVocabulary,
@@ -80,7 +81,7 @@ export function validateCourseContent(): CourseContentValidationReport {
   const issues: string[] = []
 
   requireExactCount(moduleOneLessons, 16, 'module-one lessons', issues)
-  requireExactCount(moduleOneVocabulary, 401, 'module-one vocabulary', issues)
+  requireExactCount(moduleOneVocabulary, 407, 'module-one vocabulary', issues)
   requireExactCount(exerciseIds, 960, 'module-one exercises', issues)
   requireExactCount(preparedTexts, 5, 'module-one milestone texts', issues)
   requireUnique(
@@ -196,6 +197,14 @@ export async function validateFinnishMorphologyContent(
         expectedLemma: item.lemma,
       })),
     ])
+    for (const [lemma, paradigm] of Object.entries(finnishGeneratedParadigms)) {
+      forms.push(
+        ...paradigm.forms.map((form) => ({
+          surface: form.surface,
+          expectedLemma: lemma,
+        })),
+      )
+    }
     const exerciseWords = moduleOneLessons.flatMap((lesson) =>
       lesson.exercises.flatMap((exercise) => [
         ...extractFinnishWords(exercise.targetText),

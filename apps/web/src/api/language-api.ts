@@ -15,7 +15,6 @@ import type {
   PreparedExerciseResponse,
   PreparedTextCatalogResponse,
   PreparedTextDetailResponse,
-  ReviewQueueResponse,
   UserVocabularyResponse,
   VocabularyStudyRequest,
   VocabularyStudyResponse,
@@ -115,10 +114,6 @@ export function getCourseProgress(routeVersionId: string) {
   return request<CourseProgressResponse>(
     `/me/course-progress/${routeVersionId}`,
   )
-}
-
-export function getReviewQueue(routeVersionId: string) {
-  return request<ReviewQueueResponse>(`/me/reviews/${routeVersionId}`)
 }
 
 export function getUserVocabulary(routeVersionId: string) {

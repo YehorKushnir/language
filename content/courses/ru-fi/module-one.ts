@@ -114,6 +114,7 @@ import {
   verbTypesFourSixGoldenExerciseIds,
   verbTypesFourSixVocabulary,
 } from './lessons/fi.verb-types.four-six.js'
+import { withFinnishParadigm } from './finnish-paradigms.js'
 
 type PartOfSpeech = LessonVocabularySeed['partOfSpeech']
 
@@ -851,7 +852,7 @@ const generatedLessons = specifications.map((specification, index) => {
   }
 })
 
-export const moduleOneLessons: CourseLessonSeed[] = [
+const moduleOneLessonsWithoutFullParadigms: CourseLessonSeed[] = [
   {
     id: 'fi.olla.basics',
     modulePosition: 1,
@@ -874,6 +875,12 @@ export const moduleOneLessons: CourseLessonSeed[] = [
   },
   ...generatedLessons,
 ]
+
+export const moduleOneLessons: CourseLessonSeed[] =
+  moduleOneLessonsWithoutFullParadigms.map((lesson) => ({
+    ...lesson,
+    vocabulary: lesson.vocabulary.map(withFinnishParadigm),
+  }))
 
 export const moduleOneVocabulary = moduleOneLessons.flatMap(
   (lesson) => lesson.vocabulary,

@@ -122,7 +122,7 @@ function HomePage() {
           to={
             (progress.data?.dueReviews ?? 0) > 0
               ? '/reviews/session'
-              : '/reviews'
+              : '/vocabulary'
           }
           className="interactive-surface group flex items-center gap-3 rounded-lg border bg-card p-4"
         >

@@ -30,34 +30,78 @@ export class VocabularyService {
   ): Promise<UserVocabularyResponse> {
     const route = await this.prisma.courseRouteVersion.findUnique({
       where: { id: routeVersionId, status: ContentStatus.CURATED },
+      select: { courseId: true },
+    })
+
+    if (!route) {
+      throw new NotFoundException(
+        `Course route ${routeVersionId} was not found`,
+      )
+    }
+
+    const memories = await this.prisma.userMemory.findMany({
+      where: {
+        userId,
+        item: {
+          kind: KnowledgeItemKind.LEXICAL_SENSE,
+          OR: [
+            {
+              lessonItems: {
+                some: {
+                  lesson: {
+                    status: ContentStatus.CURATED,
+                    routeEntries: { some: { routeVersionId } },
+                  },
+                },
+              },
+            },
+            {
+              textItems: {
+                some: {
+                  text: {
+                    courseId: route.courseId,
+                    status: ContentStatus.CURATED,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
       include: {
-        entries: {
-          orderBy: [{ modulePosition: 'asc' }, { lessonPosition: 'asc' }],
+        item: {
           include: {
-            lesson: {
-              select: {
-                id: true,
-                title: true,
-                knowledgeItems: {
-                  where: { item: { kind: KnowledgeItemKind.LEXICAL_SENSE } },
-                  orderBy: { position: 'asc' },
+            lessonItems: {
+              where: {
+                lesson: {
+                  status: ContentStatus.CURATED,
+                  routeEntries: { some: { routeVersionId } },
+                },
+              },
+              orderBy: { lessonId: 'asc' },
+              take: 1,
+              include: {
+                lesson: { select: { id: true, title: true } },
+              },
+            },
+            textItems: {
+              where: {
+                text: {
+                  courseId: route.courseId,
+                  status: ContentStatus.CURATED,
+                },
+              },
+              orderBy: { textId: 'asc' },
+              take: 1,
+              include: { text: { select: { id: true, title: true } } },
+            },
+            lexicalSense: {
+              include: {
+                lexicalEntry: {
                   include: {
-                    item: {
-                      include: {
-                        userMemories: { where: { userId }, take: 1 },
-                        lexicalSense: {
-                          include: {
-                            lexicalEntry: {
-                              include: {
-                                forms: {
-                                  orderBy: { id: 'asc' },
-                                  include: { audioAsset: true },
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
+                    forms: {
+                      orderBy: { id: 'asc' },
+                      include: { audioAsset: true },
                     },
                   },
                 },
@@ -68,120 +112,75 @@ export class VocabularyService {
       },
     })
 
-    if (!route) {
-      throw new NotFoundException(
-        `Course route ${routeVersionId} was not found`,
-      )
-    }
+    const now = new Date()
+    const items = memories.flatMap<UserVocabularyResponse['items'][number]>(
+      (memory) => {
+        const sense = memory.item.lexicalSense
+        const lesson = memory.item.lessonItems[0]?.lesson
+        const text = memory.item.textItems[0]?.text
+        if (!sense || (!lesson && !text)) return []
 
-    const readerItems = await this.prisma.knowledgeItem.findMany({
-      where: {
-        kind: KnowledgeItemKind.LEXICAL_SENSE,
-        textItems: { some: { text: { courseId: route.courseId } } },
-        lessonItems: { none: {} },
-      },
-      include: {
-        userMemories: { where: { userId }, take: 1 },
-        textItems: {
-          orderBy: { textId: 'asc' },
-          take: 1,
-          include: { text: { select: { id: true, title: true } } },
-        },
-        lexicalSense: {
-          include: {
-            lexicalEntry: {
-              include: {
-                forms: {
-                  orderBy: { id: 'asc' },
-                  include: { audioAsset: true },
+        return [
+          {
+            itemId: memory.itemId,
+            lexicalEntryId: sense.lexicalEntry.id,
+            lemma: sense.lexicalEntry.lemma,
+            partOfSpeech: sense.lexicalEntry.partOfSpeech,
+            gloss: toLocalizedText(sense.gloss),
+            example: toVocabularyExample(sense.metadata),
+            forms: sense.lexicalEntry.forms
+              .map((form) => ({
+                id: form.id,
+                surface: form.surface,
+                features: toLexicalFeatures(form.features),
+                audioUrl: this.media.resolve(form.audioAsset?.storageKey),
+              }))
+              .sort(compareVocabularyForms),
+            status: sense.status,
+            introducedIn: lesson
+              ? {
+                  kind: 'lesson',
+                  lessonId: lesson.id,
+                  title: toLocalizedText(lesson.title),
+                }
+              : {
+                  kind: 'text',
+                  textId: text!.id,
+                  title: toLocalizedText(text!.title),
                 },
-              },
+            memory: {
+              state: memory.state,
+              dueAt: memory.dueAt.toISOString(),
+              isDue: memory.dueAt <= now,
+              repetitions: memory.repetitions,
+              lapses: memory.lapses,
             },
           },
-        },
+        ]
       },
-    })
+    )
+    items.sort((left, right) =>
+      left.lemma.localeCompare(right.lemma, 'fi', { sensitivity: 'base' }),
+    )
 
-    const now = new Date()
-    const items = new Map<string, UserVocabularyResponse['items'][number]>()
-
-    for (const entry of route.entries) {
-      for (const lessonItem of entry.lesson.knowledgeItems) {
-        const sense = lessonItem.item.lexicalSense
-        if (!sense || items.has(lessonItem.itemId)) continue
-
-        const memory = lessonItem.item.userMemories[0]
-        items.set(lessonItem.itemId, {
-          itemId: lessonItem.itemId,
-          lexicalEntryId: sense.lexicalEntry.id,
-          lemma: sense.lexicalEntry.lemma,
-          partOfSpeech: sense.lexicalEntry.partOfSpeech,
-          gloss: toLocalizedText(sense.gloss),
-          example: toVocabularyExample(sense.metadata),
-          forms: sense.lexicalEntry.forms.map((form) => ({
-            id: form.id,
-            surface: form.surface,
-            features: toLexicalFeatures(form.features),
-            audioUrl: this.media.resolve(form.audioAsset?.storageKey),
-          })),
-          status: sense.status,
-          introducedIn: {
-            kind: 'lesson',
-            lessonId: entry.lesson.id,
-            title: toLocalizedText(entry.lesson.title),
-          },
-          memory: {
-            state: memory?.state ?? 'NEW',
-            dueAt: memory?.dueAt.toISOString() ?? null,
-            isDue: Boolean(memory && memory.dueAt <= now),
-            repetitions: memory?.repetitions ?? 0,
-            lapses: memory?.lapses ?? 0,
-          },
-        })
-      }
+    const counts = {
+      all: items.length,
+      due: items.filter((item) => item.memory.isDue).length,
+      new: items.filter((item) => item.memory.state === MemoryState.NEW).length,
+      learning: items.filter(
+        (item) =>
+          item.memory.state === MemoryState.LEARNING ||
+          item.memory.state === MemoryState.RELEARNING,
+      ).length,
+      review: items.filter((item) => item.memory.state === MemoryState.REVIEW)
+        .length,
     }
-
-    for (const item of readerItems) {
-      const sense = item.lexicalSense
-      const text = item.textItems[0]?.text
-      if (!sense || !text || items.has(item.id)) continue
-
-      const memory = item.userMemories[0]
-      items.set(item.id, {
-        itemId: item.id,
-        lexicalEntryId: sense.lexicalEntry.id,
-        lemma: sense.lexicalEntry.lemma,
-        partOfSpeech: sense.lexicalEntry.partOfSpeech,
-        gloss: toLocalizedText(sense.gloss),
-        example: toVocabularyExample(sense.metadata),
-        forms: sense.lexicalEntry.forms.map((form) => ({
-          id: form.id,
-          surface: form.surface,
-          features: toLexicalFeatures(form.features),
-          audioUrl: this.media.resolve(form.audioAsset?.storageKey),
-        })),
-        status: sense.status,
-        introducedIn: {
-          kind: 'text',
-          textId: text.id,
-          title: toLocalizedText(text.title),
-        },
-        memory: {
-          state: memory?.state ?? 'NEW',
-          dueAt: memory?.dueAt.toISOString() ?? null,
-          isDue: Boolean(memory && memory.dueAt <= now),
-          repetitions: memory?.repetitions ?? 0,
-          lapses: memory?.lapses ?? 0,
-        },
-      })
-    }
-
-    const vocabularyItems = [...items.values()]
     return {
       routeVersionId,
-      totalCount: vocabularyItems.length,
-      dueCount: vocabularyItems.filter((item) => item.memory.isDue).length,
-      items: vocabularyItems,
+      totalCount: counts.all,
+      dueCount: counts.due,
+      counts,
+      items,
     }
   }
 
@@ -258,4 +257,119 @@ export class VocabularyService {
       lapses: memory.lapses,
     }
   }
+}
+
+const caseOrder = new Map(
+  [
+    'nominative',
+    'genitive',
+    'accusative',
+    'partitive',
+    'essive',
+    'translative',
+    'inessive',
+    'elative',
+    'illative',
+    'adessive',
+    'ablative',
+    'allative',
+    'abessive',
+    'instructive',
+    'comitative',
+  ].map((value, index) => [value, index]),
+)
+
+const comparisonOrder = new Map(
+  ['positive', 'comparative', 'superlative'].map((value, index) => [
+    value,
+    index,
+  ]),
+)
+
+const personOrder = new Map(
+  ['first', 'second', 'third'].map((value, index) => [value, index]),
+)
+
+function compareVocabularyForms(
+  left: UserVocabularyResponse['items'][number]['forms'][number],
+  right: UserVocabularyResponse['items'][number]['forms'][number],
+) {
+  const leftHasCase = typeof left.features.case === 'string'
+  const rightHasCase = typeof right.features.case === 'string'
+  if (leftHasCase || rightHasCase) {
+    const comparisonDifference =
+      getFeatureOrder(comparisonOrder, left.features.comparison, 0) -
+      getFeatureOrder(comparisonOrder, right.features.comparison, 0)
+    if (comparisonDifference !== 0) return comparisonDifference
+
+    const numberDifference =
+      getNumberOrder(left.features.number) -
+      getNumberOrder(right.features.number)
+    if (numberDifference !== 0) return numberDifference
+
+    const caseDifference =
+      getFeatureOrder(caseOrder, left.features.case) -
+      getFeatureOrder(caseOrder, right.features.case)
+    return caseDifference || left.id.localeCompare(right.id)
+  }
+
+  const categoryDifference =
+    getVerbFormOrder(left.features) - getVerbFormOrder(right.features)
+  if (categoryDifference !== 0) return categoryDifference
+
+  const numberDifference =
+    getNumberOrder(left.features.number) - getNumberOrder(right.features.number)
+  if (numberDifference !== 0) return numberDifference
+
+  const personDifference =
+    getFeatureOrder(personOrder, left.features.person) -
+    getFeatureOrder(personOrder, right.features.person)
+  return personDifference || left.id.localeCompare(right.id)
+}
+
+function getFeatureOrder(
+  order: Map<string, number>,
+  value: unknown,
+  fallback = Number.MAX_SAFE_INTEGER,
+) {
+  return order.get(String(value)) ?? fallback
+}
+
+function getNumberOrder(value: unknown) {
+  if (value === 'singular') return 0
+  if (value === 'plural') return 1
+  return 2
+}
+
+function getVerbFormOrder(features: Record<string, unknown>) {
+  const form = features.form
+  const voice = features.voice
+  const mood = features.mood
+  const tense = features.tense
+
+  if (form === 'infinitive') return 0
+  if (voice === 'active' && mood === 'indicative' && tense === 'present') {
+    return 10
+  }
+  if (voice === 'active' && mood === 'indicative' && tense === 'imperfect') {
+    return 20
+  }
+  if (voice === 'active' && mood === 'conditional') return 30
+  if (voice === 'active' && mood === 'imperative') return 40
+  if (form === 'connegative') return 45
+  if (voice === 'passive' && mood === 'indicative' && tense === 'present') {
+    return 50
+  }
+  if (voice === 'passive' && mood === 'indicative' && tense === 'imperfect') {
+    return 51
+  }
+  if (voice === 'passive' && mood === 'conditional') return 52
+  if (voice === 'passive' && mood === 'imperative') return 53
+  if (form === 'present_participle' && voice !== 'passive') return 60
+  if (form === 'present_participle') return 61
+  if (form === 'past_participle' && voice !== 'passive') return 62
+  if (form === 'past_participle') return 63
+  if (form === 'agent_participle') return 64
+  if (form === 'negative_participle') return 65
+  return 99
 }

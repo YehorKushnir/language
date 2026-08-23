@@ -9,7 +9,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   BookOpenCheckIcon,
   BookOpenTextIcon,
-  BrainIcon,
   HomeIcon,
   LanguagesIcon,
   LogOutIcon,
@@ -26,7 +25,7 @@ import { authClient } from '@/lib/auth-client'
 import type { RouterContext } from '@/router-context'
 
 const navigationItems: Array<{
-  to: '/' | '/lessons' | '/vocabulary' | '/texts' | '/reviews'
+  to: '/' | '/lessons' | '/vocabulary' | '/texts'
   label: string
   icon: LucideIcon
   exact?: boolean
@@ -35,7 +34,6 @@ const navigationItems: Array<{
   { to: '/lessons', label: 'Уроки', icon: BookOpenCheckIcon },
   { to: '/vocabulary', label: 'Словарь', icon: LanguagesIcon },
   { to: '/texts', label: 'Тексты', icon: ScrollTextIcon },
-  { to: '/reviews', label: 'Повторение', icon: BrainIcon },
 ]
 
 export const Route = createRootRouteWithContext<RouterContext>()({
@@ -151,7 +149,7 @@ function RootLayout() {
         className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
         aria-label="Мобильная навигация"
       >
-        <div className="mx-auto grid h-16 max-w-lg grid-cols-5 gap-1 px-2 pt-1.5">
+        <div className="mx-auto grid h-16 max-w-lg grid-cols-4 gap-1 px-2 pt-1.5">
           {navigationItems.map((item) => {
             const Icon = item.icon
             return (

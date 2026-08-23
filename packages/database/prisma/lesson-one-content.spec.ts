@@ -21,7 +21,12 @@ describe('lesson one content', () => {
   it('meets the curated MVP content checks', () => {
     expect(validateLessonOneContent()).toEqual([])
     expect(lessonExercises).toHaveLength(60)
-    expect(lessonVocabulary).toHaveLength(11)
+    expect(lessonVocabulary).toHaveLength(17)
+    expect(
+      lessonVocabulary
+        .filter((item) => item.partOfSpeech === 'pronoun')
+        .map((item) => item.lemma),
+    ).toEqual(['minä', 'sinä', 'hän', 'me', 'te', 'he'])
     expect(lessonContent.explanationScreens).toHaveLength(5)
   })
 
@@ -42,9 +47,9 @@ describe('lesson one content', () => {
 
   it('ships a complete first module with milestone reading texts', () => {
     expect(moduleOneLessons).toHaveLength(16)
-    expect(moduleOneVocabulary).toHaveLength(401)
+    expect(moduleOneVocabulary).toHaveLength(407)
     expect(new Set(moduleOneVocabulary.map((item) => item.lemma)).size).toBe(
-      401,
+      407,
     )
     expect(
       moduleOneLessons.reduce(
@@ -55,8 +60,8 @@ describe('lesson one content', () => {
     expect(preparedTexts).toHaveLength(5)
     expect(validateCourseContent().module).toEqual({
       lessonCount: 16,
-      vocabularyCount: 401,
-      uniqueLemmaCount: 401,
+      vocabularyCount: 407,
+      uniqueLemmaCount: 407,
       exerciseCount: 960,
     })
   })

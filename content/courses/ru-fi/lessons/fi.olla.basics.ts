@@ -1,3 +1,10 @@
+import {
+  finnishLearnerDictionaryConceptId,
+  finnishLearnerDictionaryItemId,
+  finnishLearnerDictionaryLexicalEntryId,
+  getFinnishLearnerDictionaryEntry,
+} from '../../../../packages/language-fi/src/learner-dictionary.js'
+
 export interface LessonVocabularyFormSeed {
   id: string
   surface: string
@@ -10,7 +17,7 @@ export interface LessonVocabularySeed {
   conceptId: string
   lexicalEntryId: string
   lemma: string
-  partOfSpeech: 'noun' | 'verb' | 'adjective' | 'adverb'
+  partOfSpeech: 'noun' | 'verb' | 'adjective' | 'adverb' | 'pronoun'
   gloss: string
   example: {
     target: string
@@ -204,6 +211,39 @@ export const lessonContent = {
 } as const
 
 export const lessonVocabulary: LessonVocabularySeed[] = [
+  createPersonalPronounVocabulary({
+    key: 'pronoun-mina',
+    lemma: 'minä',
+    example: { target: 'Minä olen opiskelija.', source: 'Я студент.' },
+  }),
+  createPersonalPronounVocabulary({
+    key: 'pronoun-sina',
+    lemma: 'sinä',
+    example: { target: 'Sinä olet lääkäri.', source: 'Ты врач.' },
+  }),
+  createPersonalPronounVocabulary({
+    key: 'pronoun-han',
+    lemma: 'hän',
+    example: {
+      target: 'Hän on opettaja.',
+      source: 'Он или она — преподаватель.',
+    },
+  }),
+  createPersonalPronounVocabulary({
+    key: 'pronoun-me',
+    lemma: 'me',
+    example: { target: 'Me olemme täällä.', source: 'Мы здесь.' },
+  }),
+  createPersonalPronounVocabulary({
+    key: 'pronoun-te',
+    lemma: 'te',
+    example: { target: 'Te olette valmiita.', source: 'Вы готовы.' },
+  }),
+  createPersonalPronounVocabulary({
+    key: 'pronoun-he',
+    lemma: 'he',
+    example: { target: 'He ovat kotona.', source: 'Они дома.' },
+  }),
   createNominalVocabulary({
     key: 'student',
     itemId: 'word.fi.opiskelija.person',
@@ -337,6 +377,7 @@ interface PersonSeed {
   sourceSubject: string
   plural: boolean
   canOmitSubject: boolean
+  itemId: string
 }
 
 const persons: PersonSeed[] = [
@@ -349,6 +390,7 @@ const persons: PersonSeed[] = [
     sourceSubject: 'Я',
     plural: false,
     canOmitSubject: true,
+    itemId: finnishLearnerDictionaryItemId('minä'),
   },
   {
     key: '2sg',
@@ -359,6 +401,7 @@ const persons: PersonSeed[] = [
     sourceSubject: 'Ты',
     plural: false,
     canOmitSubject: true,
+    itemId: finnishLearnerDictionaryItemId('sinä'),
   },
   {
     key: '3sg',
@@ -369,6 +412,7 @@ const persons: PersonSeed[] = [
     sourceSubject: 'Он',
     plural: false,
     canOmitSubject: false,
+    itemId: finnishLearnerDictionaryItemId('hän'),
   },
   {
     key: '1pl',
@@ -379,6 +423,7 @@ const persons: PersonSeed[] = [
     sourceSubject: 'Мы',
     plural: true,
     canOmitSubject: true,
+    itemId: finnishLearnerDictionaryItemId('me'),
   },
   {
     key: '2pl',
@@ -389,6 +434,7 @@ const persons: PersonSeed[] = [
     sourceSubject: 'Вы',
     plural: true,
     canOmitSubject: true,
+    itemId: finnishLearnerDictionaryItemId('te'),
   },
   {
     key: '3pl',
@@ -399,6 +445,7 @@ const persons: PersonSeed[] = [
     sourceSubject: 'Они',
     plural: true,
     canOmitSubject: false,
+    itemId: finnishLearnerDictionaryItemId('he'),
   },
 ]
 
@@ -414,14 +461,16 @@ export const lessonIdentityTemplateDefinition = {
     negative: 'grammar.fi.olla.negative',
     question: 'grammar.fi.olla.question',
   },
-  complements: lessonVocabulary.map((item) => ({
-    key: item.key,
-    itemId: item.itemId,
-    singular: item.singular,
-    plural: item.plural,
-    sourceSingular: item.sourceSingular,
-    sourcePlural: item.sourcePlural,
-  })),
+  complements: lessonVocabulary
+    .filter((item) => item.partOfSpeech !== 'pronoun')
+    .map((item) => ({
+      key: item.key,
+      itemId: item.itemId,
+      singular: item.singular,
+      plural: item.plural,
+      sourceSingular: item.sourceSingular,
+      sourcePlural: item.sourcePlural,
+    })),
 }
 
 const exerciseMatrix = {
@@ -516,8 +565,8 @@ export function validateLessonOneContent(): string[] {
 
   for (const item of lessonVocabulary) {
     if (
-      !lessonExercises.some(
-        (exercise) => exercise.vocabularyItemId === item.itemId,
+      !lessonExercises.some((exercise) =>
+        exercise.slots.some((slot) => slot.itemIds.includes(item.itemId)),
       )
     ) {
       errors.push(`${item.itemId} is not covered by an exercise`)
@@ -686,9 +735,10 @@ function createStandardExercise(
         ],
         ['grammar.fi.olla.affirmative'],
         vocabulary.itemId,
+        person.itemId,
       ),
       primaryItemId: 'grammar.fi.olla.affirmative',
-      secondaryItemIds: [],
+      secondaryItemIds: [person.itemId],
       vocabularyItemId: vocabulary.itemId,
     }
   }
@@ -718,9 +768,10 @@ function createStandardExercise(
         ],
         ['grammar.fi.olla.negative'],
         vocabulary.itemId,
+        person.itemId,
       ),
       primaryItemId: 'grammar.fi.olla.negative',
-      secondaryItemIds: [],
+      secondaryItemIds: [person.itemId],
       vocabularyItemId: vocabulary.itemId,
     }
   }
@@ -748,9 +799,10 @@ function createStandardExercise(
       ],
       ['grammar.fi.olla.question'],
       vocabulary.itemId,
+      person.itemId,
     ),
     primaryItemId: 'grammar.fi.olla.question',
-    secondaryItemIds: [],
+    secondaryItemIds: [person.itemId],
     vocabularyItemId: vocabulary.itemId,
   }
 }
@@ -783,10 +835,16 @@ function attachEvidenceItems(
   slots: Array<Omit<ExerciseSlotSeed, 'itemIds'>>,
   grammarItemIds: string[],
   vocabularyItemId: string,
+  subjectItemId?: string,
 ): ExerciseSlotSeed[] {
   return slots.map((slot) => ({
     ...slot,
-    itemIds: slot.role === 'complement' ? [vocabularyItemId] : grammarItemIds,
+    itemIds:
+      slot.role === 'complement'
+        ? [vocabularyItemId]
+        : slot.role === 'subject' && subjectItemId
+          ? [...grammarItemIds, subjectItemId]
+          : grammarItemIds,
   }))
 }
 
@@ -819,6 +877,41 @@ function getVocabulary(key: string): LessonVocabularySeed {
 
 function capitalize(value: string): string {
   return `${value.charAt(0).toLocaleUpperCase('fi-FI')}${value.slice(1)}`
+}
+
+function createPersonalPronounVocabulary(input: {
+  key: string
+  lemma: 'minä' | 'sinä' | 'hän' | 'me' | 'te' | 'he'
+  example: { target: string; source: string }
+}): LessonVocabularySeed {
+  const entry = getFinnishLearnerDictionaryEntry(input.lemma)
+  if (!entry) {
+    throw new Error(`Missing learner dictionary entry for ${input.lemma}`)
+  }
+
+  return {
+    key: input.key,
+    itemId: finnishLearnerDictionaryItemId(input.lemma),
+    conceptId: finnishLearnerDictionaryConceptId(input.lemma),
+    lexicalEntryId: finnishLearnerDictionaryLexicalEntryId(input.lemma),
+    lemma: input.lemma,
+    partOfSpeech: 'pronoun',
+    gloss: entry.gloss,
+    example: {
+      target: input.example.target,
+      source: { ru: input.example.source },
+    },
+    semanticTypes: ['personal-pronoun'],
+    singular: input.lemma,
+    plural: input.lemma,
+    sourceSingular: entry.gloss,
+    sourcePlural: entry.gloss,
+    forms: entry.forms.map((form, index) => ({
+      id: `form.fi.reader.${input.lemma}.${index + 1}`,
+      surface: form.surface,
+      features: form.features,
+    })),
+  }
 }
 
 function createNominalVocabulary(input: {

@@ -16,7 +16,7 @@ import {
   courseQuery,
   lessonQuery,
   lessonVocabularyQuery,
-  reviewQueueQuery,
+  userVocabularyQuery,
 } from '@/api/queries'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
 import { PageShell } from '@/components/page-shell'
@@ -89,10 +89,10 @@ function LessonVocabularyPage() {
     onSuccess: () => {
       void Promise.all([
         queryClient.invalidateQueries({
-          queryKey: reviewQueueQuery(routeVersionId).queryKey,
+          queryKey: courseProgressQuery(routeVersionId).queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: courseProgressQuery(routeVersionId).queryKey,
+          queryKey: userVocabularyQuery(routeVersionId).queryKey,
         }),
       ])
       const isLastCard = cardIndex === (vocabulary.data?.items.length ?? 0) - 1
@@ -128,6 +128,10 @@ function LessonVocabularyPage() {
   if (!item) {
     return <PartPageState message="В этом уроке пока нет слов." />
   }
+  const cardForms =
+    item.partOfSpeech === 'pronoun'
+      ? item.forms.filter((form) => form.features.case === 'nominative')
+      : item.forms
 
   if (sessionCompleted) {
     return (
@@ -169,7 +173,7 @@ function LessonVocabularyPage() {
           ) : (
             <div className="mt-6 flex flex-wrap justify-center gap-2">
               <Button asChild size="sm" variant="outline">
-                <Link to="/reviews">Перейти к повторению</Link>
+                <Link to="/vocabulary">Перейти к словарю</Link>
               </Button>
               <Button asChild size="sm">
                 <Link to="/lessons/$lessonId/practice" params={{ lessonId }}>
@@ -287,7 +291,7 @@ function LessonVocabularyPage() {
                 Формы
               </span>
               <span className="mt-2 flex flex-wrap gap-2">
-                {item.forms.map((form) => {
+                {cardForms.map((form) => {
                   const labels = Object.values(form.features).map(
                     (feature) =>
                       featureLabels[String(feature)] ?? String(feature),

@@ -6,10 +6,10 @@ import { Fragment, useEffect, useState } from 'react'
 
 import { addVocabularyItem } from '@/api/language-api'
 import {
+  courseProgressQuery,
   courseQuery,
   preparedTextQuery,
   preparedTextsQuery,
-  reviewQueueQuery,
   userVocabularyQuery,
 } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
@@ -58,7 +58,7 @@ function PreparedTextPage() {
           queryKey: userVocabularyQuery(routeVersionId).queryKey,
         }),
         queryClient.invalidateQueries({
-          queryKey: reviewQueueQuery(routeVersionId).queryKey,
+          queryKey: courseProgressQuery(routeVersionId).queryKey,
         }),
       ])
     },

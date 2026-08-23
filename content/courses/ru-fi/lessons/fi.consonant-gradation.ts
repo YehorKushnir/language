@@ -266,15 +266,47 @@ export const consonantGradationVocabulary: LessonVocabularySeed[] = nouns.map(
         lexicalForm(serial, 'nominative-sg', lemma, {
           case: 'nominative',
           number: 'singular',
+          ...(lemma === 'kauppa' ? { inflectionType: '9' } : {}),
         }),
         lexicalForm(serial, 'genitive-sg', genitive, {
           case: 'genitive',
           number: 'singular',
         }),
+        ...supplementalNounForms(serial, lemma),
       ],
     }
   },
 )
+
+function supplementalNounForms(
+  serial: string,
+  lemma: string,
+): LessonVocabularySeed['forms'] {
+  if (lemma !== 'kauppa') return []
+
+  return [
+    lexicalForm(serial, 'partitive-sg', 'kauppaa', {
+      case: 'partitive',
+      number: 'singular',
+    }),
+    lexicalForm(serial, 'illative-sg', 'kauppaan', {
+      case: 'illative',
+      number: 'singular',
+    }),
+    lexicalForm(serial, 'nominative-pl', 'kaupat', {
+      case: 'nominative',
+      number: 'plural',
+    }),
+    lexicalForm(serial, 'partitive-pl', 'kauppoja', {
+      case: 'partitive',
+      number: 'plural',
+    }),
+    lexicalForm(serial, 'elative-pl', 'kaupoista', {
+      case: 'elative',
+      number: 'plural',
+    }),
+  ]
+}
 
 interface GradatingVerb {
   lemma: string

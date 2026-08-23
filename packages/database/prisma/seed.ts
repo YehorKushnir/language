@@ -10,6 +10,7 @@ import {
 } from '../src/index.js'
 import { moduleOneLessons } from '../../../content/courses/ru-fi/module-one.js'
 import { preparedTexts } from '../../../content/courses/ru-fi/texts/fi.olla.introductions.js'
+import { finnishGeneratedParadigms } from '../../../content/courses/ru-fi/finnish-paradigms.generated.js'
 import {
   finnishLearnerDictionaryConceptId,
   finnishLearnerDictionaryEntries,
@@ -327,20 +328,70 @@ async function seedReaderDictionary() {
       },
     })
 
-    for (const [index, form] of entry.forms.entries()) {
+    const paradigm = finnishGeneratedParadigms[entry.lemma]
+    const metadata =
+      paradigm?.partOfSpeech === entry.partOfSpeech
+        ? Object.fromEntries(
+            Object.entries({
+              inflectionType: paradigm.inflectionType,
+              gradationType: paradigm.gradationType,
+              verbType: paradigm.verbType,
+            }).filter((value): value is [string, string] => value[1] !== null),
+          )
+        : {}
+    const forms: Array<{
+      id: string
+      surface: string
+      features: Record<string, string>
+      source: LexicalFormSource
+    }> = entry.forms.map((form, index) => ({
+      ...form,
+      id: `form.fi.reader.${entry.lemma}.${index + 1}`,
+      features: index === 0 ? { ...metadata, ...form.features } : form.features,
+      source: LexicalFormSource.CURATED,
+    }))
+    if (paradigm?.partOfSpeech === entry.partOfSpeech) {
+      for (const generated of paradigm.forms) {
+        if (
+          forms.some((form) =>
+            isSameReaderDictionaryForm(
+              form.features,
+              generated.features,
+              entry.partOfSpeech,
+            ),
+          )
+        ) {
+          continue
+        }
+        forms.push({
+          id: `form.fi.reader.${entry.lemma}.paradigm.${generated.key}`,
+          surface: generated.surface,
+          features: generated.features,
+          source: LexicalFormSource.GENERATED,
+        })
+      }
+    }
+
+    await prisma.lexicalForm.deleteMany({
+      where: {
+        lexicalEntryId,
+        id: { notIn: forms.map((form) => form.id) },
+      },
+    })
+    for (const form of forms) {
       await prisma.lexicalForm.upsert({
-        where: { id: `form.fi.reader.${entry.lemma}.${index + 1}` },
+        where: { id: form.id },
         update: {
           surface: form.surface,
           features: form.features,
-          source: LexicalFormSource.CURATED,
+          source: form.source,
         },
         create: {
-          id: `form.fi.reader.${entry.lemma}.${index + 1}`,
+          id: form.id,
           lexicalEntryId,
           surface: form.surface,
           features: form.features,
-          source: LexicalFormSource.CURATED,
+          source: form.source,
         },
       })
     }
@@ -380,6 +431,52 @@ async function seedReaderDictionary() {
       },
     })
   }
+}
+
+const readerDictionaryFormFeatures = [
+  'case',
+  'comparison',
+  'form',
+  'mood',
+  'number',
+  'person',
+  'tense',
+  'voice',
+] as const
+
+function isSameReaderDictionaryForm(
+  left: Record<string, string>,
+  right: Record<string, string>,
+  partOfSpeech: string,
+) {
+  const keys =
+    partOfSpeech === 'verb'
+      ? readerDictionaryFormFeatures
+      : readerDictionaryFormFeatures.filter((key) =>
+          ['case', 'comparison', 'form', 'number'].includes(key),
+        )
+  return keys.every(
+    (key) =>
+      normalizeReaderDictionaryFeature(key, left[key], partOfSpeech) ===
+      normalizeReaderDictionaryFeature(key, right[key], partOfSpeech),
+  )
+}
+
+function normalizeReaderDictionaryFeature(
+  key: (typeof readerDictionaryFormFeatures)[number],
+  value: string | undefined,
+  partOfSpeech: string,
+) {
+  if (key === 'comparison' && partOfSpeech === 'adjective') {
+    return value ?? 'positive'
+  }
+  if (key === 'voice' && partOfSpeech === 'verb') return value ?? 'active'
+  if (key === 'mood' && partOfSpeech === 'verb') return value ?? 'indicative'
+  if (key === 'tense') {
+    if (value === 'present_simple') return 'present'
+    if (value === 'past_imperfective') return 'imperfect'
+  }
+  return value ?? null
 }
 
 async function seedExercise() {

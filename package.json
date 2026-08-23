@@ -18,6 +18,7 @@
     "e2e": "playwright test",
     "e2e:local": "pnpm dev:setup && pnpm build && pnpm e2e",
     "content:validate": "pnpm --filter @language/database content:validate",
+    "content:generate:paradigms": "tsx scripts/generate-finnish-paradigms.ts",
     "content:audit:mvp": "pnpm --filter @language/database content:audit:mvp",
     "publication:validate": "pnpm --filter @language/database publication:validate",
     "api:smoke:production": "node scripts/api-production-smoke.mjs",
