@@ -8,7 +8,6 @@ import {
 import { preparedTexts } from '../../../content/courses/ru-fi/texts/fi.olla.introductions.js'
 
 const MINIMUM_EXPLANATION_SECTIONS = 5
-const MINIMUM_QUICK_CHECKS = 3
 const MINIMUM_GOLDEN_EXERCISES = 5
 const MINIMUM_GRAMMAR_EXERCISES = 30
 const MINIMUM_DISTINCT_SLOT_SHAPES = 5
@@ -67,10 +66,6 @@ export function assertMvpContentReadiness(): MvpContentReadinessReport {
 function inspectLesson(lesson: CourseLessonSeed): MvpLessonReadiness {
   const issues: string[] = []
   const screens = lesson.content.explanationScreens
-  const quickCheckCount = screens.reduce(
-    (total, screen) => total + (screen.quickChecks?.length ?? 0),
-    0,
-  )
   const searchableExplanation = screens
     .flatMap((screen) => [
       screen.title.ru,
@@ -122,9 +117,6 @@ function inspectLesson(lesson: CourseLessonSeed): MvpLessonReadiness {
   }
   if (!screens.some((screen) => screen.table)) {
     issues.push('explanation has no forms table')
-  }
-  if (quickCheckCount < MINIMUM_QUICK_CHECKS) {
-    issues.push(`expected at least ${MINIMUM_QUICK_CHECKS} quick checks`)
   }
   if (!/ошиб/u.test(searchableExplanation)) {
     issues.push('explanation does not cover typical errors')

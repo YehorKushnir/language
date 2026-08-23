@@ -1,6 +1,5 @@
 import type {
   LessonExplanationExample,
-  LessonExplanationQuickCheck,
   LessonExplanationScreen,
   LessonExplanationTable,
   LessonPart,
@@ -125,14 +124,6 @@ function toExplanationScreen(value: unknown): LessonExplanationScreen | null {
           (example): example is LessonExplanationExample => example !== null,
         )
     : []
-  const quickChecks = Array.isArray(candidate.quickChecks)
-    ? candidate.quickChecks
-        .map(toExplanationQuickCheck)
-        .filter(
-          (quickCheck): quickCheck is LessonExplanationQuickCheck =>
-            quickCheck !== null,
-        )
-    : []
   const callout = toNullableLocalizedText(candidate.callout)
 
   return {
@@ -144,28 +135,7 @@ function toExplanationScreen(value: unknown): LessonExplanationScreen | null {
       : [],
     ...(table ? { table } : {}),
     ...(examples.length > 0 ? { examples } : {}),
-    ...(quickChecks.length > 0 ? { quickChecks } : {}),
     ...(callout ? { callout } : {}),
-  }
-}
-
-function toExplanationQuickCheck(
-  value: unknown,
-): LessonExplanationQuickCheck | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return null
-  }
-
-  const candidate = value as Record<string, unknown>
-  if (typeof candidate.answer !== 'string') {
-    return null
-  }
-
-  const explanation = toNullableLocalizedText(candidate.explanation)
-  return {
-    prompt: toLocalizedText(candidate.prompt),
-    answer: candidate.answer,
-    ...(explanation ? { explanation } : {}),
   }
 }
 
@@ -197,10 +167,8 @@ function toExplanationExample(value: unknown): LessonExplanationExample | null {
     return null
   }
 
-  const note = toNullableLocalizedText(candidate.note)
   return {
     target: candidate.target,
     source: toLocalizedText(candidate.source),
-    ...(note ? { note } : {}),
   }
 }

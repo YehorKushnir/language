@@ -118,18 +118,11 @@ export type LessonPart = 'explanation' | 'vocabulary' | 'practice'
 export interface LessonExplanationExample {
   target: string
   source: LocalizedText
-  note?: LocalizedText
 }
 
 export interface LessonExplanationTable {
   headers: LocalizedText[]
   rows: LocalizedText[][]
-}
-
-export interface LessonExplanationQuickCheck {
-  prompt: LocalizedText
-  answer: string
-  explanation?: LocalizedText
 }
 
 export interface LessonExplanationScreen {
@@ -139,7 +132,6 @@ export interface LessonExplanationScreen {
   paragraphs: LocalizedText[]
   table?: LessonExplanationTable
   examples?: LessonExplanationExample[]
-  quickChecks?: LessonExplanationQuickCheck[]
   callout?: LocalizedText
 }
 

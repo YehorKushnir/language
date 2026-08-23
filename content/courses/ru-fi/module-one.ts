@@ -119,7 +119,7 @@ type PartOfSpeech = LessonVocabularySeed['partOfSpeech']
 
 export interface CourseExplanationScreenSeed {
   id: string
-  eyebrow: { ru: string }
+  eyebrow?: { ru: string }
   title: { ru: string }
   paragraphs: readonly { ru: string }[]
   examples: readonly {

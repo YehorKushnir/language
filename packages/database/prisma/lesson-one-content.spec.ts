@@ -22,7 +22,7 @@ describe('lesson one content', () => {
     expect(validateLessonOneContent()).toEqual([])
     expect(lessonExercises).toHaveLength(60)
     expect(lessonVocabulary).toHaveLength(11)
-    expect(lessonContent.explanationScreens).toHaveLength(6)
+    expect(lessonContent.explanationScreens).toHaveLength(5)
   })
 
   it('keeps stable ordering for the original five exercises', () => {

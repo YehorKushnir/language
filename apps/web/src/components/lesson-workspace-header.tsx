@@ -80,7 +80,7 @@ export function LessonWorkspaceHeader({
               className={cn(
                 'inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-[color,background-color,transform] duration-150 active:scale-[0.98]',
                 active
-                  ? 'bg-background text-foreground shadow-xs'
+                  ? 'bg-accent text-foreground shadow-xs'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
             >

@@ -48,17 +48,38 @@ export const lessonContent = {
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
-      id: 'personal-pronouns',
-      eyebrow: { ru: 'Шаг 1 из 6' },
-      title: { ru: 'Личные местоимения' },
+      id: 'pronouns-and-olla',
+      title: { ru: 'Личные местоимения и формы olla' },
       paragraphs: [
         {
-          ru: 'В финском местоимение hän означает и «он», и «она». Род становится понятен из контекста.',
+          ru: 'Minä означает «я», а olen — форма глагола olla для minä. Поэтому Minä olen opiskelija значит «Я студент».',
         },
         {
-          ru: 'Глагол olla — «быть». В настоящем времени его форма меняется вместе с лицом.',
+          ru: 'Olla означает «быть». Его форма меняется вместе с лицом: minä olen, sinä olet, hän on и так далее. Таблица выше показывает всю систему настоящего времени.',
+        },
+        {
+          ru: 'Hän означает и «он», и «она»: род становится понятен из контекста. He означает «они».',
+        },
+        {
+          ru: 'В первом и втором лице форма глагола уже указывает на действующее лицо, поэтому местоимение часто опускают: Olen täällä значит «Я здесь», а Olemme täällä — «Мы здесь».',
         },
       ],
+      table: {
+        headers: [
+          { ru: 'Кто?' },
+          { ru: 'Местоимение' },
+          { ru: 'Olla' },
+          { ru: 'Вместе' },
+        ],
+        rows: [
+          [{ ru: 'я' }, { ru: 'minä' }, { ru: 'olen' }, { ru: 'minä olen' }],
+          [{ ru: 'ты' }, { ru: 'sinä' }, { ru: 'olet' }, { ru: 'sinä olet' }],
+          [{ ru: 'он / она' }, { ru: 'hän' }, { ru: 'on' }, { ru: 'hän on' }],
+          [{ ru: 'мы' }, { ru: 'me' }, { ru: 'olemme' }, { ru: 'me olemme' }],
+          [{ ru: 'вы' }, { ru: 'te' }, { ru: 'olette' }, { ru: 'te olette' }],
+          [{ ru: 'они' }, { ru: 'he' }, { ru: 'ovat' }, { ru: 'he ovat' }],
+        ],
+      },
       examples: [
         { target: 'Minä olen opiskelija.', source: { ru: 'Я студент.' } },
         { target: 'Sinä olet lääkäri.', source: { ru: 'Ты врач.' } },
@@ -66,52 +87,18 @@ export const lessonContent = {
           target: 'Hän on opettaja.',
           source: { ru: 'Он или она — преподаватель.' },
         },
-      ],
-    },
-    {
-      id: 'olla-forms',
-      eyebrow: { ru: 'Шаг 2 из 6' },
-      title: { ru: 'Шесть форм olla' },
-      paragraphs: [
-        {
-          ru: 'Запомни пары местоимение + глагол. У hän и he формы отличаются от остальных.',
-        },
-        {
-          ru: 'В первом и втором лице местоимение часто можно опустить: olen готово сообщить, что речь идёт о minä.',
-        },
-      ],
-      table: {
-        headers: [{ ru: 'Местоимение' }, { ru: 'Olla' }, { ru: 'Перевод' }],
-        rows: [
-          [{ ru: 'minä' }, { ru: 'olen' }, { ru: 'я есть' }],
-          [{ ru: 'sinä' }, { ru: 'olet' }, { ru: 'ты есть' }],
-          [{ ru: 'hän' }, { ru: 'on' }, { ru: 'он / она есть' }],
-          [{ ru: 'me' }, { ru: 'olemme' }, { ru: 'мы есть' }],
-          [{ ru: 'te' }, { ru: 'olette' }, { ru: 'вы есть' }],
-          [{ ru: 'he' }, { ru: 'ovat' }, { ru: 'они есть' }],
-        ],
-      },
-      examples: [
         {
           target: 'Olemme täällä.',
           source: { ru: 'Мы здесь.' },
           note: { ru: 'Me можно опустить: форма olemme уже указывает лицо.' },
         },
-        { target: 'He ovat kotona.', source: { ru: 'Они дома.' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Вставь форму olla: Me ___ täällä.' },
-          answer: 'olemme',
-          explanation: {
-            ru: 'Подлежащее me требует формы первого лица множественного числа olemme.',
-          },
-        },
-      ],
+      callout: {
+        ru: 'Не используй одну форму olla со всеми местоимениями. Сравни: minä olen, hän on, he ovat.',
+      },
     },
     {
       id: 'predicative-complements',
-      eyebrow: { ru: 'Шаг 3 из 6' },
       title: { ru: 'Что ставить после olla' },
       paragraphs: [
         {
@@ -132,7 +119,6 @@ export const lessonContent = {
     },
     {
       id: 'olla-negative',
-      eyebrow: { ru: 'Шаг 4 из 6' },
       title: { ru: 'Как построить отрицание' },
       paragraphs: [
         {
@@ -161,21 +147,9 @@ export const lessonContent = {
         { target: 'En ole väsynyt.', source: { ru: 'Я не устал.' } },
         { target: 'He eivät ole kotona.', source: { ru: 'Они не дома.' } },
       ],
-      quickChecks: [
-        {
-          prompt: {
-            ru: 'Вставь отрицательный глагол: Hän ___ ole opiskelija.',
-          },
-          answer: 'ei',
-          explanation: {
-            ru: 'С hän используется отрицательный глагол ei, а olla принимает форму ole.',
-          },
-        },
-      ],
     },
     {
       id: 'olla-questions',
-      eyebrow: { ru: 'Шаг 5 из 6' },
       title: { ru: 'Общие вопросы с -ko/-kö' },
       paragraphs: [
         {
@@ -196,21 +170,9 @@ export const lessonContent = {
         { target: 'Onko hän lääkäri?', source: { ru: 'Он врач?' } },
         { target: 'Ovatko he täällä?', source: { ru: 'Они здесь?' } },
       ],
-      quickChecks: [
-        {
-          prompt: {
-            ru: 'Поставь вопросительную форму первой: ___ hän lääkäri?',
-          },
-          answer: 'Onko',
-          explanation: {
-            ru: 'В общем вопросе личная форма on получает частицу -ko и переходит в начало.',
-          },
-        },
-      ],
     },
     {
       id: 'spoken-olla-and-errors',
-      eyebrow: { ru: 'Шаг 6 из 6' },
       title: { ru: 'Разговорные формы и типичные ошибки' },
       paragraphs: [
         {

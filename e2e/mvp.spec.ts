@@ -115,7 +115,59 @@ test('learner can move through the first lesson with keyboard controls', async (
   ).toBeVisible()
   expect(Date.now() - explanationNavigationStartedAt).toBeLessThan(1_500)
   await expect(page.locator('main')).toHaveCount(1)
+
+  const explanationArticle = page.getByRole('article')
+  await expect(
+    explanationArticle.getByRole('heading', {
+      level: 2,
+      name: 'Личные местоимения и формы olla',
+    }),
+  ).toBeVisible()
+  await expect(
+    explanationArticle.getByRole('table', {
+      name: 'Личные местоимения и формы olla',
+    }),
+  ).toBeVisible()
+  const firstSectionContent = await explanationArticle
+    .locator('section')
+    .first()
+    .locator('table, p')
+    .allTextContents()
+  expect(firstSectionContent[0]).toContain('Кто?МестоимениеOllaВместе')
+  expect(firstSectionContent[1]).toContain('Minä означает «я»')
+  const firstExamples = explanationArticle
+    .getByRole('region', { name: 'Примеры' })
+    .first()
+  await expect(firstExamples).toBeVisible()
+  await expect(
+    explanationArticle.locator('blockquote[lang="fi"]').first(),
+  ).toBeVisible()
+  await expect(firstExamples.getByText('Финский')).toHaveCount(0)
+  await expect(firstExamples.getByText('Перевод')).toHaveCount(0)
+  await expect(firstExamples.getByText(/Me можно опустить/u)).toHaveCount(0)
+  await expect(explanationArticle.getByText('Главное')).toHaveCount(0)
+  await expect(explanationArticle.getByText('Проверь себя')).toHaveCount(0)
+  await expect(explanationArticle.getByText(/Шаг \d/u)).toHaveCount(0)
+  const importantNote = explanationArticle
+    .getByRole('complementary', { name: 'Важно' })
+    .first()
+  await expect(importantNote).toBeVisible()
+  await expect(importantNote.getByText('Важно')).toHaveCount(0)
+  await expect(importantNote.locator('svg[aria-hidden="true"]')).toBeVisible()
   await expectAccessible(page)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  expect(
+    await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
+    ),
+  ).toBe(true)
+  await expect(
+    explanationArticle.locator('blockquote[lang="fi"]').first(),
+  ).toBeVisible()
+  await page.setViewportSize({ width: 1280, height: 720 })
 
   await page.getByRole('link', { name: 'Слова', exact: true }).click()
   await expect(page).toHaveURL(/\/lessons\/fi\.olla\.basics\/vocabulary$/u)
