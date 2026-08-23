@@ -11,10 +11,15 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 
 import { toLocalizedText } from '../common/content-mapper'
 import { PrismaService } from '../database/prisma.service'
+import { ExerciseGenerationService } from '../generation/exercise-generation.service'
 
 @Injectable()
 export class ReviewQueueService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ExerciseGenerationService)
+    private readonly generation: ExerciseGenerationService,
+  ) {}
 
   async getQueue(
     userId: string,
@@ -114,6 +119,17 @@ export class ReviewQueueService {
     const dueItemIds = dueMemories.map((memory) => memory.itemId)
     if (dueItemIds.length === 0) {
       return { dueCount: 0, exercise: null }
+    }
+
+    const generatedExercise = await this.generation.getOrCreateReviewExercise(
+      userId,
+      routeVersionId,
+      sourceLanguage,
+      dueItemIds,
+      excludedExerciseIds,
+    )
+    if (generatedExercise) {
+      return { dueCount: dueItemIds.length, exercise: generatedExercise }
     }
 
     const candidates = await this.prisma.exercise.findMany({

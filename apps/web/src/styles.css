@@ -86,6 +86,12 @@
     min-height: 100vh;
   }
 
+  html,
+  #root {
+    min-height: 100%;
+    background: var(--background);
+  }
+
   button:not(:disabled),
   [role='button']:not(:disabled) {
     cursor: pointer;
@@ -93,13 +99,57 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  ::view-transition-group(root) {
-    animation-duration: 240ms;
-    animation-timing-function: ease-out;
+  [data-app-header] {
+    view-transition-name: app-header;
+  }
+
+  [data-app-page] {
+    view-transition-name: app-page;
+  }
+
+  ::view-transition-old(root) {
+    animation: none;
+    opacity: 0;
+  }
+
+  ::view-transition-new(root) {
+    animation: none;
+    opacity: 1;
+  }
+
+  ::view-transition-old(app-header),
+  ::view-transition-old(app-page) {
+    animation: none;
+    opacity: 0;
+  }
+
+  ::view-transition-new(app-header) {
+    animation: none;
+    opacity: 1;
+  }
+
+  ::view-transition-new(app-page) {
+    animation: app-page-enter 140ms ease-out both;
   }
 
   ::view-transition-group(active-lesson-title) {
-    animation-duration: 420ms;
+    animation-duration: 300ms;
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  ::view-transition-old(active-lesson-title) {
+    animation: none;
+    opacity: 1;
+  }
+
+  ::view-transition-new(active-lesson-title) {
+    animation: none;
+    opacity: 0;
+  }
+
+  @keyframes app-page-enter {
+    from {
+      opacity: 0.94;
+    }
   }
 }

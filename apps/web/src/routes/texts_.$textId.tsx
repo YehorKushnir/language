@@ -19,7 +19,9 @@ import {
   reviewQueueQuery,
   userVocabularyQuery,
 } from '@/api/queries'
+import { preloadCourseRoute } from '@/api/route-preload'
 import { LearningPageHeader } from '@/components/learning-page-header'
+import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -27,6 +29,12 @@ import { localizedText } from '@/lib/localized-text'
 import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/texts_/$textId')({
+  loader: ({ context, params }) =>
+    preloadCourseRoute(context.queryClient, (routeVersionId, queryClient) =>
+      queryClient.ensureQueryData(
+        preparedTextQuery(routeVersionId, params.textId),
+      ),
+    ),
   component: PreparedTextPage,
 })
 
@@ -130,7 +138,7 @@ function PreparedTextPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-5 sm:py-10">
+    <PageShell>
       <LearningPageHeader
         eyebrow={
           <Link
@@ -188,7 +196,7 @@ function PreparedTextPage() {
           onAdd={(itemId) => addWord.mutate(itemId)}
         />
       </div>
-    </main>
+    </PageShell>
   )
 }
 
@@ -320,8 +328,8 @@ function PageState({
   message?: string
 }) {
   return (
-    <main className="mx-auto w-full max-w-4xl px-5 py-10">
+    <PageShell>
       {loading ? <PageLoading /> : <QueryError message={message} />}
-    </main>
+    </PageShell>
   )
 }

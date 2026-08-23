@@ -83,6 +83,7 @@ const exerciseSlotSchema = z.object({
   role: slotRoleSchema,
   accepted: z.array(z.string().trim().min(1)).min(1),
   itemIds: z.array(identifierSchema).min(1),
+  optional: z.boolean().optional(),
 })
 
 export const preparedExerciseSchema = z.object({

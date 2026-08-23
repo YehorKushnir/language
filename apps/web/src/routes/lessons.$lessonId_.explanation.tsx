@@ -5,6 +5,7 @@ import { CheckIcon, LightbulbIcon, LoaderCircleIcon } from 'lucide-react'
 import { completeLessonPart } from '@/api/language-api'
 import { courseProgressQuery, courseQuery, lessonQuery } from '@/api/queries'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
+import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,11 @@ import {
 import { localizedText } from '@/lib/localized-text'
 
 export const Route = createFileRoute('/lessons/$lessonId_/explanation')({
+  loader: ({ context, params }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(courseQuery),
+      context.queryClient.ensureQueryData(lessonQuery(params.lessonId)),
+    ]),
   component: LessonExplanationPage,
 })
 
@@ -59,7 +65,7 @@ function LessonExplanationPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-5 sm:py-10">
+    <PageShell>
       <LessonWorkspaceHeader
         lessonId={lessonId}
         lessonTitle={localizedText(lesson.data.title)}
@@ -67,7 +73,7 @@ function LessonExplanationPage() {
         activePart="explanation"
       />
 
-      <article className="mt-7 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <article className="mt-7">
         <div className="divide-y">
           {screens.map((screen, screenIndex) => (
             <section key={screen.id} className="py-7 first:pt-6">
@@ -177,7 +183,7 @@ function LessonExplanationPage() {
           {completed ? 'Прочитано' : 'Отметить прочитанным'}
         </Button>
       </footer>
-    </main>
+    </PageShell>
   )
 }
 
@@ -189,8 +195,8 @@ function PartPageState({
   message?: string
 }) {
   return (
-    <main className="mx-auto w-full max-w-5xl px-5 py-10">
+    <PageShell>
       {loading ? <PageLoading /> : <QueryError message={message} />}
-    </main>
+    </PageShell>
   )
 }

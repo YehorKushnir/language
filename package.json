@@ -16,6 +16,8 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "content:validate": "pnpm --filter @language/database content:validate",
+    "publication:validate": "pnpm --filter @language/database publication:validate",
+    "api:smoke:production": "node scripts/api-production-smoke.mjs",
     "db:validate": "pnpm --filter @language/database db:validate",
     "db:start": "node scripts/postgres.mjs start",
     "db:stop": "node scripts/postgres.mjs stop",

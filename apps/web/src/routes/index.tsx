@@ -3,6 +3,8 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowRightIcon, BookOpenIcon, CalendarClockIcon } from 'lucide-react'
 
 import { courseProgressQuery, courseQuery } from '@/api/queries'
+import { preloadCourseRoute } from '@/api/route-preload'
+import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -10,6 +12,10 @@ import { authClient } from '@/lib/auth-client'
 import { localizedText } from '@/lib/localized-text'
 
 export const Route = createFileRoute('/')({
+  loader: ({ context }) =>
+    preloadCourseRoute(context.queryClient, (routeVersionId, queryClient) =>
+      queryClient.ensureQueryData(courseProgressQuery(routeVersionId)),
+    ),
   component: HomePage,
 })
 
@@ -30,7 +36,7 @@ function HomePage() {
   const completedLessons = progress.data?.completedLessons ?? 0
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-5 sm:py-14">
+    <PageShell className="py-10 sm:py-14">
       <section className="grid gap-8 border-b pb-9 sm:grid-cols-[1fr_auto] sm:items-end">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -48,7 +54,7 @@ function HomePage() {
           {session.data && currentLessonId ? (
             <Button asChild size="sm">
               <Link
-                to="/lessons/$lessonId"
+                to="/lessons/$lessonId/explanation"
                 params={{ lessonId: currentLessonId }}
               >
                 Продолжить <ArrowRightIcon />
@@ -106,7 +112,7 @@ function HomePage() {
           </span>
         </Link>
       </section>
-    </main>
+    </PageShell>
   )
 }
 
@@ -118,8 +124,8 @@ function PageState({
   message?: string
 }) {
   return (
-    <main className="mx-auto w-full max-w-4xl px-5 py-10">
+    <PageShell>
       {loading ? <PageLoading /> : <QueryError message={message} />}
-    </main>
+    </PageShell>
   )
 }

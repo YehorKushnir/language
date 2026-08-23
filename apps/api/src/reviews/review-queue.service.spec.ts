@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PrismaService } from '../database/prisma.service'
+import { ExerciseGenerationService } from '../generation/exercise-generation.service'
 import { ReviewQueueService } from './review-queue.service'
 
 describe('ReviewQueueService', () => {
@@ -15,11 +16,16 @@ describe('ReviewQueueService', () => {
     },
     exercise: { findMany: vi.fn() },
   }
-  const service = new ReviewQueueService(prisma as unknown as PrismaService)
+  const generation = { getOrCreateReviewExercise: vi.fn() }
+  const service = new ReviewQueueService(
+    prisma as unknown as PrismaService,
+    generation as unknown as ExerciseGenerationService,
+  )
 
   beforeEach(() => {
     vi.clearAllMocks()
     prisma.courseRouteVersion.findUnique.mockResolvedValue({ id: 'route.1' })
+    generation.getOrCreateReviewExercise.mockResolvedValue(null)
   })
 
   it('returns no exercise when nothing is due', async () => {
@@ -74,6 +80,26 @@ describe('ReviewQueueService', () => {
         }),
       }),
     )
+  })
+
+  it('prefers a generated exercise over the prepared fallback', async () => {
+    prisma.userMemory.findMany.mockResolvedValue([{ itemId: 'grammar.early' }])
+    generation.getOrCreateReviewExercise.mockResolvedValue({
+      id: 'generated.1',
+      lessonId: 'lesson.1',
+      sourceLanguage: 'ru',
+      targetLanguage: 'fi',
+      prompt: 'Сгенерированное задание',
+      reviewItemIds: ['grammar.early'],
+    })
+
+    await expect(
+      service.getNext('user.1', 'route.1', 'ru', []),
+    ).resolves.toEqual({
+      dueCount: 1,
+      exercise: expect.objectContaining({ id: 'generated.1' }),
+    })
+    expect(prisma.exercise.findMany).not.toHaveBeenCalled()
   })
 
   it('does not expose a draft or unknown route', async () => {

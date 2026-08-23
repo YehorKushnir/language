@@ -11,6 +11,22 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://language:language@localhost:5432/language
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: language
+          POSTGRES_USER: language
+          POSTGRES_PASSWORD: language
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U language -d language"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -26,4 +42,10 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm content:validate
+      - run: pnpm db:migrate:deploy
+      - run: pnpm db:seed
+        env:
+          NODE_ENV: production
+      - run: pnpm publication:validate
       - run: pnpm build
+      - run: pnpm api:smoke:production

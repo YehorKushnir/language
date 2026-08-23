@@ -8,11 +8,7 @@ import {
   LessonItemRole,
   Prisma,
 } from '../src/index.js'
-import {
-  lessonContent,
-  lessonExercises,
-  lessonVocabulary,
-} from '../../../content/courses/ru-fi/lessons/fi.olla.basics.js'
+import { moduleOneLessons } from '../../../content/courses/ru-fi/module-one.js'
 import { preparedTexts } from '../../../content/courses/ru-fi/texts/fi.olla.introductions.js'
 import {
   validateCourseContent,
@@ -25,33 +21,6 @@ const COURSE_ID = 'course.ru-fi'
 const ROUTE_VERSION_ID = 'course.ru-fi@1'
 const LESSON_ID = 'fi.olla.basics'
 const LOCAL_USER_ID = 'user.local'
-
-const skills = [
-  {
-    id: 'grammar.fi.olla.affirmative',
-    kind: KnowledgeItemKind.GRAMMAR,
-    name: { ru: 'Утвердительные предложения с olla' },
-    description: { ru: 'Личные формы olla в настоящем времени.' },
-  },
-  {
-    id: 'grammar.fi.olla.negative',
-    kind: KnowledgeItemKind.SPECIFIC_SKILL,
-    name: { ru: 'Отрицание с olla' },
-    description: { ru: 'Согласование отрицательного глагола с лицом.' },
-  },
-  {
-    id: 'grammar.fi.olla.question',
-    kind: KnowledgeItemKind.SPECIFIC_SKILL,
-    name: { ru: 'Вопросы с olla' },
-    description: { ru: 'Общие вопросы с частицей -ko/-kö.' },
-  },
-  {
-    id: 'register.fi.puhekieli.olla',
-    kind: KnowledgeItemKind.REGISTER,
-    name: { ru: 'Разговорные формы olla' },
-    description: { ru: 'Распознавание распространённых форм puhekieli.' },
-  },
-] as const
 
 async function seedCourse() {
   await prisma.course.upsert({
@@ -71,23 +40,25 @@ async function seedCourse() {
     },
   })
 
-  await prisma.lesson.upsert({
-    where: { id: LESSON_ID },
-    update: {
-      title: { ru: 'Личные местоимения и olla' },
-      summary: { ru: 'Утверждение, отрицание и общий вопрос.' },
-      content: lessonContent,
-      status: ContentStatus.CURATED,
-    },
-    create: {
-      id: LESSON_ID,
-      courseId: COURSE_ID,
-      title: { ru: 'Личные местоимения и olla' },
-      summary: { ru: 'Утверждение, отрицание и общий вопрос.' },
-      content: lessonContent,
-      status: ContentStatus.CURATED,
-    },
-  })
+  for (const lesson of moduleOneLessons) {
+    await prisma.lesson.upsert({
+      where: { id: lesson.id },
+      update: {
+        title: lesson.title,
+        summary: lesson.summary,
+        content: lesson.content as unknown as Prisma.InputJsonValue,
+        status: ContentStatus.CURATED,
+      },
+      create: {
+        id: lesson.id,
+        courseId: COURSE_ID,
+        title: lesson.title,
+        summary: lesson.summary,
+        content: lesson.content as unknown as Prisma.InputJsonValue,
+        status: ContentStatus.CURATED,
+      },
+    })
+  }
 
   await prisma.courseRouteVersion.upsert({
     where: { id: ROUTE_VERSION_ID },
@@ -104,102 +75,100 @@ async function seedCourse() {
     },
   })
 
-  await prisma.courseRouteEntry.upsert({
-    where: {
-      routeVersionId_lessonId: {
-        routeVersionId: ROUTE_VERSION_ID,
-        lessonId: LESSON_ID,
+  for (const [index, lesson] of moduleOneLessons.entries()) {
+    await prisma.courseRouteEntry.upsert({
+      where: {
+        routeVersionId_lessonId: {
+          routeVersionId: ROUTE_VERSION_ID,
+          lessonId: lesson.id,
+        },
       },
-    },
-    update: {
-      modulePosition: 1,
-      lessonPosition: 1,
-    },
-    create: {
-      routeVersionId: ROUTE_VERSION_ID,
-      lessonId: LESSON_ID,
-      modulePosition: 1,
-      lessonPosition: 1,
-    },
-  })
+      update: {
+        modulePosition: lesson.modulePosition,
+        lessonPosition: lesson.lessonPosition,
+      },
+      create: {
+        routeVersionId: ROUTE_VERSION_ID,
+        lessonId: lesson.id,
+        modulePosition: lesson.modulePosition,
+        lessonPosition: lesson.lessonPosition,
+      },
+    })
+
+    const prerequisite = moduleOneLessons[index - 1]
+    if (prerequisite) {
+      await prisma.courseRouteDependency.upsert({
+        where: {
+          routeVersionId_lessonId_prerequisiteLessonId: {
+            routeVersionId: ROUTE_VERSION_ID,
+            lessonId: lesson.id,
+            prerequisiteLessonId: prerequisite.id,
+          },
+        },
+        update: {},
+        create: {
+          routeVersionId: ROUTE_VERSION_ID,
+          lessonId: lesson.id,
+          prerequisiteLessonId: prerequisite.id,
+        },
+      })
+    }
+  }
 }
 
 async function seedKnowledge() {
-  for (const [position, skill] of skills.entries()) {
-    await prisma.knowledgeItem.upsert({
-      where: { id: skill.id },
-      update: {
-        kind: skill.kind,
-        languageCode: 'fi',
-        skill: {
-          upsert: {
-            create: {
-              name: skill.name,
-              description: skill.description,
-            },
-            update: {
-              name: skill.name,
-              description: skill.description,
+  for (const lesson of moduleOneLessons) {
+    for (const [position, skill] of lesson.skills.entries()) {
+      const kind = KnowledgeItemKind[skill.kind]
+      const role = LessonItemRole[skill.role ?? 'INTRODUCED']
+      await prisma.knowledgeItem.upsert({
+        where: { id: skill.id },
+        update: {
+          kind,
+          languageCode: 'fi',
+          skill: {
+            upsert: {
+              create: { name: skill.name, description: skill.description },
+              update: { name: skill.name, description: skill.description },
             },
           },
         },
-      },
-      create: {
-        id: skill.id,
-        kind: skill.kind,
-        languageCode: 'fi',
-        skill: {
-          create: {
-            name: skill.name,
-            description: skill.description,
+        create: {
+          id: skill.id,
+          kind,
+          languageCode: 'fi',
+          skill: {
+            create: { name: skill.name, description: skill.description },
           },
         },
-      },
-    })
+      })
 
-    await prisma.lessonKnowledgeItem.upsert({
-      where: {
-        lessonId_itemId: {
-          lessonId: LESSON_ID,
+      await prisma.lessonKnowledgeItem.upsert({
+        where: {
+          lessonId_itemId: { lessonId: lesson.id, itemId: skill.id },
+        },
+        update: { role, position: position + 1 },
+        create: {
+          lessonId: lesson.id,
           itemId: skill.id,
+          role,
+          position: position + 1,
         },
-      },
-      update: {
-        role:
-          skill.kind === KnowledgeItemKind.REGISTER
-            ? LessonItemRole.RECOGNITION
-            : LessonItemRole.INTRODUCED,
-        position: position + 1,
-      },
-      create: {
-        lessonId: LESSON_ID,
-        itemId: skill.id,
-        role:
-          skill.kind === KnowledgeItemKind.REGISTER
-            ? LessonItemRole.RECOGNITION
-            : LessonItemRole.INTRODUCED,
-        position: position + 1,
-      },
-    })
-  }
+      })
 
-  for (const skillId of [
-    'grammar.fi.olla.negative',
-    'grammar.fi.olla.question',
-  ]) {
-    await prisma.skillDependency.upsert({
-      where: {
-        skillId_prerequisiteSkillId: {
-          skillId,
-          prerequisiteSkillId: 'grammar.fi.olla.affirmative',
-        },
-      },
-      update: {},
-      create: {
-        skillId,
-        prerequisiteSkillId: 'grammar.fi.olla.affirmative',
-      },
-    })
+      for (const prerequisiteSkillId of skill.prerequisiteSkillIds) {
+        await prisma.skillDependency.upsert({
+          where: {
+            skillId_prerequisiteSkillId: {
+              skillId: skill.id,
+              prerequisiteSkillId,
+            },
+          },
+          update: {},
+          create: { skillId: skill.id, prerequisiteSkillId },
+        })
+      }
+    }
   }
 }
 
@@ -216,185 +185,230 @@ async function seedVocabulary() {
     },
   })
 
-  for (const [index, vocabulary] of lessonVocabulary.entries()) {
-    await prisma.concept.upsert({
-      where: { id: vocabulary.conceptId },
-      update: { semanticTypes: vocabulary.semanticTypes },
-      create: {
-        id: vocabulary.conceptId,
-        semanticTypes: vocabulary.semanticTypes,
-      },
-    })
-
-    await prisma.lexicalEntry.upsert({
-      where: { id: vocabulary.lexicalEntryId },
-      update: {
-        lemma: vocabulary.lemma,
-        partOfSpeech: vocabulary.partOfSpeech,
-        status: ContentStatus.CURATED,
-      },
-      create: {
-        id: vocabulary.lexicalEntryId,
-        languageCode: 'fi',
-        lemma: vocabulary.lemma,
-        partOfSpeech: vocabulary.partOfSpeech,
-        status: ContentStatus.CURATED,
-      },
-    })
-
-    for (const form of vocabulary.forms) {
-      await prisma.lexicalForm.upsert({
-        where: { id: form.id },
-        update: {
-          surface: form.surface,
-          features: form.features,
-          source: LexicalFormSource.CURATED,
-        },
+  for (const lesson of moduleOneLessons) {
+    for (const [index, vocabulary] of lesson.vocabulary.entries()) {
+      await prisma.concept.upsert({
+        where: { id: vocabulary.conceptId },
+        update: { semanticTypes: vocabulary.semanticTypes },
         create: {
-          id: form.id,
-          lexicalEntryId: vocabulary.lexicalEntryId,
-          surface: form.surface,
-          features: form.features,
-          source: LexicalFormSource.CURATED,
+          id: vocabulary.conceptId,
+          semanticTypes: vocabulary.semanticTypes,
         },
       })
-    }
 
-    await prisma.knowledgeItem.upsert({
-      where: { id: vocabulary.itemId },
-      update: {
-        kind: KnowledgeItemKind.LEXICAL_SENSE,
-        languageCode: 'fi',
-        lexicalSense: {
-          upsert: {
+      await prisma.lexicalEntry.upsert({
+        where: { id: vocabulary.lexicalEntryId },
+        update: {
+          lemma: vocabulary.lemma,
+          partOfSpeech: vocabulary.partOfSpeech,
+          status: ContentStatus.CURATED,
+        },
+        create: {
+          id: vocabulary.lexicalEntryId,
+          languageCode: 'fi',
+          lemma: vocabulary.lemma,
+          partOfSpeech: vocabulary.partOfSpeech,
+          status: ContentStatus.CURATED,
+        },
+      })
+
+      for (const form of vocabulary.forms) {
+        await prisma.lexicalForm.upsert({
+          where: { id: form.id },
+          update: {
+            surface: form.surface,
+            features: form.features,
+            source: LexicalFormSource.CURATED,
+          },
+          create: {
+            id: form.id,
+            lexicalEntryId: vocabulary.lexicalEntryId,
+            surface: form.surface,
+            features: form.features,
+            source: LexicalFormSource.CURATED,
+          },
+        })
+      }
+
+      await prisma.knowledgeItem.upsert({
+        where: { id: vocabulary.itemId },
+        update: {
+          kind: KnowledgeItemKind.LEXICAL_SENSE,
+          languageCode: 'fi',
+          lexicalSense: {
+            upsert: {
+              create: {
+                lexicalEntry: { connect: { id: vocabulary.lexicalEntryId } },
+                concept: { connect: { id: vocabulary.conceptId } },
+                gloss: { ru: vocabulary.gloss },
+                status: ContentStatus.CURATED,
+              },
+              update: {
+                gloss: { ru: vocabulary.gloss },
+                status: ContentStatus.CURATED,
+              },
+            },
+          },
+        },
+        create: {
+          id: vocabulary.itemId,
+          kind: KnowledgeItemKind.LEXICAL_SENSE,
+          languageCode: 'fi',
+          lexicalSense: {
             create: {
               lexicalEntry: { connect: { id: vocabulary.lexicalEntryId } },
               concept: { connect: { id: vocabulary.conceptId } },
               gloss: { ru: vocabulary.gloss },
               status: ContentStatus.CURATED,
             },
-            update: {
-              gloss: { ru: vocabulary.gloss },
-              status: ContentStatus.CURATED,
-            },
           },
         },
-      },
-      create: {
-        id: vocabulary.itemId,
-        kind: KnowledgeItemKind.LEXICAL_SENSE,
-        languageCode: 'fi',
-        lexicalSense: {
-          create: {
-            lexicalEntry: { connect: { id: vocabulary.lexicalEntryId } },
-            concept: { connect: { id: vocabulary.conceptId } },
-            gloss: { ru: vocabulary.gloss },
-            status: ContentStatus.CURATED,
-          },
-        },
-      },
-    })
+      })
 
-    await prisma.lessonKnowledgeItem.upsert({
-      where: {
-        lessonId_itemId: {
-          lessonId: LESSON_ID,
-          itemId: vocabulary.itemId,
-        },
-      },
-      update: { role: LessonItemRole.INTRODUCED, position: index + 5 },
-      create: {
-        lessonId: LESSON_ID,
-        itemId: vocabulary.itemId,
-        role: LessonItemRole.INTRODUCED,
-        position: index + 5,
-      },
-    })
-  }
-}
-
-async function seedExercise() {
-  for (const exercise of lessonExercises) {
-    const answerSpec = {
-      selectionOrder: exercise.selectionOrder,
-      acceptedVariants: exercise.acceptedVariants,
-      slots: exercise.slots,
-      testedItems: [
-        exercise.primaryItemId,
-        ...exercise.secondaryItemIds,
-        exercise.vocabularyItemId,
-      ],
-    } as unknown as Prisma.InputJsonValue
-
-    await prisma.exercise.upsert({
-      where: { id: exercise.id },
-      update: {
-        targetText: exercise.targetText,
-        answerSpec,
-        status: ContentStatus.CURATED,
-      },
-      create: {
-        id: exercise.id,
-        courseId: COURSE_ID,
-        lessonId: LESSON_ID,
-        kind: ExerciseKind.PREPARED,
-        status: ContentStatus.CURATED,
-        targetLanguage: 'fi',
-        targetText: exercise.targetText,
-        answerSpec,
-      },
-    })
-
-    await prisma.exercisePrompt.upsert({
-      where: {
-        exerciseId_sourceLanguage: {
-          exerciseId: exercise.id,
-          sourceLanguage: 'ru',
-        },
-      },
-      update: { text: exercise.prompt },
-      create: {
-        exerciseId: exercise.id,
-        sourceLanguage: 'ru',
-        text: exercise.prompt,
-      },
-    })
-
-    const exerciseItems = [
-      {
-        itemId: exercise.primaryItemId,
-        role: ExerciseItemRole.PRIMARY,
-      },
-      ...exercise.secondaryItemIds.map((itemId) => ({
-        itemId,
-        role: ExerciseItemRole.SECONDARY,
-      })),
-      {
-        itemId: exercise.vocabularyItemId,
-        role: ExerciseItemRole.SECONDARY,
-      },
-    ]
-
-    for (const item of exerciseItems) {
-      await prisma.exerciseItem.upsert({
+      await prisma.lessonKnowledgeItem.upsert({
         where: {
-          exerciseId_itemId: {
-            exerciseId: exercise.id,
-            itemId: item.itemId,
+          lessonId_itemId: {
+            lessonId: lesson.id,
+            itemId: vocabulary.itemId,
           },
         },
-        update: { role: item.role },
+        update: {
+          role: LessonItemRole.INTRODUCED,
+          position: lesson.skills.length + index + 1,
+        },
         create: {
-          exerciseId: exercise.id,
-          itemId: item.itemId,
-          role: item.role,
+          lessonId: lesson.id,
+          itemId: vocabulary.itemId,
+          role: LessonItemRole.INTRODUCED,
+          position: lesson.skills.length + index + 1,
         },
       })
     }
   }
 }
 
+async function seedExercise() {
+  for (const lesson of moduleOneLessons) {
+    for (const exercise of lesson.exercises) {
+      const answerSpec = {
+        selectionOrder: exercise.selectionOrder,
+        acceptedVariants: exercise.acceptedVariants,
+        slots: exercise.slots,
+        testedItems: [
+          exercise.primaryItemId,
+          ...exercise.secondaryItemIds,
+          exercise.vocabularyItemId,
+        ],
+      } as unknown as Prisma.InputJsonValue
+
+      await prisma.exercise.upsert({
+        where: { id: exercise.id },
+        update: {
+          courseId: COURSE_ID,
+          lessonId: lesson.id,
+          kind: ExerciseKind.PREPARED,
+          targetLanguage: 'fi',
+          targetText: exercise.targetText,
+          answerSpec,
+          status: ContentStatus.CURATED,
+        },
+        create: {
+          id: exercise.id,
+          courseId: COURSE_ID,
+          lessonId: lesson.id,
+          kind: ExerciseKind.PREPARED,
+          status: ContentStatus.CURATED,
+          targetLanguage: 'fi',
+          targetText: exercise.targetText,
+          answerSpec,
+        },
+      })
+
+      await prisma.exercisePrompt.upsert({
+        where: {
+          exerciseId_sourceLanguage: {
+            exerciseId: exercise.id,
+            sourceLanguage: 'ru',
+          },
+        },
+        update: { text: exercise.prompt },
+        create: {
+          exerciseId: exercise.id,
+          sourceLanguage: 'ru',
+          text: exercise.prompt,
+        },
+      })
+
+      const exerciseItems = new Map<string, ExerciseItemRole>([
+        [exercise.primaryItemId, ExerciseItemRole.PRIMARY],
+      ])
+      for (const itemId of [
+        ...exercise.secondaryItemIds,
+        exercise.vocabularyItemId,
+      ]) {
+        if (!exerciseItems.has(itemId)) {
+          exerciseItems.set(itemId, ExerciseItemRole.SECONDARY)
+        }
+      }
+
+      await prisma.exerciseItem.deleteMany({
+        where: {
+          exerciseId: exercise.id,
+          itemId: { notIn: [...exerciseItems.keys()] },
+        },
+      })
+
+      for (const [itemId, role] of exerciseItems) {
+        await prisma.exerciseItem.upsert({
+          where: {
+            exerciseId_itemId: {
+              exerciseId: exercise.id,
+              itemId,
+            },
+          },
+          update: { role },
+          create: {
+            exerciseId: exercise.id,
+            itemId,
+            role,
+          },
+        })
+      }
+    }
+  }
+}
+
+async function seedExerciseTemplate() {
+  for (const lesson of moduleOneLessons) {
+    if (!lesson.template || !lesson.templateId) continue
+    await prisma.exerciseTemplate.upsert({
+      where: { id: lesson.templateId },
+      update: {
+        frame: lesson.template.frame,
+        version: lesson.template.schemaVersion,
+        definition: lesson.template,
+        status: ContentStatus.CURATED,
+      },
+      create: {
+        id: lesson.templateId,
+        courseId: COURSE_ID,
+        frame: lesson.template.frame,
+        version: lesson.template.schemaVersion,
+        definition: lesson.template,
+        status: ContentStatus.CURATED,
+      },
+    })
+  }
+}
+
 async function seedTexts() {
+  await prisma.text.deleteMany({
+    where: {
+      courseId: COURSE_ID,
+      id: { notIn: preparedTexts.map((text) => text.id) },
+    },
+  })
+
   for (const text of preparedTexts) {
     await prisma.text.upsert({
       where: { id: text.id },
@@ -413,6 +427,13 @@ async function seedTexts() {
         topics: text.topics,
         body: text.body,
         status: ContentStatus.CURATED,
+      },
+    })
+
+    await prisma.textToken.deleteMany({
+      where: {
+        textId: text.id,
+        position: { notIn: text.tokens.map((token) => token.position) },
       },
     })
 
@@ -441,6 +462,13 @@ async function seedTexts() {
         },
       })
     }
+
+    await prisma.textKnowledgeItem.deleteMany({
+      where: {
+        textId: text.id,
+        itemId: { notIn: text.knowledgeItemIds },
+      },
+    })
 
     for (const itemId of text.knowledgeItemIds) {
       await prisma.textKnowledgeItem.upsert({
@@ -488,9 +516,12 @@ async function main() {
   await seedCourse()
   await seedKnowledge()
   await seedVocabulary()
+  await seedExerciseTemplate()
   await seedExercise()
   await seedTexts()
-  await seedLocalUser()
+  if (process.env.NODE_ENV !== 'production') {
+    await seedLocalUser()
+  }
 }
 
 main()

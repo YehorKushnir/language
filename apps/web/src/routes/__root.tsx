@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 
 import { AuthRequired } from '@/components/auth-required'
+import { PageShell } from '@/components/page-shell'
 import { PageLoading } from '@/components/query-state'
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth-client'
@@ -26,7 +27,7 @@ import type { RouterContext } from '@/router-context'
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
   notFoundComponent: () => (
-    <main className="mx-auto w-full max-w-4xl px-5 py-12">
+    <PageShell className="py-12">
       <p className="text-sm font-medium text-primary">Ошибка 404</p>
       <h1 className="mt-2 font-serif text-3xl tracking-tight">
         Страница не найдена
@@ -34,7 +35,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       <Button asChild className="mt-8">
         <Link to="/">Вернуться на главную</Link>
       </Button>
-    </main>
+    </PageShell>
   ),
 })
 
@@ -60,7 +61,10 @@ function RootLayout() {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-20 border-b bg-background/90 backdrop-blur">
+      <header
+        data-app-header
+        className="sticky top-0 z-20 border-b bg-background/90 backdrop-blur"
+      >
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4 sm:px-5">
           <Link
             className="flex items-center gap-2 text-sm font-semibold"
@@ -146,9 +150,9 @@ function RootLayout() {
         </div>
       </header>
       {requiresSession && session.isPending ? (
-        <main className="mx-auto w-full max-w-4xl px-5 py-10">
+        <PageShell>
           <PageLoading />
-        </main>
+        </PageShell>
       ) : requiresSession && !session.data ? (
         <AuthRequired />
       ) : (

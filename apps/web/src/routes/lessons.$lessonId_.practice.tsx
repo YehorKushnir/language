@@ -12,6 +12,7 @@ import {
   nextExerciseQuery,
 } from '@/api/queries'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
+import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +20,11 @@ import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
 
 export const Route = createFileRoute('/lessons/$lessonId_/practice')({
+  loader: ({ context, params }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(courseQuery),
+      context.queryClient.ensureQueryData(lessonQuery(params.lessonId)),
+    ]),
   component: LessonPracticePage,
 })
 
@@ -165,7 +171,7 @@ function LessonPracticePage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-5 sm:py-10">
+    <PageShell>
       <LessonWorkspaceHeader
         lessonId={lessonId}
         lessonTitle={localizedText(lesson.data.title)}
@@ -173,7 +179,7 @@ function LessonPracticePage() {
         activePart="practice"
       />
 
-      <section className="mt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <section className="mt-8">
         <div className="flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-wider">
           <p className="text-primary">
             Задание {round} из {SESSION_SIZE}
@@ -251,7 +257,7 @@ function LessonPracticePage() {
           ) : null}
         </div>
       </section>
-    </main>
+    </PageShell>
   )
 }
 
@@ -272,7 +278,7 @@ function PracticeSummary({
     (completion.requiredCorrectAnswers / completion.totalExercises) * 100
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-5 sm:py-10">
+    <PageShell>
       <LessonWorkspaceHeader
         lessonId={lessonId}
         lessonTitle={lessonTitle}
@@ -300,13 +306,11 @@ function PracticeSummary({
             </Button>
           ) : null}
           <Button asChild size="sm" variant="outline">
-            <Link to="/lessons/$lessonId" params={{ lessonId }}>
-              Вернуться к уроку
-            </Link>
+            <Link to="/lessons">Вернуться к урокам</Link>
           </Button>
         </div>
       </section>
-    </main>
+    </PageShell>
   )
 }
 
@@ -318,8 +322,8 @@ function PartPageState({
   message?: string
 }) {
   return (
-    <main className="mx-auto w-full max-w-5xl px-5 py-10">
+    <PageShell>
       {loading ? <PageLoading /> : <QueryError message={message} />}
-    </main>
+    </PageShell>
   )
 }

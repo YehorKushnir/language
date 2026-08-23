@@ -5,6 +5,10 @@ import {
 
 const report = validateCourseContent()
 
+console.log(
+  `Module one is valid: ${report.module.lessonCount} lessons ${report.module.vocabularyCount} vocabulary items ${report.module.uniqueLemmaCount} unique lemmas ${report.module.exerciseCount} exercises`,
+)
+
 for (const lesson of report.lessons) {
   console.log(
     [
@@ -24,5 +28,5 @@ console.log(
 
 const morphology = await validateFinnishMorphologyContent()
 console.log(
-  `Finnish morphology is valid: ${morphology.checkedWordCount} unique forms, ${morphology.lemmaOverrideCount} curated lemma overrides`,
+  `Finnish morphology is valid: ${morphology.checkedWordCount} unique forms, ${morphology.generatedCandidateCount} generated candidates, ${morphology.lemmaOverrideCount} curated lemma overrides`,
 )

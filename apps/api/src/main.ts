@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config'
+import { Logger } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
@@ -42,4 +43,11 @@ async function bootstrap() {
   )
 }
 
-void bootstrap()
+void bootstrap().catch((error: unknown) => {
+  Logger.error(
+    error instanceof Error ? error.stack : String(error),
+    undefined,
+    'Bootstrap',
+  )
+  process.exitCode = 1
+})

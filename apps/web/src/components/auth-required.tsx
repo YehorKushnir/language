@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { LockKeyholeIcon } from 'lucide-react'
 
+import { PageShell } from '@/components/page-shell'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -12,7 +13,7 @@ import {
 
 export function AuthRequired() {
   return (
-    <main className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl place-items-center px-5 py-16">
+    <PageShell className="grid min-h-[calc(100vh-4rem)] place-items-center py-16">
       <Card className="w-full max-w-lg text-center shadow-lg shadow-primary/5">
         <CardHeader>
           <span className="mx-auto mb-3 grid size-11 place-items-center rounded-full bg-primary/10 text-primary">
@@ -35,6 +36,6 @@ export function AuthRequired() {
           </Button>
         </CardContent>
       </Card>
-    </main>
+    </PageShell>
   )
 }

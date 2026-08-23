@@ -34,8 +34,37 @@ describe('validateEnvironment', () => {
     ).toThrow(/WEB_ORIGIN must use HTTPS/u)
   })
 
+  it('rejects an unknown environment and malformed production origins', () => {
+    expect(() => validateEnvironment({ NODE_ENV: 'prodution' })).toThrow(
+      /NODE_ENV/u,
+    )
+    expect(() =>
+      validateEnvironment({
+        ...productionEnvironment,
+        BETTER_AUTH_URL: 'https://api.example.com/unexpected',
+      }),
+    ).toThrow(/only the public origin/u)
+  })
+
+  it('validates the database driver and proxy hop count', () => {
+    expect(() =>
+      validateEnvironment({
+        ...productionEnvironment,
+        DATABASE_URL: 'mysql://db.example.com/language',
+      }),
+    ).toThrow(/PostgreSQL/u)
+    expect(() => validateEnvironment({ TRUST_PROXY_HOPS: '20' })).toThrow(
+      /TRUST_PROXY_HOPS/u,
+    )
+    expect(validateEnvironment({ TRUST_PROXY_HOPS: '1' })).toMatchObject({
+      TRUST_PROXY_HOPS: 1,
+    })
+  })
+
   it('accepts a complete production environment', () => {
-    expect(validateEnvironment(productionEnvironment)).toMatchObject({
+    expect(
+      validateEnvironment({ ...productionEnvironment, MEDIA_BASE_URL: '' }),
+    ).toMatchObject({
       API_PORT: 8080,
       WEB_ORIGIN: 'https://learn.example.com',
     })

@@ -4,12 +4,18 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowRightIcon, BrainIcon } from 'lucide-react'
 
 import { courseQuery, reviewQueueQuery } from '@/api/queries'
+import { preloadCourseRoute } from '@/api/route-preload'
+import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { localizedText } from '@/lib/localized-text'
 
 export const Route = createFileRoute('/reviews')({
+  loader: ({ context }) =>
+    preloadCourseRoute(context.queryClient, (routeVersionId, queryClient) =>
+      queryClient.ensureQueryData(reviewQueueQuery(routeVersionId)),
+    ),
   component: ReviewsPage,
 })
 
@@ -36,7 +42,7 @@ function ReviewsPage() {
   const currentLessonId = course.data.route?.lessons[0]?.id
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-5 sm:py-10">
+    <PageShell>
       <header className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -107,7 +113,7 @@ function ReviewsPage() {
           </ul>
         </section>
       )}
-    </main>
+    </PageShell>
   )
 }
 
@@ -132,8 +138,8 @@ function PageState({
   message?: string
 }) {
   return (
-    <main className="mx-auto w-full max-w-3xl px-5 py-10">
+    <PageShell>
       {loading ? <PageLoading /> : <QueryError message={message} />}
-    </main>
+    </PageShell>
   )
 }

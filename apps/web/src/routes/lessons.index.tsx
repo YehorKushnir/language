@@ -2,14 +2,20 @@ import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 
 import { courseProgressQuery, courseQuery } from '@/api/queries'
+import { preloadCourseRoute } from '@/api/route-preload'
 import {
   CourseOutline,
   CourseOutlineSummary,
 } from '@/components/course-outline'
 import { LearningPageHeader } from '@/components/learning-page-header'
+import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 
 export const Route = createFileRoute('/lessons/')({
+  loader: ({ context }) =>
+    preloadCourseRoute(context.queryClient, (routeVersionId, queryClient) =>
+      queryClient.ensureQueryData(courseProgressQuery(routeVersionId)),
+    ),
   component: LessonsPage,
 })
 
@@ -25,7 +31,7 @@ function LessonsPage() {
   if (course.isError) return <PageState message={course.error.message} />
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-5 sm:py-10">
+    <PageShell>
       <LearningPageHeader
         eyebrow="Курс русского → финского"
         title="5 разделов · 80 уроков"
@@ -39,7 +45,7 @@ function LessonsPage() {
       <div className="mt-7">
         <CourseOutline course={course.data} progress={progress.data} />
       </div>
-    </main>
+    </PageShell>
   )
 }
 
@@ -51,8 +57,8 @@ function PageState({
   message?: string
 }) {
   return (
-    <main className="mx-auto w-full max-w-5xl px-5 py-10">
+    <PageShell>
       {loading ? <PageLoading /> : <QueryError message={message} />}
-    </main>
+    </PageShell>
   )
 }

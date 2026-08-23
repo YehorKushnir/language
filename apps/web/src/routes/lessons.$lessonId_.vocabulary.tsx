@@ -19,6 +19,7 @@ import {
   reviewQueueQuery,
 } from '@/api/queries'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
+import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -26,6 +27,14 @@ import { localizedText } from '@/lib/localized-text'
 import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/lessons/$lessonId_/vocabulary')({
+  loader: ({ context, params }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(courseQuery),
+      context.queryClient.ensureQueryData(lessonQuery(params.lessonId)),
+      context.queryClient.ensureQueryData(
+        lessonVocabularyQuery(params.lessonId),
+      ),
+    ]),
   component: LessonVocabularyPage,
 })
 
@@ -122,14 +131,14 @@ function LessonVocabularyPage() {
 
   if (sessionCompleted) {
     return (
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-5 sm:py-10">
+      <PageShell>
         <LessonWorkspaceHeader
           lessonId={lessonId}
           lessonTitle={localizedText(lesson.data.title)}
           lessonSummary={localizedText(lesson.data.summary)}
           activePart="vocabulary"
         />
-        <section className="mt-7 animate-in rounded-lg border bg-card p-6 text-center fade-in slide-in-from-bottom-2 duration-300 sm:p-8">
+        <section className="mt-7 rounded-lg border bg-card p-6 text-center sm:p-8">
           <span className="mx-auto grid size-10 place-items-center rounded-full bg-primary text-primary-foreground">
             <CheckIcon className="size-5" />
           </span>
@@ -170,14 +179,14 @@ function LessonVocabularyPage() {
             </div>
           )}
         </section>
-      </main>
+      </PageShell>
     )
   }
 
   const progress = ((cardIndex + (revealed ? 0.5 : 0)) / items.length) * 100
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-5 sm:py-10">
+    <PageShell>
       <LessonWorkspaceHeader
         lessonId={lessonId}
         lessonTitle={localizedText(lesson.data.title)}
@@ -185,7 +194,7 @@ function LessonVocabularyPage() {
         activePart="vocabulary"
       />
 
-      <section className="mt-7 animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <section className="mt-7">
         <header className="flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -321,7 +330,7 @@ function LessonVocabularyPage() {
           «Ещё раз» вернёт слово через 10 минут, «Знаю» — через день.
         </p>
       </section>
-    </main>
+    </PageShell>
   )
 }
 
@@ -333,8 +342,8 @@ function PartPageState({
   message?: string
 }) {
   return (
-    <main className="mx-auto w-full max-w-5xl px-5 py-10">
+    <PageShell>
       {loading ? <PageLoading /> : <QueryError message={message} />}
-    </main>
+    </PageShell>
   )
 }

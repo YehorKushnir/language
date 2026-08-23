@@ -8,6 +8,8 @@ import { SearchIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { courseQuery, userVocabularyQuery } from '@/api/queries'
+import { preloadCourseRoute } from '@/api/route-preload'
+import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,6 +17,10 @@ import { Input } from '@/components/ui/input'
 import { localizedText } from '@/lib/localized-text'
 
 export const Route = createFileRoute('/vocabulary')({
+  loader: ({ context }) =>
+    preloadCourseRoute(context.queryClient, (routeVersionId, queryClient) =>
+      queryClient.ensureQueryData(userVocabularyQuery(routeVersionId)),
+    ),
   component: VocabularyPage,
 })
 
@@ -66,7 +72,7 @@ function VocabularyPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-5 sm:py-10">
+    <PageShell>
       <header className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -119,7 +125,7 @@ function VocabularyPage() {
           ))}
         </ul>
       )}
-    </main>
+    </PageShell>
   )
 }
 
@@ -185,8 +191,8 @@ function PageState({
   message?: string
 }) {
   return (
-    <main className="mx-auto w-full max-w-5xl px-5 py-10">
+    <PageShell>
       {loading ? <PageLoading /> : <QueryError message={message} />}
-    </main>
+    </PageShell>
   )
 }

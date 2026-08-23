@@ -10,6 +10,7 @@ import { useState } from 'react'
 
 import { deleteAccount, exportAccountData } from '@/api/language-api'
 import { LearningPageHeader } from '@/components/learning-page-header'
+import { PageShell } from '@/components/page-shell'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -66,7 +67,7 @@ function SettingsPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-5 sm:py-10">
+    <PageShell>
       <LearningPageHeader
         eyebrow={
           <>
@@ -128,6 +129,6 @@ function SettingsPage() {
           </Button>
         </div>
       </section>
-    </main>
+    </PageShell>
   )
 }

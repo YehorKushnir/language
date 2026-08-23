@@ -10,7 +10,7 @@ export interface LessonVocabularySeed {
   conceptId: string
   lexicalEntryId: string
   lemma: string
-  partOfSpeech: 'noun' | 'adjective' | 'adverb'
+  partOfSpeech: 'noun' | 'verb' | 'adjective' | 'adverb'
   gloss: string
   semanticTypes: string[]
   singular: string
@@ -24,6 +24,7 @@ interface ExerciseSlotSeed {
   role: string
   accepted: string[]
   itemIds: string[]
+  optional?: boolean
 }
 
 export interface PreparedExerciseSeed {
@@ -336,8 +337,10 @@ export const lessonVocabulary: LessonVocabularySeed[] = [
   }),
 ]
 
+type PersonKey = '1sg' | '2sg' | '3sg' | '1pl' | '2pl' | '3pl'
+
 interface PersonSeed {
-  key: string
+  key: PersonKey
   pronoun: string
   affirmative: string
   negative: string
@@ -409,6 +412,28 @@ const persons: PersonSeed[] = [
     canOmitSubject: false,
   },
 ]
+
+export const lessonIdentityTemplateDefinition = {
+  schemaVersion: 1 as const,
+  frame: 'identity' as const,
+  lessonId: 'fi.olla.basics',
+  sourceLanguage: 'ru' as const,
+  targetLanguage: 'fi' as const,
+  personKeys: persons.map((person) => person.key),
+  grammarItems: {
+    affirmative: 'grammar.fi.olla.affirmative',
+    negative: 'grammar.fi.olla.negative',
+    question: 'grammar.fi.olla.question',
+  },
+  complements: lessonVocabulary.map((item) => ({
+    key: item.key,
+    itemId: item.itemId,
+    singular: item.singular,
+    plural: item.plural,
+    sourceSingular: item.sourceSingular,
+    sourcePlural: item.sourcePlural,
+  })),
+}
 
 const exerciseMatrix = {
   affirmative: [
@@ -662,7 +687,11 @@ function createStandardExercise(
       ],
       slots: attachEvidenceItems(
         [
-          { role: 'subject', accepted: [person.pronoun] },
+          {
+            role: 'subject',
+            accepted: [person.pronoun],
+            optional: person.canOmitSubject,
+          },
           { role: 'mainVerb', accepted: [person.affirmative] },
           { role: 'complement', accepted: [complement] },
         ],
@@ -689,7 +718,11 @@ function createStandardExercise(
       ],
       slots: attachEvidenceItems(
         [
-          { role: 'subject', accepted: [person.pronoun] },
+          {
+            role: 'subject',
+            accepted: [person.pronoun],
+            optional: person.canOmitSubject,
+          },
           { role: 'negativeVerb', accepted: [person.negative] },
           { role: 'mainVerb', accepted: ['ole'] },
           { role: 'complement', accepted: [complement] },
@@ -717,7 +750,11 @@ function createStandardExercise(
     slots: attachEvidenceItems(
       [
         { role: 'questionVerb', accepted: [person.question] },
-        { role: 'subject', accepted: [person.pronoun] },
+        {
+          role: 'subject',
+          accepted: [person.pronoun],
+          optional: person.canOmitSubject,
+        },
         { role: 'complement', accepted: [complement] },
       ],
       ['grammar.fi.olla.question'],

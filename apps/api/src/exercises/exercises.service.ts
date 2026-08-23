@@ -115,8 +115,20 @@ export class ExercisesService {
     }
 
     const exercise = await this.prisma.exercise.findFirst({
-      where: { id: exerciseId, status: ContentStatus.CURATED },
-      include: { items: true },
+      where: {
+        id: exerciseId,
+        status: {
+          in: [
+            ContentStatus.GENERATED,
+            ContentStatus.VERIFIED,
+            ContentStatus.CURATED,
+          ],
+        },
+      },
+      include: {
+        items: true,
+        generated: { select: { generatorVersion: true } },
+      },
     })
     if (!exercise) {
       throw new NotFoundException(`Exercise ${exerciseId} was not found`)
@@ -196,7 +208,8 @@ export class ExercisesService {
             normalizedAnswerText: check.normalizedAnswer,
             outcome,
             diagnostics: diagnostics as unknown as Prisma.InputJsonValue,
-            checkerVersion: 'structured-v2-voikko',
+            checkerVersion: 'structured-v3-optional-slots-voikko',
+            generatorVersion: exercise.generated?.generatorVersion,
             durationMs: request.durationMs,
             answeredAt: now,
             evidence: { create: evidence },
@@ -391,7 +404,16 @@ function toStoredAnswerSpec(value: unknown): StoredAnswerSpec {
               )
             : []
           return typeof slotCandidate.role === 'string' && accepted.length > 0
-            ? [{ role: slotCandidate.role, accepted, itemIds }]
+            ? [
+                {
+                  role: slotCandidate.role,
+                  accepted,
+                  itemIds,
+                  ...(slotCandidate.optional === true
+                    ? { optional: true }
+                    : {}),
+                },
+              ]
             : []
         })
       : [],

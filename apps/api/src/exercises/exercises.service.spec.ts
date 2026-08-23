@@ -44,6 +44,7 @@ describe('ExercisesService morphology diagnostics', () => {
             role: 'subject',
             accepted: ['minä'],
             itemIds: ['grammar.fi.olla'],
+            optional: true,
           },
           {
             role: 'verb',
@@ -75,25 +76,25 @@ describe('ExercisesService morphology diagnostics', () => {
     transaction.userMemory.upsert.mockResolvedValue({})
     transaction.userExerciseHistory.upsert.mockResolvedValue({})
     transaction.userAttempt.create.mockImplementation(
-      ({ data }: { data: Record<string, unknown> }) => ({
-        id: 'attempt.1',
-        exerciseId: 'exercise.1',
-        outcome: data.outcome as AttemptOutcome,
-        normalizedAnswerText: data.normalizedAnswerText as string,
-        diagnostics: data.diagnostics,
-        evidence: [
-          {
-            itemId: 'grammar.fi.olla',
-            role: ExerciseItemRole.PRIMARY,
-            result: EvidenceResult.FAILURE,
-          },
-          {
-            itemId: 'word.fi.opiskelija',
-            role: ExerciseItemRole.SECONDARY,
-            result: EvidenceResult.SUCCESS,
-          },
-        ],
-      }),
+      ({ data }: { data: Record<string, unknown> }) => {
+        const evidence = (
+          data.evidence as {
+            create: Array<{
+              itemId: string
+              role: ExerciseItemRole
+              result: EvidenceResult
+            }>
+          }
+        ).create
+        return {
+          id: 'attempt.1',
+          exerciseId: 'exercise.1',
+          outcome: data.outcome as AttemptOutcome,
+          normalizedAnswerText: data.normalizedAnswerText as string,
+          diagnostics: data.diagnostics,
+          evidence,
+        }
+      },
     )
   })
 
@@ -155,10 +156,94 @@ describe('ExercisesService morphology diagnostics', () => {
     expect(transaction.userAttempt.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          checkerVersion: 'structured-v2-voikko',
+          checkerVersion: 'structured-v3-optional-slots-voikko',
         }),
       }),
     )
+  })
+
+  it('diagnoses olla when a valid optional subject is omitted', async () => {
+    morphology.compareForms.mockResolvedValue({
+      relation: 'sameLemma',
+      actual: 'olet',
+      expected: 'olen',
+      actualAnalysis: {
+        lemma: 'olla',
+        partOfSpeech: 'verb',
+        features: { person: 'second', number: 'singular' },
+        raw: {},
+      },
+      expectedAnalysis: {
+        lemma: 'olla',
+        partOfSpeech: 'verb',
+        features: { person: 'first', number: 'singular' },
+        raw: {},
+      },
+      differences: [{ feature: 'person', actual: 'second', expected: 'first' }],
+      suggestions: [],
+    })
+
+    const result = await service.submitAttempt('user.1', 'exercise.1', {
+      answer: 'Olet opiskelija',
+      idempotencyKey: '00000000-0000-4000-8000-000000000002',
+      routeVersionId: 'route.1',
+    })
+
+    expect(morphology.compareForms).toHaveBeenCalledWith('olet', ['olen'])
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: 'WRONG_FORM',
+        message: {
+          ru: expect.stringContaining(
+            'Лицо: сейчас второе лицо, нужно первое лицо.',
+          ),
+        },
+      }),
+    ])
+    expect(result.diagnostics[0]?.message.ru).not.toContain('minä')
+    expect(transaction.userAttempt.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          evidence: {
+            create: [
+              expect.objectContaining({
+                itemId: 'grammar.fi.olla',
+                result: EvidenceResult.FAILURE,
+              }),
+              expect.objectContaining({
+                itemId: 'word.fi.opiskelija',
+                result: EvidenceResult.SUCCESS,
+              }),
+            ],
+          },
+        }),
+      }),
+    )
+  })
+
+  it('accepts the correct olla form without the optional subject', async () => {
+    const result = await service.submitAttempt('user.1', 'exercise.1', {
+      answer: 'Olen opiskelija',
+      idempotencyKey: '00000000-0000-4000-8000-000000000003',
+      routeVersionId: 'route.1',
+    })
+
+    expect(morphology.compareForms).not.toHaveBeenCalled()
+    expect(result).toMatchObject({
+      isCorrect: true,
+      outcome: AttemptOutcome.CORRECT,
+      diagnostics: [{ code: 'EXACT_MATCH' }],
+      evidence: [
+        {
+          itemId: 'grammar.fi.olla',
+          result: EvidenceResult.SUCCESS,
+        },
+        {
+          itemId: 'word.fi.opiskelija',
+          result: EvidenceResult.SUCCESS,
+        },
+      ],
+    })
   })
 
   it('creates an idempotent quality report only for the user attempt', async () => {

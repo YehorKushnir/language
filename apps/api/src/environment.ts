@@ -4,8 +4,23 @@ export function validateEnvironment(
   environment: Record<string, unknown>,
 ): Record<string, unknown> {
   const result = { ...environment }
+  if (
+    environment.NODE_ENV !== undefined &&
+    !['development', 'test', 'production'].includes(
+      String(environment.NODE_ENV),
+    )
+  ) {
+    throw new Error('NODE_ENV must be development, test or production')
+  }
   const port = parsePort(environment.API_PORT)
   result.API_PORT = port
+  result.TRUST_PROXY_HOPS = parseInteger(
+    'TRUST_PROXY_HOPS',
+    environment.TRUST_PROXY_HOPS,
+    0,
+    5,
+    0,
+  )
 
   if (environment.NODE_ENV !== 'production') return result
 
@@ -31,17 +46,31 @@ export function validateEnvironment(
     )
   }
 
+  const databaseUrl = parseUrl('DATABASE_URL', String(environment.DATABASE_URL))
+  if (!['postgres:', 'postgresql:'].includes(databaseUrl.protocol)) {
+    throw new Error('DATABASE_URL must use PostgreSQL')
+  }
+
   for (const key of ['WEB_ORIGIN', 'BETTER_AUTH_URL'] as const) {
     const url = parseUrl(key, String(environment[key]))
     if (url.protocol !== 'https:') {
       throw new Error(`${key} must use HTTPS in production`)
     }
-    if (key === 'WEB_ORIGIN' && url.pathname !== '/') {
-      throw new Error('WEB_ORIGIN must contain only the public origin')
+    if (
+      url.pathname !== '/' ||
+      url.search ||
+      url.hash ||
+      url.username ||
+      url.password
+    ) {
+      throw new Error(`${key} must contain only the public origin`)
     }
   }
 
-  if (typeof environment.MEDIA_BASE_URL === 'string') {
+  if (
+    typeof environment.MEDIA_BASE_URL === 'string' &&
+    environment.MEDIA_BASE_URL.trim()
+  ) {
     const mediaUrl = parseUrl('MEDIA_BASE_URL', environment.MEDIA_BASE_URL)
     if (mediaUrl.protocol !== 'https:') {
       throw new Error('MEDIA_BASE_URL must use HTTPS in production')
@@ -58,6 +87,23 @@ function parsePort(value: unknown): number {
     throw new Error('API_PORT must be an integer between 1 and 65535')
   }
   return port
+}
+
+function parseInteger(
+  key: string,
+  value: unknown,
+  minimum: number,
+  maximum: number,
+  fallback: number,
+): number {
+  if (value === undefined || value === '') return fallback
+  const parsed = Number(value)
+  if (!Number.isInteger(parsed) || parsed < minimum || parsed > maximum) {
+    throw new Error(
+      `${key} must be an integer between ${minimum} and ${maximum}`,
+    )
+  }
+  return parsed
 }
 
 function parseUrl(key: string, value: string): URL {

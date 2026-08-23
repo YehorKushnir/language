@@ -6,7 +6,15 @@ import {
   lessonVocabulary,
   validateLessonOneContent,
 } from '../../../content/courses/ru-fi/lessons/fi.olla.basics.js'
-import { validateFinnishMorphologyContent } from './content-validation.js'
+import {
+  moduleOneLessons,
+  moduleOneVocabulary,
+} from '../../../content/courses/ru-fi/module-one.js'
+import { preparedTexts } from '../../../content/courses/ru-fi/texts/fi.olla.introductions.js'
+import {
+  validateCourseContent,
+  validateFinnishMorphologyContent,
+} from './content-validation.js'
 
 describe('lesson one content', () => {
   it('meets the curated MVP content checks', () => {
@@ -31,9 +39,31 @@ describe('lesson one content', () => {
     ])
   })
 
+  it('ships a complete first module with milestone reading texts', () => {
+    expect(moduleOneLessons).toHaveLength(16)
+    expect(moduleOneVocabulary).toHaveLength(401)
+    expect(new Set(moduleOneVocabulary.map((item) => item.lemma)).size).toBe(
+      401,
+    )
+    expect(
+      moduleOneLessons.reduce(
+        (total, lesson) => total + lesson.exercises.length,
+        0,
+      ),
+    ).toBe(960)
+    expect(preparedTexts).toHaveLength(5)
+    expect(validateCourseContent().module).toEqual({
+      lessonCount: 16,
+      vocabularyCount: 401,
+      uniqueLemmaCount: 401,
+      exerciseCount: 960,
+    })
+  })
+
   it('contains only forms recognized by Finnish morphology', async () => {
     await expect(validateFinnishMorphologyContent()).resolves.toMatchObject({
       checkedWordCount: expect.any(Number),
+      generatedCandidateCount: 198,
       lemmaOverrideCount: expect.any(Number),
     })
   })

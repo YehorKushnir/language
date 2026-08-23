@@ -12,6 +12,7 @@ export interface StructuredAnswerSlot {
   role: string
   accepted: string[]
   itemIds?: string[]
+  optional?: boolean
 }
 
 export interface StructuredAnswerSpec extends ExactAnswerSpec {
@@ -41,6 +42,23 @@ export interface StructuredAnswerCheckResult extends ExactAnswerCheckResult {
 export interface StructuredAnswerItemResult {
   itemId: string
   isCorrect: boolean
+}
+
+interface NormalizedAnswerSlot extends StructuredAnswerSlot {
+  accepted: string[]
+}
+
+type AlignmentOperation =
+  | { type: 'match'; slot: NormalizedAnswerSlot; token: string }
+  | { type: 'substitute'; slot: NormalizedAnswerSlot; token: string }
+  | { type: 'missing'; slot: NormalizedAnswerSlot }
+  | { type: 'extra'; token: string }
+
+interface SlotAlignment {
+  cost: number
+  exactMatches: number
+  structuralEdits: number
+  operations: AlignmentOperation[]
 }
 
 export function normalizeExactAnswer(answer: string): string {
@@ -83,10 +101,7 @@ export function checkStructuredAnswer(
   }
 
   const actualTokens = tokenizeNormalizedAnswer(exact.normalizedAnswer)
-  const expectedSlots = spec.slots.map((slot) => ({
-    ...slot,
-    accepted: slot.accepted.map(normalizeExactAnswer),
-  }))
+  const expectedSlots = normalizeSlots(spec.slots)
 
   if (expectedSlots.length === 0) {
     return {
@@ -95,78 +110,76 @@ export function checkStructuredAnswer(
     }
   }
 
-  const positionalMatch = expectedSlots.every((slot, index) => {
-    const token = actualTokens[index]
-    return token !== undefined && slot.accepted.includes(token)
-  })
-  if (positionalMatch && actualTokens.length === expectedSlots.length) {
+  const candidateSlots = expandOptionalSlots(expectedSlots)
+  if (
+    candidateSlots.some(
+      (slots) =>
+        slots.length === actualTokens.length &&
+        slots.every((slot, index) =>
+          slot.accepted.includes(actualTokens[index]!),
+        ),
+    )
+  ) {
     return {
       ...exact,
       isCorrect: true,
       diagnostics: [{ code: 'EXACT_MATCH' }],
     }
   }
-
-  if (actualTokens.length < expectedSlots.length) {
-    const missingSlot = findMissingSlot(expectedSlots, actualTokens)
-    return {
-      ...exact,
-      diagnostics: [
-        {
-          code: 'MISSING_TOKEN',
-          ...(missingSlot
-            ? {
-                slot: missingSlot.role,
-                expected: missingSlot.accepted,
-              }
-            : {}),
-        },
-      ],
-    }
-  }
-
-  if (actualTokens.length > expectedSlots.length) {
-    return {
-      ...exact,
-      diagnostics: [
-        {
-          code: 'EXTRA_TOKEN',
-          actual: findExtraToken(expectedSlots, actualTokens),
-        },
-      ],
-    }
-  }
-
-  if (tokensMatchWithoutOrder(expectedSlots, actualTokens)) {
+  if (
+    candidateSlots.some((slots) => tokensMatchWithoutOrder(slots, actualTokens))
+  ) {
     return {
       ...exact,
       diagnostics: [{ code: 'WORD_ORDER' }],
     }
   }
 
-  const mismatchIndex = expectedSlots.findIndex((slot, index) => {
-    const token = actualTokens[index]
-    return token === undefined || !slot.accepted.includes(token)
-  })
-  const mismatchedSlot = expectedSlots[mismatchIndex]
-  const actualToken = actualTokens[mismatchIndex]
-  const likelyTypo =
-    mismatchedSlot && actualToken
-      ? findLikelyTypo(actualToken, mismatchedSlot.accepted)
-      : null
+  const selectedSlots = selectBestSlotSequence(expectedSlots, actualTokens)
+  const alignment = alignSlots(selectedSlots, actualTokens)
+
+  const firstIssue = alignment.operations.find(
+    (operation) => operation.type !== 'match',
+  )
+  if (!firstIssue) {
+    return {
+      ...exact,
+      diagnostics: [{ code: 'ANSWER_MISMATCH' }],
+    }
+  }
+
+  if (firstIssue.type === 'missing') {
+    return {
+      ...exact,
+      diagnostics: [
+        {
+          code: 'MISSING_TOKEN',
+          slot: firstIssue.slot.role,
+          expected: firstIssue.slot.accepted,
+        },
+      ],
+    }
+  }
+
+  if (firstIssue.type === 'extra') {
+    return {
+      ...exact,
+      diagnostics: [{ code: 'EXTRA_TOKEN', actual: firstIssue.token }],
+    }
+  }
+
+  const likelyTypo = findLikelyTypo(firstIssue.token, firstIssue.slot.accepted)
 
   return {
     ...exact,
-    diagnostics: mismatchedSlot
-      ? [
-          {
-            code: likelyTypo ? 'TYPO' : 'WRONG_FORM',
-            slot: mismatchedSlot.role,
-            actual: actualToken,
-            expected: likelyTypo ? [likelyTypo] : mismatchedSlot.accepted,
-          },
-        ]
-      : [{ code: 'ANSWER_MISMATCH' }],
+    diagnostics: [
+      {
+        code: likelyTypo ? 'TYPO' : 'WRONG_FORM',
+        slot: firstIssue.slot.role,
+        actual: firstIssue.token,
+        expected: likelyTypo ? [likelyTypo] : firstIssue.slot.accepted,
+      },
+    ],
   }
 }
 
@@ -229,13 +242,14 @@ export function checkStructuredAnswerItems(
     return itemIds.map((itemId) => ({ itemId, isCorrect: true }))
   }
 
-  const unmatchedTokens = tokenizeNormalizedAnswer(normalizeExactAnswer(answer))
+  const actualTokens = tokenizeNormalizedAnswer(normalizeExactAnswer(answer))
+  const slots = selectBestSlotSequence(normalizeSlots(spec.slots), actualTokens)
+  const unmatchedTokens = [...actualTokens]
   const resultByItem = new Map(itemIds.map((itemId) => [itemId, true]))
 
-  for (const slot of spec.slots) {
-    const accepted = slot.accepted.map(normalizeExactAnswer)
+  for (const slot of slots) {
     const tokenIndex = unmatchedTokens.findIndex((token) =>
-      accepted.includes(token),
+      slot.accepted.includes(token),
     )
     const slotMatches = tokenIndex >= 0
     if (slotMatches) unmatchedTokens.splice(tokenIndex, 1)
@@ -255,46 +269,131 @@ function tokenizeNormalizedAnswer(answer: string): string[] {
   return answer ? answer.split(' ') : []
 }
 
-function findMissingSlot(
-  slots: StructuredAnswerSlot[],
-  actualTokens: string[],
-): StructuredAnswerSlot | undefined {
-  const unmatchedTokens = [...actualTokens]
-  return slots.find((slot) => {
-    const tokenIndex = unmatchedTokens.findIndex((token) =>
-      slot.accepted.includes(token),
-    )
-    if (tokenIndex === -1) {
-      return true
-    }
+function normalizeSlots(slots: StructuredAnswerSlot[]): NormalizedAnswerSlot[] {
+  return slots.map((slot) => ({
+    ...slot,
+    accepted: slot.accepted.map(normalizeExactAnswer),
+  }))
+}
 
-    unmatchedTokens.splice(tokenIndex, 1)
-    return false
+function selectBestSlotSequence(
+  slots: NormalizedAnswerSlot[],
+  actualTokens: string[],
+): NormalizedAnswerSlot[] {
+  const candidates = expandOptionalSlots(slots)
+  return candidates.reduce((best, candidate) => {
+    const candidateAlignment = alignSlots(candidate, actualTokens)
+    const bestAlignment = alignSlots(best, actualTokens)
+    return isBetterAlignment(candidateAlignment, bestAlignment)
+      ? candidate
+      : best
   })
 }
 
-function findExtraToken(
-  slots: StructuredAnswerSlot[],
-  actualTokens: string[],
-): string | undefined {
-  const unmatchedSlots = [...slots]
-  return actualTokens.find((token) => {
-    const slotIndex = unmatchedSlots.findIndex((slot) =>
-      slot.accepted.includes(token),
-    )
-    if (slotIndex === -1) {
-      return true
-    }
+function expandOptionalSlots(
+  slots: NormalizedAnswerSlot[],
+): NormalizedAnswerSlot[][] {
+  return slots.reduce<NormalizedAnswerSlot[][]>(
+    (variants, slot) =>
+      slot.optional
+        ? variants.flatMap((variant) => [[...variant, slot], [...variant]])
+        : variants.map((variant) => [...variant, slot]),
+    [[]],
+  )
+}
 
-    unmatchedSlots.splice(slotIndex, 1)
-    return false
-  })
+function alignSlots(
+  slots: NormalizedAnswerSlot[],
+  actualTokens: string[],
+): SlotAlignment {
+  const table = Array.from({ length: slots.length + 1 }, () =>
+    Array<SlotAlignment | undefined>(actualTokens.length + 1),
+  )
+  table[0]![0] = {
+    cost: 0,
+    exactMatches: 0,
+    structuralEdits: 0,
+    operations: [],
+  }
+
+  for (let slotIndex = 0; slotIndex <= slots.length; slotIndex += 1) {
+    for (
+      let tokenIndex = 0;
+      tokenIndex <= actualTokens.length;
+      tokenIndex += 1
+    ) {
+      const current = table[slotIndex]![tokenIndex]
+      if (!current) continue
+
+      const slot = slots[slotIndex]
+      const token = actualTokens[tokenIndex]
+      if (slot && token !== undefined) {
+        const matches = slot.accepted.includes(token)
+        updateAlignment(table, slotIndex + 1, tokenIndex + 1, {
+          cost: current.cost + (matches ? 0 : 1),
+          exactMatches: current.exactMatches + (matches ? 1 : 0),
+          structuralEdits: current.structuralEdits,
+          operations: [
+            ...current.operations,
+            matches
+              ? { type: 'match', slot, token }
+              : { type: 'substitute', slot, token },
+          ],
+        })
+      }
+      if (slot) {
+        updateAlignment(table, slotIndex + 1, tokenIndex, {
+          cost: current.cost + 1,
+          exactMatches: current.exactMatches,
+          structuralEdits: current.structuralEdits + 1,
+          operations: [...current.operations, { type: 'missing', slot }],
+        })
+      }
+      if (token !== undefined) {
+        updateAlignment(table, slotIndex, tokenIndex + 1, {
+          cost: current.cost + 1,
+          exactMatches: current.exactMatches,
+          structuralEdits: current.structuralEdits + 1,
+          operations: [...current.operations, { type: 'extra', token }],
+        })
+      }
+    }
+  }
+
+  return table[slots.length]![actualTokens.length]!
+}
+
+function updateAlignment(
+  table: Array<Array<SlotAlignment | undefined>>,
+  slotIndex: number,
+  tokenIndex: number,
+  candidate: SlotAlignment,
+) {
+  const current = table[slotIndex]![tokenIndex]
+  if (!current || isBetterAlignment(candidate, current)) {
+    table[slotIndex]![tokenIndex] = candidate
+  }
+}
+
+function isBetterAlignment(
+  candidate: SlotAlignment,
+  current: SlotAlignment,
+): boolean {
+  if (candidate.cost !== current.cost) return candidate.cost < current.cost
+  if (candidate.exactMatches !== current.exactMatches) {
+    return candidate.exactMatches > current.exactMatches
+  }
+  if (candidate.structuralEdits !== current.structuralEdits) {
+    return candidate.structuralEdits < current.structuralEdits
+  }
+  return false
 }
 
 function tokensMatchWithoutOrder(
-  slots: StructuredAnswerSlot[],
+  slots: NormalizedAnswerSlot[],
   actualTokens: string[],
 ): boolean {
+  if (slots.length !== actualTokens.length) return false
   const unmatchedTokens = [...actualTokens]
   return slots.every((slot) => {
     const tokenIndex = unmatchedTokens.findIndex((token) =>

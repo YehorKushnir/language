@@ -110,6 +110,28 @@ const itemAwareNegativeAnswerSpec = {
   ],
 }
 
+const optionalFirstPersonAnswerSpec = {
+  acceptedVariants: ['Minä olen lääkäri.', 'Olen lääkäri.'],
+  slots: [
+    {
+      role: 'subject',
+      accepted: ['minä'],
+      itemIds: ['grammar.fi.olla.affirmative'],
+      optional: true,
+    },
+    {
+      role: 'mainVerb',
+      accepted: ['olen'],
+      itemIds: ['grammar.fi.olla.affirmative'],
+    },
+    {
+      role: 'complement',
+      accepted: ['lääkäri'],
+      itemIds: ['word.fi.lääkäri'],
+    },
+  ],
+}
+
 describe('structured answer checker', () => {
   it('accepts a positional slot match even without a curated exact variant', () => {
     expect(
@@ -187,9 +209,153 @@ describe('structured answer checker', () => {
       ],
     })
   })
+
+  describe('optional Finnish subject', () => {
+    it.each(['Minä olen lääkäri.', 'Olen lääkäri.'])(
+      'accepts the valid answer %s',
+      (answer) => {
+        expect(
+          checkStructuredAnswer(answer, optionalFirstPersonAnswerSpec),
+        ).toMatchObject({
+          isCorrect: true,
+          diagnostics: [{ code: 'EXACT_MATCH' }],
+        })
+      },
+    )
+
+    it('reports the wrong olla form instead of a missing pronoun', () => {
+      expect(
+        checkStructuredAnswer('Olet lääkäri.', optionalFirstPersonAnswerSpec),
+      ).toMatchObject({
+        isCorrect: false,
+        diagnostics: [
+          {
+            code: 'WRONG_FORM',
+            slot: 'mainVerb',
+            actual: 'olet',
+            expected: ['olen'],
+          },
+        ],
+      })
+    })
+
+    it('still detects a missing required verb when the subject is present', () => {
+      expect(
+        checkStructuredAnswer('Minä lääkäri.', optionalFirstPersonAnswerSpec),
+      ).toMatchObject({
+        isCorrect: false,
+        diagnostics: [
+          {
+            code: 'MISSING_TOKEN',
+            slot: 'mainVerb',
+            expected: ['olen'],
+          },
+        ],
+      })
+    })
+
+    it('detects word order and extra tokens in a subjectless answer', () => {
+      expect(
+        checkStructuredAnswer('Lääkäri olen.', optionalFirstPersonAnswerSpec),
+      ).toMatchObject({ diagnostics: [{ code: 'WORD_ORDER' }] })
+      expect(
+        checkStructuredAnswer(
+          'Olen hyvä lääkäri.',
+          optionalFirstPersonAnswerSpec,
+        ),
+      ).toMatchObject({
+        diagnostics: [{ code: 'EXTRA_TOKEN', actual: 'hyvä' }],
+      })
+    })
+
+    it('does not make third-person subjects optional', () => {
+      expect(
+        checkStructuredAnswer('On lääkäri.', {
+          acceptedVariants: ['Hän on lääkäri.'],
+          slots: [
+            { role: 'subject', accepted: ['hän'] },
+            { role: 'mainVerb', accepted: ['on'] },
+            { role: 'complement', accepted: ['lääkäri'] },
+          ],
+        }),
+      ).toMatchObject({
+        diagnostics: [
+          {
+            code: 'MISSING_TOKEN',
+            slot: 'subject',
+            expected: ['hän'],
+          },
+        ],
+      })
+    })
+
+    it('handles omitted subjects in negative statements and questions', () => {
+      expect(
+        checkStructuredAnswer('Et ole lääkäri.', {
+          acceptedVariants: ['En ole lääkäri.'],
+          slots: [
+            { role: 'subject', accepted: ['minä'], optional: true },
+            { role: 'negativeVerb', accepted: ['en'] },
+            { role: 'mainVerb', accepted: ['ole'] },
+            { role: 'complement', accepted: ['lääkäri'] },
+          ],
+        }),
+      ).toMatchObject({
+        diagnostics: [
+          {
+            code: 'WRONG_FORM',
+            slot: 'negativeVerb',
+            actual: 'et',
+            expected: ['en'],
+          },
+        ],
+      })
+
+      expect(
+        checkStructuredAnswer('Oletko lääkäri?', {
+          acceptedVariants: ['Olenko lääkäri?'],
+          slots: [
+            { role: 'questionVerb', accepted: ['olenko'] },
+            { role: 'subject', accepted: ['minä'], optional: true },
+            { role: 'complement', accepted: ['lääkäri'] },
+          ],
+        }),
+      ).toMatchObject({
+        diagnostics: [
+          {
+            code: 'TYPO',
+            slot: 'questionVerb',
+            actual: 'oletko',
+            expected: ['olenko'],
+          },
+        ],
+      })
+    })
+  })
 })
 
 describe('structured item evidence', () => {
+  it('ignores an omitted optional subject but scores the wrong verb form', () => {
+    expect(
+      checkStructuredAnswerItems(
+        'Olet lääkäri.',
+        optionalFirstPersonAnswerSpec,
+      ),
+    ).toEqual([
+      { itemId: 'grammar.fi.olla.affirmative', isCorrect: false },
+      { itemId: 'word.fi.lääkäri', isCorrect: true },
+    ])
+    expect(
+      checkStructuredAnswerItems(
+        'Olen lääkäri.',
+        optionalFirstPersonAnswerSpec,
+      ),
+    ).toEqual([
+      { itemId: 'grammar.fi.olla.affirmative', isCorrect: true },
+      { itemId: 'word.fi.lääkäri', isCorrect: true },
+    ])
+  })
+
   it('keeps vocabulary successful when the grammar form is wrong', () => {
     expect(
       checkStructuredAnswerItems(

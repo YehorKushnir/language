@@ -4,7 +4,7 @@ import type {
   LessonPart,
   LessonProgressResponse,
 } from '@language/contracts'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import {
   BookOpenIcon,
   CheckIcon,
@@ -19,10 +19,6 @@ import { useEffect, useState } from 'react'
 import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
 import { cn } from '@/lib/utils'
-import {
-  shouldAnimateNavigation,
-  startAppViewTransition,
-} from '@/lib/view-transition'
 
 interface CourseOutlineProps {
   course: CourseOverviewResponse
@@ -83,7 +79,6 @@ export function CourseOutline({
   progress,
   selectedLessonId,
 }: CourseOutlineProps) {
-  const navigate = useNavigate()
   const [expandedLessonId, setExpandedLessonId] = useState<string | null>(
     selectedLessonId ?? null,
   )
@@ -106,21 +101,9 @@ export function CourseOutline({
   }, [selectedLessonId])
 
   function toggleLesson(lessonId: string) {
-    if (expandedLessonId === lessonId) {
-      setExpandedLessonId(null)
-      window.setTimeout(() => {
-        void navigate({ to: '/lessons' })
-      }, 180)
-      return
-    }
-
-    setExpandedLessonId(lessonId)
-    window.setTimeout(() => {
-      void navigate({
-        to: '/lessons/$lessonId',
-        params: { lessonId },
-      })
-    }, 180)
+    setExpandedLessonId((currentLessonId) =>
+      currentLessonId === lessonId ? null : lessonId,
+    )
   }
 
   return (
@@ -233,16 +216,6 @@ export function CourseOutline({
                                   to={item.to}
                                   params={{ lessonId: lesson.id }}
                                   className="flex items-center justify-center gap-2 rounded-lg border bg-card px-3 py-2.5 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-accent"
-                                  onClick={(event) => {
-                                    if (!shouldAnimateNavigation(event)) return
-                                    event.preventDefault()
-                                    startAppViewTransition(() =>
-                                      navigate({
-                                        to: item.to,
-                                        params: { lessonId: lesson.id },
-                                      }),
-                                    )
-                                  }}
                                 >
                                   {complete ? (
                                     <CheckIcon className="size-3.5 text-primary" />

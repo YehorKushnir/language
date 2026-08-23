@@ -1,5 +1,5 @@
 import type { LessonPart } from '@language/contracts'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import {
   ArrowLeftIcon,
   BookOpenIcon,
@@ -9,10 +9,6 @@ import {
 
 import { LearningPageHeader } from '@/components/learning-page-header'
 import { cn } from '@/lib/utils'
-import {
-  shouldAnimateNavigation,
-  startAppViewTransition,
-} from '@/lib/view-transition'
 
 interface LessonWorkspaceHeaderProps {
   lessonId: string
@@ -48,7 +44,6 @@ export function LessonWorkspaceHeader({
   lessonSummary,
   activePart,
 }: LessonWorkspaceHeaderProps) {
-  const navigate = useNavigate()
   const activeLabel = parts.find((item) => item.part === activePart)?.label
 
   return (
@@ -56,19 +51,8 @@ export function LessonWorkspaceHeader({
       eyebrow={
         <>
           <Link
-            to="/lessons/$lessonId"
-            params={{ lessonId }}
+            to="/lessons"
             className="inline-flex items-center gap-1 transition-colors hover:text-foreground"
-            onClick={(event) => {
-              if (!shouldAnimateNavigation(event)) return
-              event.preventDefault()
-              startAppViewTransition(() =>
-                navigate({
-                  to: '/lessons/$lessonId',
-                  params: { lessonId },
-                }),
-              )
-            }}
           >
             <ArrowLeftIcon className="size-3.5" /> Все уроки
           </Link>
@@ -89,6 +73,7 @@ export function LessonWorkspaceHeader({
               key={item.part}
               to={item.to}
               params={{ lessonId }}
+              resetScroll={false}
               aria-current={active ? 'page' : undefined}
               className={cn(
                 'inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
@@ -96,16 +81,6 @@ export function LessonWorkspaceHeader({
                   ? 'bg-secondary text-secondary-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
-              onClick={(event) => {
-                if (active || !shouldAnimateNavigation(event)) return
-                event.preventDefault()
-                startAppViewTransition(() =>
-                  navigate({
-                    to: item.to,
-                    params: { lessonId },
-                  }),
-                )
-              }}
             >
               <Icon className="size-4" />
               {item.label}

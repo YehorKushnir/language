@@ -3,7 +3,9 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowRightIcon, HeadphonesIcon } from 'lucide-react'
 
 import { courseQuery, preparedTextsQuery } from '@/api/queries'
+import { preloadCourseRoute } from '@/api/route-preload'
 import { LearningPageHeader } from '@/components/learning-page-header'
+import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,6 +13,10 @@ import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
 
 export const Route = createFileRoute('/texts')({
+  loader: ({ context }) =>
+    preloadCourseRoute(context.queryClient, (routeVersionId, queryClient) =>
+      queryClient.ensureQueryData(preparedTextsQuery(routeVersionId)),
+    ),
   component: TextsPage,
 })
 
@@ -28,7 +34,7 @@ function TextsPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-5 sm:py-10">
+    <PageShell>
       <LearningPageHeader
         eyebrow="Чтение с разбором"
         title="Тексты"
@@ -83,7 +89,7 @@ function TextsPage() {
           </li>
         ))}
       </ul>
-    </main>
+    </PageShell>
   )
 }
 
@@ -95,8 +101,8 @@ function PageState({
   message?: string
 }) {
   return (
-    <main className="mx-auto w-full max-w-4xl px-5 py-10">
+    <PageShell>
       {loading ? <PageLoading /> : <QueryError message={message} />}
-    </main>
+    </PageShell>
   )
 }

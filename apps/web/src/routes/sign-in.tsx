@@ -2,6 +2,7 @@ import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import { AlertCircleIcon, LogInIcon } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 
+import { PageShell } from '@/components/page-shell'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -134,8 +135,8 @@ function SignInPage() {
 
 function AuthPageLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl place-items-center px-5 py-12">
+    <PageShell className="grid min-h-[calc(100vh-4rem)] place-items-center py-12">
       {children}
-    </main>
+    </PageShell>
   )
 }

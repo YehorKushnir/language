@@ -20,6 +20,8 @@ import {
   nextReviewQuery,
   reviewQueueQuery,
 } from '@/api/queries'
+import { preloadCourseRoute } from '@/api/route-preload'
+import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -30,6 +32,10 @@ import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
 
 export const Route = createFileRoute('/reviews_/session')({
+  loader: ({ context }) =>
+    preloadCourseRoute(context.queryClient, (routeVersionId, queryClient) =>
+      queryClient.ensureQueryData(nextReviewQuery(routeVersionId)),
+    ),
   component: ReviewSessionPage,
 })
 
@@ -123,7 +129,7 @@ function ReviewSessionPage() {
   if (!exercise) {
     const hasUnavailableItems = review.data.dueCount > 0
     return (
-      <main className="mx-auto w-full max-w-3xl px-5 py-14">
+      <PageShell className="py-14">
         <Button asChild variant="ghost" size="sm" className="-ml-3 mb-8">
           <Link to="/reviews">
             <ArrowLeftIcon /> К очереди
@@ -153,12 +159,12 @@ function ReviewSessionPage() {
             </Button>
           </CardContent>
         </Card>
-      </main>
+      </PageShell>
     )
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-5 py-10 sm:py-14">
+    <PageShell className="sm:py-14">
       <Button asChild variant="ghost" size="sm" className="-ml-3 mb-8">
         <Link to="/reviews">
           <ArrowLeftIcon /> Завершить сессию
@@ -259,7 +265,7 @@ function ReviewSessionPage() {
           </Button>
         </div>
       ) : null}
-    </main>
+    </PageShell>
   )
 }
 
@@ -271,8 +277,8 @@ function PageState({
   message?: string
 }) {
   return (
-    <main className="mx-auto w-full max-w-3xl px-5 py-14">
+    <PageShell className="py-14">
       {loading ? <PageLoading /> : <QueryError message={message} />}
-    </main>
+    </PageShell>
   )
 }
