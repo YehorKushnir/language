@@ -41,39 +41,67 @@ export const consonantGradationSkills: CourseSkillSeed[] = [
 ]
 
 export const consonantGradationContent: CourseLessonContentSeed = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
       id: 'gradation-principle',
-      eyebrow: { ru: 'Основа правила' },
-      title: { ru: 'Сильная и слабая ступень' },
+      title: { ru: 'Где появляются сильная и слабая ступени' },
       paragraphs: [
         {
-          ru: 'Внутри основы k, p и t могут чередоваться. У глаголов первого типа словарная форма и hän обычно показывают сильную ступень, а minä, sinä, me и te — слабую.',
+          ru: 'Внутри основы k, p и t могут чередоваться. У многих глаголов первого типа hän показывает сильную ступень, а minä, sinä, me и te — слабую. У части глаголов типов 3 и 4 направление обратное: инфинитив слабый, а личная основа сильная.',
         },
         {
-          ru: 'Сначала определи тип глагола и основу, затем выбери ступень, и только после этого добавляй личное окончание.',
+          ru: 'Чередование принадлежит конкретному слову и модели. Поэтому порядок всегда один: определить тип, построить основу, выбрать нужную ступень и добавить личное окончание.',
         },
       ],
+      table: {
+        headers: [
+          { ru: 'Модель' },
+          { ru: 'Исходная форма' },
+          { ru: 'Личная форма' },
+          { ru: 'Направление' },
+        ],
+        rows: [
+          [
+            { ru: 'тип 1' },
+            { ru: 'hän ottaa' },
+            { ru: 'minä otan' },
+            { ru: 'tt → t' },
+          ],
+          [
+            { ru: 'тип 1' },
+            { ru: 'hän antaa' },
+            { ru: 'minä annan' },
+            { ru: 'nt → nn' },
+          ],
+          [
+            { ru: 'тип 4' },
+            { ru: 'tavata' },
+            { ru: 'minä tapaan' },
+            { ru: 'v → p' },
+          ],
+          [
+            { ru: 'тип 4' },
+            { ru: 'tykätä' },
+            { ru: 'minä tykkään' },
+            { ru: 'k → kk' },
+          ],
+        ],
+      },
       examples: [
-        { target: 'ottaa → otan', source: { ru: 'брать → я беру' } },
         {
-          target: 'käyttää → käytän',
-          source: { ru: 'использовать → я использую' },
+          target: 'Hän ottaa. Minä otan.',
+          source: { ru: 'Он берёт. Я беру.' },
         },
-      ],
-      quickChecks: [
         {
-          prompt: { ru: 'Выбери форму minä от ottaa.' },
-          answer: 'otan',
-          explanation: { ru: 'В слабой ступени tt превращается в t.' },
+          target: 'Tavata → minä tapaan.',
+          source: { ru: 'встречать → я встречаю' },
         },
       ],
     },
     {
       id: 'quantitative-gradation',
-      eyebrow: { ru: 'Модель 1' },
       title: { ru: 'Количественное чередование' },
       paragraphs: [
         {
@@ -83,7 +111,7 @@ export const consonantGradationContent: CourseLessonContentSeed = {
       table: {
         headers: [{ ru: 'Сильная' }, { ru: 'Слабая' }, { ru: 'Пример' }],
         rows: [
-          [{ ru: 'kk' }, { ru: 'k' }, { ru: 'pakata → pakkaan' }],
+          [{ ru: 'kk' }, { ru: 'k' }, { ru: 'nukkua → nukun' }],
           [{ ru: 'pp' }, { ru: 'p' }, { ru: 'tappaa → tapan' }],
           [{ ru: 'tt' }, { ru: 't' }, { ru: 'ottaa → otan' }],
         ],
@@ -101,7 +129,6 @@ export const consonantGradationContent: CourseLessonContentSeed = {
     },
     {
       id: 'qualitative-gradation',
-      eyebrow: { ru: 'Модель 2' },
       title: { ru: 'Качественное чередование' },
       paragraphs: [
         {
@@ -111,7 +138,7 @@ export const consonantGradationContent: CourseLessonContentSeed = {
       table: {
         headers: [{ ru: 'Сильная' }, { ru: 'Слабая' }, { ru: 'Пример' }],
         rows: [
-          [{ ru: 'p' }, { ru: 'v' }, { ru: 'tavata → tapaan' }],
+          [{ ru: 'p' }, { ru: 'v' }, { ru: 'leipoa → leivon' }],
           [{ ru: 't' }, { ru: 'd' }, { ru: 'löytää → löydän' }],
           [
             { ru: 'k' },
@@ -125,17 +152,9 @@ export const consonantGradationContent: CourseLessonContentSeed = {
         { target: 'Minä luen.', source: { ru: 'Я читаю.' } },
         { target: 'Me annamme.', source: { ru: 'Мы даём.' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери форму hän от antaa.' },
-          answer: 'antaa',
-          explanation: { ru: 'Форма hän сохраняет сильную ступень nt.' },
-        },
-      ],
     },
     {
       id: 'reverse-gradation',
-      eyebrow: { ru: 'Типы 3–4' },
       title: { ru: 'Обратное чередование' },
       paragraphs: [
         {
@@ -152,19 +171,9 @@ export const consonantGradationContent: CourseLessonContentSeed = {
           source: { ru: 'Тебе нравится кофе?' },
         },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери форму minä от tykätä.' },
-          answer: 'tykkään',
-          explanation: {
-            ru: 'Слабая k инфинитива восстанавливается до kk в личной основе.',
-          },
-        },
-      ],
     },
     {
       id: 'noun-recognition',
-      eyebrow: { ru: 'Лексика урока' },
       title: { ru: 'Те же пары в существительных' },
       paragraphs: [
         {
@@ -178,7 +187,6 @@ export const consonantGradationContent: CourseLessonContentSeed = {
     },
     {
       id: 'gradation-register-errors',
-      eyebrow: { ru: 'Контроль' },
       title: { ru: 'Типичные ошибки и разговорная речь' },
       paragraphs: [
         {
@@ -192,12 +200,10 @@ export const consonantGradationContent: CourseLessonContentSeed = {
         {
           target: 'Mä otan tämän.',
           source: { ru: 'Я возьму это.' },
-          note: { ru: 'Kirjakieli: Minä otan tämän.' },
         },
         {
           target: 'Sä tykkäät siitä.',
           source: { ru: 'Тебе это нравится.' },
-          note: { ru: 'Kirjakieli: Sinä tykkäät siitä.' },
         },
       ],
       callout: {

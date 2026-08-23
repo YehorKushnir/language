@@ -8,6 +8,7 @@ import {
 import { preparedTexts } from '../../../content/courses/ru-fi/texts/fi.olla.introductions.js'
 
 const MINIMUM_EXPLANATION_SECTIONS = 5
+const MINIMUM_EXPLANATION_EXAMPLES = 12
 const MINIMUM_GOLDEN_EXERCISES = 5
 const MINIMUM_GRAMMAR_EXERCISES = 30
 const MINIMUM_DISTINCT_SLOT_SHAPES = 5
@@ -115,8 +116,43 @@ function inspectLesson(lesson: CourseLessonSeed): MvpLessonReadiness {
       `expected at least ${MINIMUM_EXPLANATION_SECTIONS} explanation sections`,
     )
   }
-  if (!screens.some((screen) => screen.table)) {
-    issues.push('explanation has no forms table')
+  if (!screens[0]?.table) {
+    issues.push('first explanation section must contain the overview table')
+  }
+  const explanationExampleCount = screens.reduce(
+    (count, screen) => count + (screen.examples?.length ?? 0),
+    0,
+  )
+  if (explanationExampleCount < MINIMUM_EXPLANATION_EXAMPLES) {
+    issues.push(
+      `expected at least ${MINIMUM_EXPLANATION_EXAMPLES} explanation examples`,
+    )
+  }
+  if (screens.some((screen) => (screen.examples?.length ?? 0) < 2)) {
+    issues.push('every explanation section must contain at least 2 examples')
+  }
+  if (!screens.some((screen) => screen.callout)) {
+    issues.push('explanation has no important callout')
+  }
+  if (
+    screens.some((screen) =>
+      /(шаг|самопроверк|контроль|главное|объяснение)/iu.test(screen.title.ru),
+    )
+  ) {
+    issues.push('explanation contains a service or self-check heading')
+  }
+  if (
+    screens.some((screen) => {
+      const candidate = screen as unknown as Record<string, unknown>
+      return 'eyebrow' in candidate || 'quickChecks' in candidate
+    }) ||
+    screens.some((screen) =>
+      (screen.examples ?? []).some(
+        (example) => 'note' in (example as unknown as Record<string, unknown>),
+      ),
+    )
+  ) {
+    issues.push('explanation contains a forbidden service field')
   }
   if (!/ошиб/u.test(searchableExplanation)) {
     issues.push('explanation does not cover typical errors')

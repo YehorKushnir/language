@@ -313,19 +313,57 @@ const pronouns = [
 ] as const
 
 export const presentCommonContent = {
-  version: 3,
+  version: 4,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
-      id: 'type-one-stem',
-      eyebrow: { ru: 'Основа' },
-      title: { ru: 'Как узнать глагол первого типа' },
+      id: 'present-overview',
+      title: { ru: 'Настоящее время целиком' },
       paragraphs: [
         {
-          ru: 'У глагола первого типа словарная форма оканчивается на -a или -ä, а перед окончанием стоит гласная: puhua, lukea, kysyä. Чтобы получить основу, убери последнюю -a/-ä.',
+          ru: 'Личная форма состоит из основы глагола и окончания, которое показывает участника. На примере puhua видно сразу всю систему: puhun, puhut, puhuu, puhumme, puhutte, puhuvat.',
         },
         {
-          ru: 'Это правило определяет основу, но не отменяет чередование согласных. Поэтому lukea даёт luen, а kertoa — kerron.',
+          ru: 'Сначала выбирается основа, затем личное окончание. В третьем лице единственного числа вместо отдельного окончания последняя гласная основы обычно удлиняется.',
+        },
+      ],
+      table: {
+        headers: [{ ru: 'Кто' }, { ru: 'Окончание' }, { ru: 'puhua' }],
+        rows: pronouns.map(([target, source], index) => [
+          { ru: `${target} — ${source}` },
+          {
+            ru: ['-n', '-t', 'долгая гласная', '-mme', '-tte', '-vat/-vät'][
+              index
+            ]!,
+          },
+          { ru: verbs[0]!.forms[index]! },
+        ]),
+      },
+      examples: [
+        { target: 'Minä puhun suomea.', source: { ru: 'Я говорю по-фински.' } },
+        {
+          target: 'Sinä puhut suomea.',
+          source: { ru: 'Ты говоришь по-фински.' },
+        },
+        {
+          target: 'Hän puhuu suomea.',
+          source: { ru: 'Он или она говорит по-фински.' },
+        },
+        {
+          target: 'Me puhumme suomea.',
+          source: { ru: 'Мы говорим по-фински.' },
+        },
+      ],
+    },
+    {
+      id: 'type-one-stem',
+      title: { ru: 'Как получить основу глагола первого типа' },
+      paragraphs: [
+        {
+          ru: 'Глагол первого типа в словарной форме оканчивается на -a или -ä, перед которыми стоит гласная: puhua, lukea, kysyä. Чтобы получить основу, убери последнюю -a/-ä.',
+        },
+        {
+          ru: 'После выделения основы проверь, не меняются ли k, p или t. Поэтому puhua даёт puhun, но lukea — luen. Полная система таких чередований будет разобрана в уроке 6.',
         },
       ],
       table: {
@@ -338,58 +376,13 @@ export const presentCommonContent = {
         ],
       },
       examples: [
-        { target: 'Minä puhun suomea.', source: { ru: 'Я говорю по-фински.' } },
+        { target: 'Minä kysyn.', source: { ru: 'Я спрашиваю.' } },
         { target: 'Minä luen.', source: { ru: 'Я читаю.' } },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Убери окончание инфинитива: puhua → ___' },
-          answer: 'puhu-',
-          explanation: { ru: 'У первого типа убирается последняя -a/-ä.' },
-        },
-      ],
-    },
-    {
-      id: 'personal-endings',
-      eyebrow: { ru: 'Лицо и число' },
-      title: { ru: 'Шесть личных окончаний' },
-      paragraphs: [
-        {
-          ru: 'К основе добавляются окончания -n, -t, удлинение гласной, -mme, -tte и -vat/-vät. Последний вариант выбирается по гармонии гласных.',
-        },
-        {
-          ru: 'В третьем лице единственного числа последняя гласная обычно удлиняется: puhuu, kysyy, lukee. Уже долгую гласную повторно не удлиняют.',
-        },
-      ],
-      table: {
-        headers: [{ ru: 'Лицо' }, { ru: 'Окончание' }, { ru: 'puhua' }],
-        rows: pronouns.map(([target, source], index) => [
-          { ru: `${target} — ${source}` },
-          {
-            ru: ['-n', '-t', 'долгая гласная', '-mme', '-tte', '-vat/-vät'][
-              index
-            ]!,
-          },
-          { ru: verbs[0]!.forms[index]! },
-        ]),
-      },
-      examples: [
-        { target: 'Sinä puhut.', source: { ru: 'Ты говоришь.' } },
-        { target: 'He puhuvat.', source: { ru: 'Они говорят.' } },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери форму для me: puhun / puhumme / puhuvat' },
-          answer: 'puhumme',
-          explanation: {
-            ru: 'Первое лицо множественного числа получает окончание -mme.',
-          },
-        },
+        { target: 'Minä kerron.', source: { ru: 'Я рассказываю.' } },
       ],
     },
     {
       id: 'gradation-in-present',
-      eyebrow: { ru: 'Чередование' },
       title: { ru: 'Почему согласная иногда меняется' },
       paragraphs: [
         {
@@ -430,11 +423,10 @@ export const presentCommonContent = {
     },
     {
       id: 'subject-omission',
-      eyebrow: { ru: 'Предложение' },
       title: { ru: 'Когда местоимение можно опустить' },
       paragraphs: [
         {
-          ru: 'В первом и втором лице окончание уже показывает действующее лицо, поэтому minä, sinä, me и te часто опускаются. Olen здесь значит «я живу», а puhut — «ты говоришь».',
+          ru: 'В первом и втором лице окончание уже показывает действующее лицо, поэтому minä, sinä, me и te часто опускаются. Asun здесь значит «я живу», а puhut — «ты говоришь».',
         },
         {
           ru: 'Hän и he в нейтральном письменном языке не опускаются: hän lukee, he kirjoittavat.',
@@ -448,19 +440,9 @@ export const presentCommonContent = {
         },
         { target: 'Kirjoitamme.', source: { ru: 'Мы пишем.' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Можно ли убрать hän из фразы Hän lukee?' },
-          answer: 'Нет, в нейтральном языке hän нужно оставить.',
-          explanation: {
-            ru: 'Форма третьего лица сама не различает hän и другие возможные подлежащие.',
-          },
-        },
-      ],
     },
     {
       id: 'spoken-present',
-      eyebrow: { ru: 'Регистр' },
       title: { ru: 'Kirjakieli и puhekieli' },
       paragraphs: [
         {
@@ -474,18 +456,15 @@ export const presentCommonContent = {
         {
           target: 'Mä puhun suomea.',
           source: { ru: 'Я говорю по-фински.' },
-          note: { ru: 'Kirjakieli: Minä puhun suomea.' },
         },
         {
           target: 'Sä asut täällä.',
           source: { ru: 'Ты живёшь здесь.' },
-          note: { ru: 'Kirjakieli: Sinä asut täällä.' },
         },
       ],
     },
     {
       id: 'present-errors',
-      eyebrow: { ru: 'Самопроверка' },
       title: { ru: 'Типичные ошибки' },
       paragraphs: [
         {
@@ -499,17 +478,14 @@ export const presentCommonContent = {
         {
           target: 'Minä ymmärrän.',
           source: { ru: 'Я понимаю.' },
-          note: { ru: 'Не: ymmärtän.' },
         },
         {
           target: 'He käyttävät.',
           source: { ru: 'Они используют.' },
-          note: { ru: 'Не: he käytävät.' },
         },
         {
           target: 'Hän sulkee.',
           source: { ru: 'Он или она закрывает.' },
-          note: { ru: 'Не: hän suljen.' },
         },
       ],
       callout: {

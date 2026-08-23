@@ -33,40 +33,63 @@ export const genitivePossessionSkills: CourseSkillSeed[] = [
 ]
 
 export const genitivePossessionContent: CourseLessonContentSeed = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
-      id: 'genitive-owner',
-      eyebrow: { ru: 'Принадлежность' },
-      title: { ru: 'Владелец получает окончание -n' },
+      id: 'possession-overview',
+      title: { ru: 'Две конструкции принадлежности' },
       paragraphs: [
         {
-          ru: 'Финский генитив отвечает на вопрос kenen — «чей». Владелец стоит перед предметом: äidin koti, naapurin asunto.',
+          ru: 'Чтобы назвать владельца предмета, финский использует генитив на -n: äidin koti — «дом матери». Чтобы сообщить о наличии, владелец получает форму на -lla/-llä: äidillä on koti — «у матери есть дом».',
         },
         {
-          ru: 'Окончание добавляется к падежной основе, поэтому форма не всегда равна lemma + n: lapsi → lapsen, veli → veljen.',
+          ru: 'Это разные конструкции, хотя обе связаны с принадлежностью. В отрицании наличия используется ei ole, а предмет принимает партитивную форму, которую пока можно запоминать внутри готовой фразы.',
         },
       ],
+      table: {
+        headers: [{ ru: 'Что сообщаем' }, { ru: 'Модель' }, { ru: 'Пример' }],
+        rows: [
+          [
+            { ru: 'чей предмет' },
+            { ru: 'владелец-n + предмет' },
+            { ru: 'äidin koti' },
+          ],
+          [
+            { ru: 'у кого есть' },
+            { ru: 'владелец-lla/-llä + on' },
+            { ru: 'Äidillä on koti.' },
+          ],
+          [
+            { ru: 'у кого нет' },
+            { ru: 'владелец-lla/-llä + ei ole' },
+            { ru: 'Äidillä ei ole autoa.' },
+          ],
+          [
+            { ru: 'есть ли у кого' },
+            { ru: 'onko + владелец-lla/-llä' },
+            { ru: 'Onko äidillä auto?' },
+          ],
+        ],
+      },
       examples: [
-        { target: 'äidin koti', source: { ru: 'дом матери' } },
-        { target: 'veljen huone', source: { ru: 'комната брата' } },
-      ],
-      quickChecks: [
+        { target: 'Tämä on äidin koti.', source: { ru: 'Это дом матери.' } },
+        { target: 'Äidillä on koti.', source: { ru: 'У матери есть дом.' } },
         {
-          prompt: { ru: 'Образуй генитив: isä → ___' },
-          answer: 'isän',
-          explanation: { ru: 'К основе isä- добавляется -n.' },
+          target: 'Äidillä ei ole autoa.',
+          source: { ru: 'У матери нет автомобиля.' },
         },
       ],
     },
     {
       id: 'genitive-forms',
-      eyebrow: { ru: 'Формы' },
       title: { ru: 'Частые модели генитива' },
       paragraphs: [
         {
-          ru: 'Прозрачные слова получают -n напрямую, но чередование и изменение основы нужно учитывать. Учи lemma вместе с генитивом.',
+          ru: 'Генитив отвечает на вопрос kenen — «чей». Владелец стоит перед предметом. Окончание -n добавляется к падежной основе, поэтому форма не всегда равна словарной форме плюс n.',
+        },
+        {
+          ru: 'Прозрачные слова получают -n напрямую, но чередование и изменение основы нужно учитывать. Новое существительное полезно учить парой: словарная форма + генитив.',
         },
       ],
       table: {
@@ -85,7 +108,6 @@ export const genitivePossessionContent: CourseLessonContentSeed = {
     },
     {
       id: 'minulla-on',
-      eyebrow: { ru: 'Обладание' },
       title: { ru: '«У меня есть» — minulla on' },
       paragraphs: [
         {
@@ -108,17 +130,9 @@ export const genitivePossessionContent: CourseLessonContentSeed = {
         { target: 'Minulla on avain.', source: { ru: 'У меня есть ключ.' } },
         { target: 'Heillä on asunto.', source: { ru: 'У них есть квартира.' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Вставь владельца: ___ on koti. (у нас)' },
-          answer: 'Meillä',
-          explanation: { ru: 'Местоимению me соответствует форма meillä.' },
-        },
-      ],
     },
     {
       id: 'possession-negative-question',
-      eyebrow: { ru: 'Отрицание и вопрос' },
       title: { ru: 'Minulla ei ole и onko sinulla' },
       paragraphs: [
         {
@@ -135,19 +149,9 @@ export const genitivePossessionContent: CourseLessonContentSeed = {
           source: { ru: 'У тебя есть балкон?' },
         },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Заверши отрицание: Minulla ei ole ___ (ключ).' },
-          answer: 'avainta',
-          explanation: {
-            ru: 'В отрицании предмет стоит в партитиве: avainta.',
-          },
-        },
-      ],
     },
     {
       id: 'possession-meaning',
-      eyebrow: { ru: 'Смысл' },
       title: { ru: 'Принадлежность и наличие — разные модели' },
       paragraphs: [
         {
@@ -161,7 +165,6 @@ export const genitivePossessionContent: CourseLessonContentSeed = {
     },
     {
       id: 'possession-register-errors',
-      eyebrow: { ru: 'Контроль' },
       title: { ru: 'Типичные ошибки и puhekieli' },
       paragraphs: [
         {
@@ -175,12 +178,10 @@ export const genitivePossessionContent: CourseLessonContentSeed = {
         {
           target: 'Mul on avain.',
           source: { ru: 'У меня есть ключ.' },
-          note: { ru: 'Kirjakieli: Minulla on avain.' },
         },
         {
           target: 'Sul ei oo parveketta.',
           source: { ru: 'У тебя нет балкона.' },
-          note: { ru: 'Kirjakieli: Sinulla ei ole parveketta.' },
         },
       ],
       callout: {

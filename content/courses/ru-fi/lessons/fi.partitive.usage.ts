@@ -47,57 +47,85 @@ export const partitiveUsageSkills: CourseSkillSeed[] = [
 ]
 
 export const partitiveUsageContent: CourseLessonContentSeed = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
       id: 'partitive-functions',
-      eyebrow: { ru: 'Система' },
-      title: { ru: 'Одна форма — несколько связанных значений' },
+      title: { ru: 'Когда нужен партитив' },
       paragraphs: [
         {
-          ru: 'Партитив используется для части или неопределённого количества, незавершённого процесса, отрицательного объекта и после определённых глаголов управления.',
+          ru: 'Партитив используется по нескольким причинам: для неопределённого количества, действия без указанного результата, отрицательного объекта, существительного после числительного и управления некоторых глаголов.',
+        },
+        {
+          ru: 'Сначала определи причину выбора падежа, а затем образуй форму по правилам предыдущего урока. Одинаковое окончание может выполнять разные смысловые задачи.',
         },
       ],
+      table: {
+        headers: [
+          { ru: 'Причина' },
+          { ru: 'Вопрос к смыслу' },
+          { ru: 'Пример' },
+        ],
+        rows: [
+          [
+            { ru: 'количество' },
+            { ru: 'сколько-то чего' },
+            { ru: 'Juon vettä.' },
+          ],
+          [
+            { ru: 'процесс' },
+            { ru: 'результат не указан' },
+            { ru: 'Luen kirjaa.' },
+          ],
+          [
+            { ru: 'отрицание' },
+            { ru: 'объекта нет' },
+            { ru: 'En lue kirjaa.' },
+          ],
+          [
+            { ru: 'числительное' },
+            { ru: 'два и больше' },
+            { ru: 'kaksi kirjaa' },
+          ],
+          [
+            { ru: 'управление' },
+            { ru: 'этого требует глагол' },
+            { ru: 'Odotan bussia.' },
+          ],
+        ],
+      },
       examples: [
+        { target: 'Juon vettä.', source: { ru: 'Я пью воду.' } },
         { target: 'Kuuntelen musiikkia.', source: { ru: 'Я слушаю музыку.' } },
         { target: 'Odotan bussia.', source: { ru: 'Я жду автобус.' } },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери объект: Kuuntelen ___ (musiikki).' },
-          answer: 'musiikkia',
-          explanation: { ru: 'Незавершённое слушание требует партитива.' },
-        },
       ],
     },
     {
       id: 'partitive-process',
-      eyebrow: { ru: 'Процесс' },
       title: { ru: 'Незавершённое действие' },
       paragraphs: [
         {
-          ru: 'Партитив показывает действие как процесс без указанной границы. Сравни luen kirjaa — «читаю книгу» как процесс — и luen kirjan, когда важен завершённый результат.',
+          ru: 'Партитив показывает действие как процесс без указанной границы. Сравни luen kirjaa — «читаю книгу» как процесс — и luen kirjan, когда предложение представляет чтение всей книги как результат.',
         },
       ],
       table: {
-        headers: [{ ru: 'Контекст' }, { ru: 'Форма' }, { ru: 'Пример' }],
+        headers: [
+          { ru: 'Взгляд на действие' },
+          { ru: 'Объект' },
+          { ru: 'Пример' },
+        ],
         rows: [
-          [{ ru: 'процесс' }, { ru: 'партитив' }, { ru: 'Katson elokuvaa.' }],
+          [{ ru: 'идёт процесс' }, { ru: 'kirjaa' }, { ru: 'Luen kirjaa.' }],
           [
-            { ru: 'отрицание' },
-            { ru: 'партитив' },
-            { ru: 'En katso elokuvaa.' },
+            { ru: 'важен весь результат' },
+            { ru: 'kirjan' },
+            { ru: 'Luen kirjan.' },
           ],
           [
-            { ru: 'число > 1' },
-            { ru: 'партитив ед. ч.' },
-            { ru: 'kaksi elokuvaa' },
-          ],
-          [
-            { ru: 'управление' },
-            { ru: 'партитив' },
-            { ru: 'Ajattelen matkaa.' },
+            { ru: 'идёт просмотр' },
+            { ru: 'elokuvaa' },
+            { ru: 'Katson elokuvaa.' },
           ],
         ],
       },
@@ -108,7 +136,6 @@ export const partitiveUsageContent: CourseLessonContentSeed = {
     },
     {
       id: 'partitive-negative',
-      eyebrow: { ru: 'Отрицание' },
       title: { ru: 'Отрицательный объект стоит в партитиве' },
       paragraphs: [
         {
@@ -122,17 +149,9 @@ export const partitiveUsageContent: CourseLessonContentSeed = {
           source: { ru: 'Он не ждёт праздника.' },
         },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Заверши: En ajattele ___ (matka).' },
-          answer: 'matkaa',
-          explanation: { ru: 'Отрицательный объект сохраняет партитив.' },
-        },
-      ],
     },
     {
       id: 'partitive-number',
-      eyebrow: { ru: 'Количество' },
       title: { ru: 'После kaksi и больше — партитив единственного числа' },
       paragraphs: [
         {
@@ -143,19 +162,9 @@ export const partitiveUsageContent: CourseLessonContentSeed = {
         { target: 'kaksi elokuvaa', source: { ru: 'два фильма' } },
         { target: 'kolme peliä', source: { ru: 'три игры' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери: kaksi peliä / kaksi pelit.' },
-          answer: 'kaksi peliä',
-          explanation: {
-            ru: 'После kaksi используется партитив единственного числа.',
-          },
-        },
-      ],
     },
     {
       id: 'partitive-government',
-      eyebrow: { ru: 'Управление' },
       title: { ru: 'Некоторые глаголы требуют партитива' },
       paragraphs: [
         {
@@ -169,7 +178,6 @@ export const partitiveUsageContent: CourseLessonContentSeed = {
     },
     {
       id: 'partitive-usage-errors-register',
-      eyebrow: { ru: 'Контроль' },
       title: { ru: 'Типичные ошибки и puhekieli' },
       paragraphs: [
         {
@@ -183,12 +191,10 @@ export const partitiveUsageContent: CourseLessonContentSeed = {
         {
           target: 'Mä katon leffaa.',
           source: { ru: 'Я смотрю фильм.' },
-          note: { ru: 'Разговорно; kirjakieli: Minä katson elokuvaa.' },
         },
         {
           target: 'En kato leffaa.',
           source: { ru: 'Я не смотрю фильм.' },
-          note: { ru: 'Kirjakieli: En katso elokuvaa.' },
         },
       ],
       callout: {

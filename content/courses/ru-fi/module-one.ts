@@ -119,18 +119,11 @@ type PartOfSpeech = LessonVocabularySeed['partOfSpeech']
 
 export interface CourseExplanationScreenSeed {
   id: string
-  eyebrow?: { ru: string }
   title: { ru: string }
   paragraphs: readonly { ru: string }[]
   examples: readonly {
     target: string
     source: { ru: string }
-    note?: { ru: string }
-  }[]
-  quickChecks?: readonly {
-    prompt: { ru: string }
-    answer: string
-    explanation?: { ru: string }
   }[]
   table?: {
     headers: readonly { ru: string }[]
@@ -1303,7 +1296,6 @@ function createLessonContent(
     sections: ['explanation', 'vocabulary', 'practice'],
     explanationScreens: specification.focus.map((paragraph, screenIndex) => ({
       id: `rule-${screenIndex + 1}`,
-      eyebrow: { ru: `Шаг ${screenIndex + 1} из 4` },
       title: {
         ru: [
           'Основная модель',

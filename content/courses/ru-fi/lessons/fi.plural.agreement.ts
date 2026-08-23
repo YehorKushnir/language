@@ -37,87 +37,133 @@ export const pluralAgreementSkills: CourseSkillSeed[] = [
 ]
 
 export const pluralAgreementContent: CourseLessonContentSeed = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
-      id: 't-plural',
-      eyebrow: { ru: 'Форма' },
-      title: { ru: 'Именительный множественного заканчивается на -t' },
+      id: 'plural-agreement-overview',
+      title: { ru: 'Как согласуется фраза во множественном числе' },
       paragraphs: [
         {
-          ru: 'Окончание -t присоединяется к падежной основе: kirja → kirjat, uusi → uudet. Основа может отличаться от словарной формы.',
+          ru: 'При переходе от одного предмета к нескольким меняются все связанные части фразы, но они получают разные формы: определение и существительное — t-множественное, olla — ovat, признак после olla — обычно партитив множественного числа.',
         },
-      ],
-      examples: [
-        { target: 'kirja → kirjat', source: { ru: 'книга → книги' } },
-        { target: 'uusi → uudet', source: { ru: 'новый → новые' } },
-      ],
-      quickChecks: [
         {
-          prompt: { ru: 'Образуй множественное: uusi → ___' },
-          answer: 'uudet',
-          explanation: { ru: 'Используется основа uude- и окончание -t.' },
-        },
-      ],
-    },
-    {
-      id: 'agreement-table',
-      eyebrow: { ru: 'Согласование' },
-      title: { ru: 'Все связанные слова получают множественное число' },
-      paragraphs: [
-        {
-          ru: 'Определение согласуется с существительным, а olla принимает форму ovat: uudet kirjat ovat täällä.',
+          ru: 'Поэтому нельзя просто добавить -t к одному существительному. Сначала найди все слова, которые должны согласоваться с множественным подлежащим.',
         },
       ],
       table: {
         headers: [
-          { ru: 'Элемент' },
-          { ru: 'Единственное' },
-          { ru: 'Множественное' },
+          { ru: 'Часть фразы' },
+          { ru: 'Один предмет' },
+          { ru: 'Несколько предметов' },
         ],
         rows: [
-          [{ ru: 'прилагательное' }, { ru: 'uusi' }, { ru: 'uudet' }],
-          [{ ru: 'существительное' }, { ru: 'kirja' }, { ru: 'kirjat' }],
+          [{ ru: 'определение' }, { ru: 'uusi' }, { ru: 'uudet' }],
+          [{ ru: 'существительное' }, { ru: 'huone' }, { ru: 'huoneet' }],
           [{ ru: 'olla' }, { ru: 'on' }, { ru: 'ovat' }],
-          [{ ru: 'отрицание' }, { ru: 'ei ole' }, { ru: 'eivät ole' }],
+          [{ ru: 'признак после olla' }, { ru: 'vapaa' }, { ru: 'vapaita' }],
+          [
+            { ru: 'вся фраза' },
+            { ru: 'Uusi huone on vapaa.' },
+            { ru: 'Uudet huoneet ovat vapaita.' },
+          ],
         ],
       },
       examples: [
         {
-          target: 'Suuret talot ovat täällä.',
-          source: { ru: 'Большие дома здесь.' },
+          target: 'Uusi huone on vapaa.',
+          source: { ru: 'Новая комната свободна.' },
         },
         {
-          target: 'Pienet huoneet ovat vapaita.',
-          source: { ru: 'Маленькие комнаты свободны.' },
+          target: 'Uudet huoneet ovat vapaita.',
+          source: { ru: 'Новые комнаты свободны.' },
         },
       ],
     },
     {
-      id: 'adjective-stems',
-      eyebrow: { ru: 'Основы' },
-      title: { ru: 'Частые прилагательные меняют основу' },
+      id: 't-plural',
+      title: { ru: 'Как образуется t-множественное' },
       paragraphs: [
         {
-          ru: 'Сравни pieni → pienet, lämmin → lämpimät, kallis → kalliit. Эти формы нужно связывать с уже знакомой генитивной основой.',
+          ru: 'Окончание -t присоединяется к падежной основе: kirja → kirjat, uusi → uudet. Основа может отличаться от словарной формы, поэтому полезно опираться на уже знакомую генитивную основу.',
         },
       ],
+      table: {
+        headers: [
+          { ru: 'Словарная форма' },
+          { ru: 'Основа' },
+          { ru: 'Множественное' },
+        ],
+        rows: [
+          [{ ru: 'kirja' }, { ru: 'kirja-' }, { ru: 'kirjat' }],
+          [{ ru: 'uusi' }, { ru: 'uude-' }, { ru: 'uudet' }],
+          [{ ru: 'pieni' }, { ru: 'piene-' }, { ru: 'pienet' }],
+          [{ ru: 'lämmin' }, { ru: 'lämpimä-' }, { ru: 'lämpimät' }],
+        ],
+      },
       examples: [
+        { target: 'kirja → kirjat', source: { ru: 'книга → книги' } },
+        { target: 'uusi → uudet', source: { ru: 'новый → новые' } },
         { target: 'lämmin → lämpimät', source: { ru: 'тёплый → тёплые' } },
-        { target: 'kallis → kalliit', source: { ru: 'дорогой → дорогие' } },
       ],
-      quickChecks: [
+    },
+    {
+      id: 'adjective-stems',
+      title: { ru: 'Прилагательное получает форму по своей роли' },
+      paragraphs: [
         {
-          prompt: { ru: 'Выбери: lämpimät или lämminet?' },
-          answer: 'lämpimät',
-          explanation: { ru: 'Используется основа lämpimä-.' },
+          ru: 'Перед существительным прилагательное получает t-множественное: pienet huoneet. После olla признак множественного подлежащего обычно стоит в партитиве множественного числа: huoneet ovat pieniä.',
+        },
+        {
+          ru: 'Обе формы строятся от основы прилагательного, которая иногда отличается от словарной формы. Для частых слов запоминай сразу пару: pienet/pieniä, lämpimät/lämpimiä.',
+        },
+      ],
+      table: {
+        headers: [
+          { ru: 'Прилагательное' },
+          { ru: 'Перед существительным' },
+          { ru: 'После olla' },
+        ],
+        rows: [
+          [
+            { ru: 'suuri' },
+            { ru: 'suuret talot' },
+            { ru: 'talot ovat suuria' },
+          ],
+          [
+            { ru: 'pieni' },
+            { ru: 'pienet huoneet' },
+            { ru: 'huoneet ovat pieniä' },
+          ],
+          [
+            { ru: 'lämmin' },
+            { ru: 'lämpimät päivät' },
+            { ru: 'päivät ovat lämpimiä' },
+          ],
+          [
+            { ru: 'kallis' },
+            { ru: 'kalliit hotellit' },
+            { ru: 'hotellit ovat kalliita' },
+          ],
+        ],
+      },
+      examples: [
+        {
+          target: 'Pienet huoneet ovat vapaita.',
+          source: { ru: 'Маленькие комнаты свободны.' },
+        },
+        {
+          target: 'Lämpimät päivät ovat pitkiä.',
+          source: { ru: 'Тёплые дни длинные.' },
+        },
+        {
+          target: 'Kalliit hotellit ovat suuria.',
+          source: { ru: 'Дорогие отели большие.' },
         },
       ],
     },
     {
       id: 'plural-negative-question',
-      eyebrow: { ru: 'Матрица' },
       title: { ru: 'Утверждение, отрицание и вопрос' },
       paragraphs: [
         {
@@ -131,17 +177,9 @@ export const pluralAgreementContent: CourseLessonContentSeed = {
         },
         { target: 'Ovatko kirjat uusia?', source: { ru: 'Книги новые?' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Вставь: Kirjat ___ uusia.' },
-          answer: 'ovat',
-          explanation: { ru: 'Подлежащее kirjat требует ovat.' },
-        },
-      ],
     },
     {
       id: 'plural-after-number',
-      eyebrow: { ru: 'Контраст' },
       title: { ru: 'После числительного t-множественное не используется' },
       paragraphs: [
         {
@@ -155,11 +193,10 @@ export const pluralAgreementContent: CourseLessonContentSeed = {
     },
     {
       id: 'plural-errors-register',
-      eyebrow: { ru: 'Контроль' },
       title: { ru: 'Типичные ошибки и puhekieli' },
       paragraphs: [
         {
-          ru: 'Типичные ошибки — оставить прилагательное или сказуемое в единственном числе: uusi kirjat on. Правильно uudet kirjat ovat.',
+          ru: 'Типичные ошибки — оставить определение или глагол в единственном числе: uusi kirjat on täällä. Правильно uudet kirjat ovat täällä.',
         },
         {
           ru: 'В puhekieli с неодушевлённым множественным часто слышно ne on. В активных ответах kirjakieli используй ne ovat или существительное + ovat.',
@@ -169,12 +206,10 @@ export const pluralAgreementContent: CourseLessonContentSeed = {
         {
           target: 'Ne on uusia.',
           source: { ru: 'Они новые.' },
-          note: { ru: 'Разговорно; kirjakieli: Ne ovat uusia.' },
         },
         {
           target: 'Nää talot on kalliita.',
           source: { ru: 'Эти дома дорогие.' },
-          note: { ru: 'Kirjakieli: Nämä talot ovat kalliita.' },
         },
       ],
       callout: {

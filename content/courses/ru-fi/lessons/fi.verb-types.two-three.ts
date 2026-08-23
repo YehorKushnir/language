@@ -269,57 +269,75 @@ const verbs: CuratedPresentVerb[] = [
 ]
 
 export const verbTypesTwoThreeContent = {
-  version: 3,
+  version: 4,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
-      id: 'type-two',
-      eyebrow: { ru: 'Тип 2' },
-      title: { ru: 'Убери -da/-dä' },
+      id: 'types-two-three-overview',
+      title: { ru: 'Глаголы второго и третьего типов' },
       paragraphs: [
         {
-          ru: 'У глаголов второго типа словарная форма заканчивается на -da/-dä. Убери это окончание и добавь личное: juoda → juo- → juon.',
+          ru: 'Тип глагола определяется концом словарной формы. У второго типа убирается -da/-dä. У третьего типа окончания -la/-lä, -na/-nä, -ra/-rä и -sta/-stä заменяются основой на -e-.',
         },
         {
-          ru: 'В третьем лице единственного числа основа остаётся без дополнительного удлинения, если гласная уже долгая или является дифтонгом: hän saa, hän syö.',
+          ru: 'После построения основы добавляются уже знакомые личные окончания. Поэтому главное новое действие урока — сначала правильно распознать тип и получить основу.',
         },
       ],
       table: {
         headers: [
-          { ru: 'Инфинитив' },
+          { ru: 'Тип' },
+          { ru: 'Конец' },
           { ru: 'Основа' },
-          { ru: 'minä' },
-          { ru: 'hän' },
+          { ru: 'Пример' },
         ],
         rows: [
-          [{ ru: 'saada' }, { ru: 'saa-' }, { ru: 'saan' }, { ru: 'saa' }],
-          [{ ru: 'syödä' }, { ru: 'syö-' }, { ru: 'syön' }, { ru: 'syö' }],
-          [{ ru: 'juoda' }, { ru: 'juo-' }, { ru: 'juon' }, { ru: 'juo' }],
-          [{ ru: 'myydä' }, { ru: 'myy-' }, { ru: 'myyn' }, { ru: 'myy' }],
+          [
+            { ru: '2' },
+            { ru: '-da/-dä' },
+            { ru: 'убрать -da/-dä' },
+            { ru: 'juoda → juon' },
+          ],
+          [
+            { ru: '3' },
+            { ru: '-la/-lä' },
+            { ru: '-le-' },
+            { ru: 'tulla → tulen' },
+          ],
+          [
+            { ru: '3' },
+            { ru: '-na/-nä' },
+            { ru: '-ne-' },
+            { ru: 'mennä → menen' },
+          ],
+          [
+            { ru: '3' },
+            { ru: '-ra/-rä' },
+            { ru: '-re-' },
+            { ru: 'purra → puren' },
+          ],
+          [
+            { ru: '3' },
+            { ru: '-sta/-stä' },
+            { ru: '-se-' },
+            { ru: 'pestä → pesen' },
+          ],
         ],
       },
       examples: [
         { target: 'Minä juon.', source: { ru: 'Я пью.' } },
-        { target: 'He uivat.', source: { ru: 'Они плавают.' } },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Образуй minä от syödä.' },
-          answer: 'minä syön',
-          explanation: { ru: 'Убери -dä и добавь -n к основе syö-.' },
-        },
+        { target: 'Sinä tulet.', source: { ru: 'Ты приходишь.' } },
+        { target: 'Hän menee.', source: { ru: 'Он или она идёт.' } },
       ],
     },
     {
-      id: 'type-two-irregular',
-      eyebrow: { ru: 'Частотные формы' },
-      title: { ru: 'Tehdä и nähdä нужно выучить отдельно' },
+      id: 'type-two',
+      title: { ru: 'Как спрягается второй тип' },
       paragraphs: [
         {
-          ru: 'Tehdä и nähdä относятся ко второму типу, но их основа меняется: teen/tekee и näen/näkee.',
+          ru: 'У обычного глагола второго типа убери -da/-dä и добавь личное окончание: juoda → juo- → juon. В третьем лице основа с долгой гласной или дифтонгом дополнительно не удлиняется: hän saa, hän syö.',
         },
         {
-          ru: 'Эти глаголы очень частотны, поэтому запоминай сразу пары minä + hän, а не пытайся каждый раз восстановить их механически.',
+          ru: 'Tehdä и nähdä относятся к тому же типу, но меняют основу. Эти частые исключения запоминай сразу парами minä + hän: teen/tekee и näen/näkee.',
         },
       ],
       table: {
@@ -330,18 +348,21 @@ export const verbTypesTwoThreeContent = {
           { ru: 'he' },
         ],
         rows: [
+          [{ ru: 'juoda' }, { ru: 'juon' }, { ru: 'juo' }, { ru: 'juovat' }],
+          [{ ru: 'syödä' }, { ru: 'syön' }, { ru: 'syö' }, { ru: 'syövät' }],
           [{ ru: 'tehdä' }, { ru: 'teen' }, { ru: 'tekee' }, { ru: 'tekevät' }],
           [{ ru: 'nähdä' }, { ru: 'näen' }, { ru: 'näkee' }, { ru: 'näkevät' }],
         ],
       },
       examples: [
+        { target: 'Me juomme.', source: { ru: 'Мы пьём.' } },
+        { target: 'Te syötte.', source: { ru: 'Вы едите.' } },
         { target: 'Me teemme.', source: { ru: 'Мы делаем.' } },
         { target: 'Hän näkee.', source: { ru: 'Он или она видит.' } },
       ],
     },
     {
       id: 'type-three',
-      eyebrow: { ru: 'Тип 3' },
       title: { ru: 'Замени окончание на -e-' },
       paragraphs: [
         {
@@ -370,17 +391,9 @@ export const verbTypesTwoThreeContent = {
         { target: 'Hän pesee.', source: { ru: 'Он или она моет.' } },
         { target: 'Me menemme.', source: { ru: 'Мы идём.' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Какая основа у tulla?' },
-          answer: 'tule-',
-          explanation: { ru: '-lla заменяется на -le-.' },
-        },
-      ],
     },
     {
       id: 'long-type-three',
-      eyebrow: { ru: 'Длинные основы' },
       title: { ru: 'Kuunnella и opiskella следуют тому же правилу' },
       paragraphs: [
         {
@@ -395,19 +408,9 @@ export const verbTypesTwoThreeContent = {
         { target: 'Te opiskelette.', source: { ru: 'Вы учитесь.' } },
         { target: 'He työskentelevät.', source: { ru: 'Они работают.' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Образуй hän от opiskella.' },
-          answer: 'hän opiskelee',
-          explanation: {
-            ru: 'Основа opiskele- получает долгую -ee в третьем лице.',
-          },
-        },
-      ],
     },
     {
       id: 'spoken-types-two-three',
-      eyebrow: { ru: 'Регистр' },
       title: { ru: 'Kirjakieli и puhekieli' },
       paragraphs: [
         {
@@ -421,18 +424,15 @@ export const verbTypesTwoThreeContent = {
         {
           target: 'Mä meen kotiin.',
           source: { ru: 'Я иду домой.' },
-          note: { ru: 'Kirjakieli: Minä menen kotiin.' },
         },
         {
           target: 'Mä tuun nyt.',
           source: { ru: 'Я сейчас приду.' },
-          note: { ru: 'Kirjakieli: Minä tulen nyt.' },
         },
       ],
     },
     {
       id: 'type-two-three-errors',
-      eyebrow: { ru: 'Самопроверка' },
       title: { ru: 'Типичные ошибки' },
       paragraphs: [
         {
@@ -446,17 +446,14 @@ export const verbTypesTwoThreeContent = {
         {
           target: 'Hän juo.',
           source: { ru: 'Он или она пьёт.' },
-          note: { ru: 'Не: juoo.' },
         },
         {
           target: 'Minä tulen.',
           source: { ru: 'Я прихожу.' },
-          note: { ru: 'Не: tullan.' },
         },
         {
           target: 'Hän tekee.',
           source: { ru: 'Он или она делает.' },
-          note: { ru: 'Не: tehdä + окончание.' },
         },
       ],
       callout: {

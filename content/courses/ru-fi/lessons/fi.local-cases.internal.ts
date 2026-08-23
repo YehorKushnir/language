@@ -37,45 +37,88 @@ export const internalCasesSkills: CourseSkillSeed[] = [
 ]
 
 export const internalCasesContent: CourseLessonContentSeed = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
       id: 'internal-case-matrix',
-      eyebrow: { ru: 'Матрица' },
-      title: { ru: 'Где, куда и откуда' },
+      title: { ru: 'Три направления внутренней серии' },
       paragraphs: [
         {
-          ru: 'Внутренняя серия описывает нахождение внутри или связь с ограниченным местом. Missä требует инессива, mihin — иллатива, mistä — элатива.',
+          ru: 'Внутренняя серия описывает нахождение внутри помещения или другого ограниченного места. Один и тот же объект получает три формы: где находится, куда направляется и откуда выходит участник.',
+        },
+        {
+          ru: 'Missä требует инессива, mihin — иллатива, mistä — элатива. Сначала выбери направление по смыслу и только затем образуй форму слова.',
         },
       ],
+      table: {
+        headers: [
+          { ru: 'Вопрос' },
+          { ru: 'Значение' },
+          { ru: 'Падеж' },
+          { ru: 'Пример' },
+        ],
+        rows: [
+          [
+            { ru: 'missä?' },
+            { ru: 'где' },
+            { ru: 'inessiivi' },
+            { ru: 'koulussa' },
+          ],
+          [
+            { ru: 'mihin?' },
+            { ru: 'куда' },
+            { ru: 'illatiivi' },
+            { ru: 'kouluun' },
+          ],
+          [
+            { ru: 'mistä?' },
+            { ru: 'откуда' },
+            { ru: 'elatiivi' },
+            { ru: 'koulusta' },
+          ],
+        ],
+      },
       examples: [
         { target: 'Olen koulussa.', source: { ru: 'Я в школе.' } },
         { target: 'Menen kouluun.', source: { ru: 'Я иду в школу.' } },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Ответь на missä: koulu → ___' },
-          answer: 'koulussa',
-          explanation: { ru: 'Местонахождение внутри получает -ssa.' },
-        },
+        { target: 'Tulen koulusta.', source: { ru: 'Я иду из школы.' } },
       ],
     },
     {
       id: 'internal-case-table',
-      eyebrow: { ru: 'Формы' },
-      title: { ru: 'Три направления одной основы' },
+      title: { ru: 'Как формы строятся от одной основы' },
       paragraphs: [
         {
           ru: 'Инесив и элатив имеют прозрачные окончания -ssa/-ssä и -sta/-stä. Иллатив зависит от типа основы: kouluun, hotelliin, huoneeseen.',
         },
       ],
       table: {
-        headers: [{ ru: 'Вопрос' }, { ru: 'Падеж' }, { ru: 'Форма' }],
+        headers: [
+          { ru: 'Слово' },
+          { ru: 'Где' },
+          { ru: 'Куда' },
+          { ru: 'Откуда' },
+        ],
         rows: [
-          [{ ru: 'missä?' }, { ru: 'inessiivi' }, { ru: 'koulussa' }],
-          [{ ru: 'mihin?' }, { ru: 'illatiivi' }, { ru: 'kouluun' }],
-          [{ ru: 'mistä?' }, { ru: 'elatiivi' }, { ru: 'koulusta' }],
+          [
+            { ru: 'koulu' },
+            { ru: 'koulussa' },
+            { ru: 'kouluun' },
+            { ru: 'koulusta' },
+          ],
+          [
+            { ru: 'hotelli' },
+            { ru: 'hotellissa' },
+            { ru: 'hotelliin' },
+            { ru: 'hotellista' },
+          ],
+          [
+            { ru: 'huone' },
+            { ru: 'huoneessa' },
+            { ru: 'huoneeseen' },
+            { ru: 'huoneesta' },
+          ],
         ],
       },
       examples: [
@@ -91,7 +134,6 @@ export const internalCasesContent: CourseLessonContentSeed = {
     },
     {
       id: 'illative-models',
-      eyebrow: { ru: 'Иллатив' },
       title: { ru: 'Не своди направление к одному окончанию' },
       paragraphs: [
         {
@@ -108,17 +150,9 @@ export const internalCasesContent: CourseLessonContentSeed = {
           source: { ru: 'фабрика → на фабрику' },
         },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Ответь на mihin: hotelli → ___' },
-          answer: 'hotelliin',
-          explanation: { ru: 'Конечная i удлиняется перед -n.' },
-        },
-      ],
     },
     {
       id: 'series-exceptions',
-      eyebrow: { ru: 'Выбор серии' },
       title: { ru: 'Некоторые места требуют внешнюю серию' },
       paragraphs: [
         {
@@ -129,17 +163,9 @@ export const internalCasesContent: CourseLessonContentSeed = {
         { target: 'Olen asemalla.', source: { ru: 'Я на станции.' } },
         { target: 'Menen torille.', source: { ru: 'Я иду на площадь.' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери: asemassa или asemalla?' },
-          answer: 'asemalla',
-          explanation: { ru: 'В значении станции используется внешняя серия.' },
-        },
-      ],
     },
     {
       id: 'local-case-verbs',
-      eyebrow: { ru: 'Контекст' },
       title: { ru: 'Глагол подсказывает направление' },
       paragraphs: [
         {
@@ -156,7 +182,6 @@ export const internalCasesContent: CourseLessonContentSeed = {
     },
     {
       id: 'internal-errors-register',
-      eyebrow: { ru: 'Контроль' },
       title: { ru: 'Типичные ошибки и puhekieli' },
       paragraphs: [
         {
@@ -170,12 +195,10 @@ export const internalCasesContent: CourseLessonContentSeed = {
         {
           target: 'Mä oon koulus.',
           source: { ru: 'Я в школе.' },
-          note: { ru: 'Kirjakieli: Minä olen koulussa.' },
         },
         {
           target: 'Tuun koulust.',
           source: { ru: 'Я иду из школы.' },
-          note: { ru: 'Kirjakieli: Tulen koulusta.' },
         },
       ],
       callout: { ru: 'missä = положение, mihin = цель, mistä = источник.' },

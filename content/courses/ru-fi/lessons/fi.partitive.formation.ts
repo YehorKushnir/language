@@ -45,39 +45,61 @@ export const partitiveFormationSkills: CourseSkillSeed[] = [
 ]
 
 export const partitiveFormationContent: CourseLessonContentSeed = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
-      id: 'partitive-purpose',
-      eyebrow: { ru: 'Новая форма' },
-      title: { ru: 'Партитив называет часть или неопределённое количество' },
+      id: 'partitive-formation-overview',
+      title: { ru: 'Как выбрать окончание партитива' },
       paragraphs: [
         {
-          ru: 'С едой и напитками партитив часто означает некоторое количество вещества: haluan leipää, juon vettä. В этом уроке главное — правильно построить форму.',
+          ru: 'У партитива нет одного окончания для всех слов. Выбор зависит от конца словарной формы и иногда требует другой основы. Таблица показывает основные модели этого урока.',
+        },
+        {
+          ru: 'С едой и напитками партитив часто обозначает некоторое количество вещества: haluan leipää, juon vettä. Сначала выбери модель формы, затем проверь гармонию гласных.',
         },
       ],
+      table: {
+        headers: [{ ru: 'Конец слова' }, { ru: 'Модель' }, { ru: 'Пример' }],
+        rows: [
+          [
+            { ru: 'одна гласная, кроме e' },
+            { ru: '-a/-ä' },
+            { ru: 'kala → kalaa' },
+          ],
+          [
+            { ru: 'долгая гласная или дифтонг' },
+            { ru: '-ta/-tä' },
+            { ru: 'tee → teetä' },
+          ],
+          [
+            { ru: 'согласная или -e' },
+            { ru: 'основа + -ta/-tä' },
+            { ru: 'huone → huonetta' },
+          ],
+          [{ ru: '-nen' }, { ru: '-sta/-stä' }, { ru: 'nainen → naista' }],
+          [
+            { ru: 'особая основа' },
+            { ru: 'учить отдельно' },
+            { ru: 'vesi → vettä' },
+          ],
+        ],
+      },
       examples: [
         { target: 'Haluan leipää.', source: { ru: 'Я хочу хлеба.' } },
         { target: 'Juon vettä.', source: { ru: 'Я пью воду.' } },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Образуй партитив: leipä → ___' },
-          answer: 'leipää',
-          explanation: {
-            ru: 'К основе добавляется -ä; краткая гласная удлиняется.',
-          },
-        },
+        { target: 'Ostan kalaa.', source: { ru: 'Я покупаю рыбу.' } },
       ],
     },
     {
       id: 'partitive-endings',
-      eyebrow: { ru: 'Окончания' },
-      title: { ru: '-a/-ä или -ta/-tä' },
+      title: { ru: 'Когда добавлять -a/-ä и -ta/-tä' },
       paragraphs: [
         {
-          ru: 'После одной краткой гласной обычно используется -a/-ä. После долгой гласной, дифтонга или согласного требуется -ta/-tä.',
+          ru: 'После одной конечной гласной, кроме e, обычно добавляется -a/-ä: kala + a → kalaa, leipä + ä → leipää. Две одинаковые гласные на границе основы и окончания принадлежат разным частям формы.',
+        },
+        {
+          ru: 'После долгой гласной или дифтонга используется -ta/-tä. Слова на согласную и -e часто меняют основу, поэтому их лучше учить вместе с готовым партитивом.',
         },
       ],
       table: {
@@ -90,10 +112,11 @@ export const partitiveFormationContent: CourseLessonContentSeed = {
           ],
           [{ ru: 'долгая гласная' }, { ru: '-ta/-tä' }, { ru: 'tee → teetä' }],
           [{ ru: 'дифтонг' }, { ru: '-ta/-tä' }, { ru: 'voi → voita' }],
+          [{ ru: '-e' }, { ru: '-tta/-ttä' }, { ru: 'huone → huonetta' }],
           [
-            { ru: 'особая основа' },
-            { ru: 'по модели' },
-            { ru: 'vesi → vettä' },
+            { ru: 'согласная' },
+            { ru: 'основа + -ta/-tä' },
+            { ru: 'olut → olutta' },
           ],
         ],
       },
@@ -104,7 +127,6 @@ export const partitiveFormationContent: CourseLessonContentSeed = {
     },
     {
       id: 'vowel-harmony',
-      eyebrow: { ru: 'Гармония' },
       title: { ru: 'Гласные выбирают передний или задний вариант' },
       paragraphs: [
         {
@@ -115,17 +137,9 @@ export const partitiveFormationContent: CourseLessonContentSeed = {
         { target: 'kalaa', source: { ru: 'рыбы' } },
         { target: 'leipää', source: { ru: 'хлеба' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери окончание: kala + ___' },
-          answer: 'a',
-          explanation: { ru: 'Задняя гласная a требует варианта -a.' },
-        },
-      ],
     },
     {
       id: 'partitive-stems',
-      eyebrow: { ru: 'Основа' },
       title: { ru: 'Частотные слова меняют основу' },
       paragraphs: [
         {
@@ -139,19 +153,9 @@ export const partitiveFormationContent: CourseLessonContentSeed = {
           source: { ru: 'апельсин → апельсина' },
         },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери форму: Haluan ___ (вода).' },
-          answer: 'vettä',
-          explanation: {
-            ru: 'У vesi используется особая партитивная основа vet-.',
-          },
-        },
-      ],
     },
     {
       id: 'partitive-learning',
-      eyebrow: { ru: 'Применение' },
       title: { ru: 'Учи форму внутри короткой фразы' },
       paragraphs: [
         {
@@ -165,7 +169,6 @@ export const partitiveFormationContent: CourseLessonContentSeed = {
     },
     {
       id: 'partitive-formation-errors-register',
-      eyebrow: { ru: 'Контроль' },
       title: { ru: 'Типичные ошибки и puhekieli' },
       paragraphs: [
         {
@@ -179,12 +182,10 @@ export const partitiveFormationContent: CourseLessonContentSeed = {
         {
           target: 'Haluutsä kahvii?',
           source: { ru: 'Хочешь кофе?' },
-          note: { ru: 'Разговорно; kirjakieli: Haluatko sinä kahvia?' },
         },
         {
           target: 'Mä ostan maitoa.',
           source: { ru: 'Я покупаю молоко.' },
-          note: { ru: 'Нейтрально: Minä ostan maitoa.' },
         },
       ],
       callout: { ru: 'Проверяй: основа → тип окончания → гармония гласных.' },

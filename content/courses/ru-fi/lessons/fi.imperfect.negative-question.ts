@@ -38,33 +38,53 @@ export const imperfectNegativeQuestionSkills: CourseSkillSeed[] = [
 ]
 
 export const imperfectNegativeQuestionContent: CourseLessonContentSeed = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
-      id: 'negative-imperfect',
-      eyebrow: { ru: 'Отрицание' },
-      title: { ru: 'В отрицании прошедшее выражает причастие' },
+      id: 'past-negative-question-overview',
+      title: { ru: 'Утверждение, отрицание и вопрос в прошлом' },
       paragraphs: [
         {
-          ru: 'Отрицательный глагол показывает лицо, а смысловой глагол принимает форму прошедшего причастия: minä en mennyt, hän ei mennyt.',
+          ru: 'Утверждение использует личную форму имперфекта. В отрицании лицо переносится на ei, а смысловой глагол принимает форму прошедшего причастия. В общем вопросе личная форма имперфекта получает -ko/-kö и выходит в начало.',
         },
-      ],
-      examples: [
-        { target: 'Minä en lähtenyt.', source: { ru: 'Я не ушёл.' } },
-        { target: 'Hän ei soittanut.', source: { ru: 'Он не позвонил.' } },
-      ],
-      quickChecks: [
         {
-          prompt: { ru: 'Вставь: Minä en ___ eilen.' },
-          answer: 'mennyt',
-          explanation: { ru: 'После en нужна форма mennyt, а не menin.' },
+          ru: 'Это две разные операции: отрицание строится как et mennyt, а вопрос — как menitkö. Их нельзя получать простым добавлением одной частицы к одной и той же форме.',
         },
+      ],
+      table: {
+        headers: [{ ru: 'Задача' }, { ru: 'Модель' }, { ru: 'Пример' }],
+        rows: [
+          [
+            { ru: 'утверждение' },
+            { ru: 'личная форма имперфекта' },
+            { ru: 'Sinä menit kotiin.' },
+          ],
+          [
+            { ru: 'отрицание' },
+            { ru: 'ei + причастие' },
+            { ru: 'Sinä et mennyt kotiin.' },
+          ],
+          [
+            { ru: 'общий вопрос' },
+            { ru: 'имперфект-ko/-kö + подлежащее' },
+            { ru: 'Menitkö sinä kotiin?' },
+          ],
+          [
+            { ru: 'отрицательный вопрос' },
+            { ru: 'ei-ko/-kö + причастие' },
+            { ru: 'Etkö sinä mennyt kotiin?' },
+          ],
+        ],
+      },
+      examples: [
+        { target: 'Minä lähdin.', source: { ru: 'Я ушёл.' } },
+        { target: 'Minä en lähtenyt.', source: { ru: 'Я не ушёл.' } },
+        { target: 'Lähditkö sinä?', source: { ru: 'Ты ушёл?' } },
       ],
     },
     {
       id: 'negative-person-table',
-      eyebrow: { ru: 'Матрица' },
       title: { ru: 'Ei согласуется, причастие различает число' },
       paragraphs: [
         {
@@ -89,7 +109,6 @@ export const imperfectNegativeQuestionContent: CourseLessonContentSeed = {
     },
     {
       id: 'past-questions',
-      eyebrow: { ru: 'Вопрос' },
       title: { ru: 'Частица -ko/-kö присоединяется к прошедшей форме' },
       paragraphs: [
         {
@@ -100,19 +119,9 @@ export const imperfectNegativeQuestionContent: CourseLessonContentSeed = {
         { target: 'Lähditkö sinä?', source: { ru: 'Ты ушёл?' } },
         { target: 'Soittiko hän?', source: { ru: 'Он позвонил?' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Образуй вопрос: Sinä jäit. → ___' },
-          answer: 'Jäitkö sinä?',
-          explanation: {
-            ru: 'Частица -kö присоединяется к личной форме jäit.',
-          },
-        },
-      ],
     },
     {
       id: 'participle-stems',
-      eyebrow: { ru: 'Основа' },
       title: { ru: 'Причастие строится не от личной формы имперфекта' },
       paragraphs: [
         {
@@ -126,19 +135,9 @@ export const imperfectNegativeQuestionContent: CourseLessonContentSeed = {
           source: { ru: 'ходить → не ходили' },
         },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери: emme kävellyt или emme kävelleet?' },
-          answer: 'emme kävelleet',
-          explanation: {
-            ru: 'При подлежащем me причастие получает форму множественного числа.',
-          },
-        },
-      ],
     },
     {
       id: 'past-dialogue',
-      eyebrow: { ru: 'Рассказ' },
       title: { ru: 'Вопрос и отрицание сохраняют прошлую рамку' },
       paragraphs: [
         {
@@ -158,7 +157,6 @@ export const imperfectNegativeQuestionContent: CourseLessonContentSeed = {
     },
     {
       id: 'past-errors-register',
-      eyebrow: { ru: 'Контроль' },
       title: { ru: 'Типичные ошибки и puhekieli' },
       paragraphs: [
         {
@@ -172,12 +170,10 @@ export const imperfectNegativeQuestionContent: CourseLessonContentSeed = {
         {
           target: 'Mä en menny.',
           source: { ru: 'Я не пошёл.' },
-          note: { ru: 'Kirjakieli: Minä en mennyt.' },
         },
         {
           target: 'Me ei lähdetty.',
           source: { ru: 'Мы не ушли.' },
-          note: { ru: 'Kirjakieli: Me emme lähteneet.' },
         },
       ],
       callout: {

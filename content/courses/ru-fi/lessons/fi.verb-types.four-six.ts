@@ -263,70 +263,56 @@ const verbs: CuratedPresentVerb[] = [
 ]
 
 export const verbTypesFourSixContent = {
-  version: 3,
+  version: 4,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
-      id: 'type-four',
-      eyebrow: { ru: 'Тип 4' },
-      title: { ru: 'Убери -t- и удлини гласную' },
+      id: 'types-four-six-overview',
+      title: { ru: 'Глаголы четвёртого, пятого и шестого типов' },
       paragraphs: [
         {
-          ru: 'У глаголов четвёртого типа окончания -ata/-ätä, -ota/-ötä и -uta/-ytä превращаются в основу на долгую гласную: haluta → halua-, pelata → pelaa-.',
+          ru: 'Типы 4–6 похожи тем, что словарная форма заканчивается на -ta/-tä, но основу они строят по-разному. У типа 4 исчезает t, у типа 5 появляется -itse-, у типа 6 — -ene-.',
         },
         {
-          ru: 'После основы добавляется личное окончание. В третьем лице единственного числа дополнительного удлинения уже не происходит: hän haluaa.',
+          ru: 'Сначала определи более длинное окончание инфинитива, затем построй основу и только после этого добавь знакомое личное окончание.',
         },
       ],
       table: {
         headers: [
-          { ru: 'Инфинитив' },
+          { ru: 'Тип' },
+          { ru: 'Конец' },
           { ru: 'Основа' },
-          { ru: 'minä' },
-          { ru: 'hän' },
+          { ru: 'Форма minä' },
         ],
         rows: [
           [
-            { ru: 'haluta' },
-            { ru: 'halua-' },
-            { ru: 'haluan' },
-            { ru: 'haluaa' },
+            { ru: '4' },
+            { ru: '-ata/-ätä, -ota/-ötä, -uta/-ytä' },
+            { ru: 'долгая гласная' },
+            { ru: 'haluta → haluan' },
           ],
           [
-            { ru: 'pelata' },
-            { ru: 'pelaa-' },
-            { ru: 'pelaan' },
-            { ru: 'pelaa' },
+            { ru: '5' },
+            { ru: '-ita/-itä' },
+            { ru: '-itse-' },
+            { ru: 'tarvita → tarvitsen' },
           ],
           [
-            { ru: 'siivota' },
-            { ru: 'siivoa-' },
-            { ru: 'siivoan' },
-            { ru: 'siivoaa' },
-          ],
-          [
-            { ru: 'herätä' },
-            { ru: 'herää-' },
-            { ru: 'herään' },
-            { ru: 'herää' },
+            { ru: '6' },
+            { ru: '-eta/-etä' },
+            { ru: '-ene-' },
+            { ru: 'vanheta → vanhenen' },
           ],
         ],
       },
       examples: [
         { target: 'Minä haluan.', source: { ru: 'Я хочу.' } },
-        { target: 'He pelaavat.', source: { ru: 'Они играют.' } },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Образуй minä от osata.' },
-          answer: 'minä osaan',
-          explanation: { ru: 'Основа osaa- получает окончание -n.' },
-        },
+        { target: 'Sinä tarvitset.', source: { ru: 'Тебе нужно.' } },
+        { target: 'Sää lämpenee.', source: { ru: 'Погода теплеет.' } },
       ],
     },
     {
       id: 'type-four-gradation',
-      eyebrow: { ru: 'Чередование' },
       title: { ru: 'Tavata → tapaan, pakata → pakkaan' },
       paragraphs: [
         {
@@ -350,17 +336,9 @@ export const verbTypesFourSixContent = {
         { target: 'Sinä pakkaat.', source: { ru: 'Ты упаковываешь.' } },
         { target: 'Hän pelkää.', source: { ru: 'Он или она боится.' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Исправь форму: minä tavan.' },
-          answer: 'minä tapaan',
-          explanation: { ru: 'У tavata сильная основа tapaa-.' },
-        },
-      ],
     },
     {
       id: 'type-five',
-      eyebrow: { ru: 'Тип 5' },
       title: { ru: 'Добавь -itse-' },
       paragraphs: [
         {
@@ -402,17 +380,9 @@ export const verbTypesFourSixContent = {
         { target: 'Minä tarvitsen.', source: { ru: 'Мне нужно.' } },
         { target: 'Hän valitsee.', source: { ru: 'Он или она выбирает.' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Какая основа у tarvita?' },
-          answer: 'tarvitse-',
-          explanation: { ru: 'Тип 5 добавляет элемент -itse-.' },
-        },
-      ],
     },
     {
       id: 'type-six',
-      eyebrow: { ru: 'Тип 6' },
       title: { ru: 'Основа на -ne-' },
       paragraphs: [
         {
@@ -457,7 +427,6 @@ export const verbTypesFourSixContent = {
     },
     {
       id: 'spoken-four-six',
-      eyebrow: { ru: 'Регистр' },
       title: { ru: 'Kirjakieli и puhekieli' },
       paragraphs: [
         {
@@ -471,18 +440,15 @@ export const verbTypesFourSixContent = {
         {
           target: 'Mä haluun levätä.',
           source: { ru: 'Я хочу отдохнуть.' },
-          note: { ru: 'Kirjakieli: Minä haluan levätä.' },
         },
         {
           target: 'Sä tarviit apua.',
           source: { ru: 'Тебе нужна помощь.' },
-          note: { ru: 'Kirjakieli: Sinä tarvitset apua.' },
         },
       ],
     },
     {
       id: 'type-four-six-errors',
-      eyebrow: { ru: 'Самопроверка' },
       title: { ru: 'Типичные ошибки' },
       paragraphs: [
         {
@@ -496,17 +462,14 @@ export const verbTypesFourSixContent = {
         {
           target: 'Minä avaan.',
           source: { ru: 'Я открываю.' },
-          note: { ru: 'Не: avatan.' },
         },
         {
           target: 'Hän tarvitsee.',
           source: { ru: 'Ему или ей нужно.' },
-          note: { ru: 'Не: hän tarvitee — в основе пропущено s.' },
         },
         {
           target: 'Me vanhenemme.',
           source: { ru: 'Мы стареем.' },
-          note: { ru: 'Основа vanhene- сохраняется перед -mme.' },
         },
       ],
       callout: {

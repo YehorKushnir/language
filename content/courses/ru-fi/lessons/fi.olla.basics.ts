@@ -44,7 +44,7 @@ export interface PreparedExerciseSeed {
 }
 
 export const lessonContent = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
@@ -90,7 +90,6 @@ export const lessonContent = {
         {
           target: 'Olemme täällä.',
           source: { ru: 'Мы здесь.' },
-          note: { ru: 'Me можно опустить: форма olemme уже указывает лицо.' },
         },
       ],
       callout: {
@@ -102,7 +101,7 @@ export const lessonContent = {
       title: { ru: 'Что ставить после olla' },
       paragraphs: [
         {
-          ru: 'После olla можно назвать профессию, национальность, состояние или место. В единственном числе используется словарная форма.',
+          ru: 'После olla можно назвать профессию, национальность, состояние или место. В базовых фразах с одним человеком профессия и признак стоят в словарной форме.',
         },
         {
           ru: 'После me, te и he профессии и признаки в этих примерах получают форму партитива множественного числа: opiskelijoita, valmiita.',
@@ -163,9 +162,6 @@ export const lessonContent = {
         {
           target: 'Oletko sinä opiskelija?',
           source: { ru: 'Ты студент?' },
-          note: {
-            ru: 'В обычной речи sinä часто опускают: Oletko opiskelija?',
-          },
         },
         { target: 'Onko hän lääkäri?', source: { ru: 'Он врач?' } },
         { target: 'Ovatko he täällä?', source: { ru: 'Они здесь?' } },
@@ -186,22 +182,18 @@ export const lessonContent = {
         {
           target: 'Mä oon täällä.',
           source: { ru: 'Я здесь.' },
-          note: { ru: 'Нейтрально: Minä olen täällä.' },
         },
         {
           target: 'Sä oot kotona.',
           source: { ru: 'Ты дома.' },
-          note: { ru: 'Нейтрально: Sinä olet kotona.' },
         },
         {
           target: 'Se on väsynyt.',
           source: { ru: 'Он или она устал(а).' },
-          note: { ru: 'Нейтрально о человеке: Hän on väsynyt.' },
         },
         {
           target: 'Ne on valmiita.',
           source: { ru: 'Они готовы.' },
-          note: { ru: 'Нейтрально: He ovat valmiita.' },
         },
       ],
       callout: {

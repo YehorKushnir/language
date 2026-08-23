@@ -37,45 +37,83 @@ export const externalCasesSkills: CourseSkillSeed[] = [
 ]
 
 export const externalCasesContent: CourseLessonContentSeed = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
       id: 'external-matrix',
-      eyebrow: { ru: 'Матрица' },
-      title: { ru: 'На чём, куда и откуда' },
+      title: { ru: 'Три направления внешней серии' },
       paragraphs: [
         {
-          ru: 'Внешняя серия использует -lla/-llä для положения или инструмента, -lle для направления к поверхности и -lta/-ltä для движения от неё.',
+          ru: 'Внешняя серия описывает положение у места или на поверхности, движение к нему и движение от него. Те же формы на -lla/-llä также выражают способ или инструмент.',
+        },
+        {
+          ru: 'Вопросы missä/millä, mihin и mistä помогают выбрать направление. Сам выбор между внутренней и внешней серией часто нужно запоминать вместе со словом.',
         },
       ],
+      table: {
+        headers: [
+          { ru: 'Вопрос' },
+          { ru: 'Значение' },
+          { ru: 'Падеж' },
+          { ru: 'Пример' },
+        ],
+        rows: [
+          [
+            { ru: 'missä / millä?' },
+            { ru: 'где / чем' },
+            { ru: 'adessiivi' },
+            { ru: 'järvellä' },
+          ],
+          [
+            { ru: 'mihin?' },
+            { ru: 'куда' },
+            { ru: 'allatiivi' },
+            { ru: 'järvelle' },
+          ],
+          [
+            { ru: 'mistä?' },
+            { ru: 'откуда' },
+            { ru: 'ablatiivi' },
+            { ru: 'järveltä' },
+          ],
+        ],
+      },
       examples: [
         { target: 'Olen järvellä.', source: { ru: 'Я на озере.' } },
         { target: 'Menen järvelle.', source: { ru: 'Я еду на озеро.' } },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Ответь на missä: järvi → ___' },
-          answer: 'järvellä',
-          explanation: { ru: 'С järvi обычно используется внешняя серия.' },
-        },
+        { target: 'Tulen järveltä.', source: { ru: 'Я еду с озера.' } },
       ],
     },
     {
       id: 'external-table',
-      eyebrow: { ru: 'Формы' },
-      title: { ru: 'Три окончания внешней серии' },
+      title: { ru: 'Как формы строятся от одной основы' },
       paragraphs: [
         {
           ru: 'Все три формы строятся от одной падежной основы. Гармония гласных выбирает lla или llä, lta или ltä.',
         },
       ],
       table: {
-        headers: [{ ru: 'Вопрос' }, { ru: 'Падеж' }, { ru: 'Пример' }],
+        headers: [
+          { ru: 'Слово' },
+          { ru: 'Где' },
+          { ru: 'Куда' },
+          { ru: 'Откуда' },
+        ],
         rows: [
-          [{ ru: 'missä / millä?' }, { ru: 'adessiivi' }, { ru: 'järvellä' }],
-          [{ ru: 'mihin?' }, { ru: 'allatiivi' }, { ru: 'järvelle' }],
-          [{ ru: 'mistä?' }, { ru: 'ablatiivi' }, { ru: 'järveltä' }],
+          [
+            { ru: 'järvi' },
+            { ru: 'järvellä' },
+            { ru: 'järvelle' },
+            { ru: 'järveltä' },
+          ],
+          [{ ru: 'tie' }, { ru: 'tiellä' }, { ru: 'tielle' }, { ru: 'tieltä' }],
+          [
+            { ru: 'saari' },
+            { ru: 'saarella' },
+            { ru: 'saarelle' },
+            { ru: 'saarelta' },
+          ],
         ],
       },
       examples: [
@@ -91,7 +129,6 @@ export const externalCasesContent: CourseLessonContentSeed = {
     },
     {
       id: 'transport-adessive',
-      eyebrow: { ru: 'Транспорт' },
       title: { ru: 'Способ передвижения выражается адессивом' },
       paragraphs: [
         {
@@ -102,17 +139,9 @@ export const externalCasesContent: CourseLessonContentSeed = {
         { target: 'Matkustan bussilla.', source: { ru: 'Я еду на автобусе.' } },
         { target: 'Tulen junalla.', source: { ru: 'Я приезжаю на поезде.' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Вставь способ: Menen ___ (автобус).' },
-          answer: 'bussilla',
-          explanation: { ru: 'Способ передвижения требует адессива.' },
-        },
-      ],
     },
     {
       id: 'series-contrast',
-      eyebrow: { ru: 'Контраст' },
       title: { ru: 'Выбор серии хранится вместе со словом' },
       paragraphs: [
         {
@@ -123,17 +152,9 @@ export const externalCasesContent: CourseLessonContentSeed = {
         { target: 'järvellä — metsässä', source: { ru: 'на озере — в лесу' } },
         { target: 'vuorelle — metsään', source: { ru: 'на гору — в лес' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери: metsässä или metsällä?' },
-          answer: 'metsässä',
-          explanation: { ru: 'Metsä употребляется во внутренней серии.' },
-        },
-      ],
     },
     {
       id: 'weather-context',
-      eyebrow: { ru: 'Погода' },
       title: { ru: 'Местные формы получают переносные значения' },
       paragraphs: [
         {
@@ -147,7 +168,6 @@ export const externalCasesContent: CourseLessonContentSeed = {
     },
     {
       id: 'external-errors-register',
-      eyebrow: { ru: 'Контроль' },
       title: { ru: 'Типичные ошибки и puhekieli' },
       paragraphs: [
         {
@@ -161,12 +181,10 @@ export const externalCasesContent: CourseLessonContentSeed = {
         {
           target: 'Mä meen bussil.',
           source: { ru: 'Я еду автобусом.' },
-          note: { ru: 'Kirjakieli: Minä menen bussilla.' },
         },
         {
           target: 'Tuun järvelt.',
           source: { ru: 'Я еду с озера.' },
-          note: { ru: 'Kirjakieli: Tulen järveltä.' },
         },
       ],
       callout: { ru: 'Различай место, направление, источник и способ.' },

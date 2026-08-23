@@ -127,7 +127,6 @@ export interface LessonExplanationTable {
 
 export interface LessonExplanationScreen {
   id: string
-  eyebrow?: LocalizedText
   title: LocalizedText
   paragraphs: LocalizedText[]
   table?: LessonExplanationTable

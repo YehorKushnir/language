@@ -25,40 +25,54 @@ export const imperfectAffirmativeSkills: CourseSkillSeed[] = [
 ]
 
 export const imperfectAffirmativeContent: CourseLessonContentSeed = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
-      id: 'imperfect-meaning',
-      eyebrow: { ru: 'Время' },
-      title: { ru: 'Имперфект переносит событие в прошлое' },
+      id: 'imperfect-overview',
+      title: { ru: 'Как личные формы переходят в прошлое' },
       paragraphs: [
         {
-          ru: 'Имперфект описывает событие или состояние в завершённой прошлой рамке. Слова eilen и viime viikolla делают эту рамку явной.',
+          ru: 'Имперфект описывает действие, событие или состояние в прошлом. Слова eilen и viime viikolla делают прошлую рамку явной, но форма глагола и сама показывает время.',
+        },
+        {
+          ru: 'У формы прошедшего времени есть основа имперфекта и знакомое личное окончание. Показатель i часто заметен, но основа может изменяться, поэтому нельзя просто вставить i в любую словарную форму.',
         },
       ],
+      table: {
+        headers: [
+          { ru: 'Кто' },
+          { ru: 'olla: настоящее' },
+          { ru: 'olla: прошлое' },
+          { ru: 'mennä: прошлое' },
+        ],
+        rows: [
+          [{ ru: 'minä' }, { ru: 'olen' }, { ru: 'olin' }, { ru: 'menin' }],
+          [{ ru: 'sinä' }, { ru: 'olet' }, { ru: 'olit' }, { ru: 'menit' }],
+          [{ ru: 'hän' }, { ru: 'on' }, { ru: 'oli' }, { ru: 'meni' }],
+          [{ ru: 'me' }, { ru: 'olemme' }, { ru: 'olimme' }, { ru: 'menimme' }],
+          [{ ru: 'te' }, { ru: 'olette' }, { ru: 'olitte' }, { ru: 'menitte' }],
+          [{ ru: 'he' }, { ru: 'ovat' }, { ru: 'olivat' }, { ru: 'menivät' }],
+        ],
+      },
       examples: [
         { target: 'Eilen olin kotona.', source: { ru: 'Вчера я был дома.' } },
         {
           target: 'Viime viikolla matkustin.',
           source: { ru: 'На прошлой неделе я путешествовал.' },
         },
-      ],
-      quickChecks: [
         {
-          prompt: { ru: 'Выбери прошлое olla для minä.' },
-          answer: 'olin',
-          explanation: { ru: 'Форма minä в имперфекте — olin.' },
+          target: 'He menivät hotelliin.',
+          source: { ru: 'Они пошли в отель.' },
         },
       ],
     },
     {
       id: 'imperfect-table',
-      eyebrow: { ru: 'Формы' },
-      title: { ru: 'Показатель -i- стоит перед личным окончанием' },
+      title: { ru: 'Основа имперфекта стоит перед личным окончанием' },
       paragraphs: [
         {
-          ru: 'Личная форма строится от основы имперфекта. Гласная основы может измениться, поэтому одной вставки i недостаточно.',
+          ru: 'Личная форма строится от основы имперфекта. После неё добавляются знакомые окончания -n, -t, -mme, -tte и -vat/-vät; в форме hän отдельного личного окончания нет.',
         },
       ],
       table: {
@@ -82,7 +96,6 @@ export const imperfectAffirmativeContent: CourseLessonContentSeed = {
     },
     {
       id: 'imperfect-stems',
-      eyebrow: { ru: 'Основа' },
       title: { ru: 'Гласная основы меняется по модели' },
       paragraphs: [
         {
@@ -93,17 +106,9 @@ export const imperfectAffirmativeContent: CourseLessonContentSeed = {
         { target: 'lukea → luin', source: { ru: 'читать → я читал' } },
         { target: 'antaa → annoin', source: { ru: 'давать → я дал' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери: lukein или luin?' },
-          answer: 'luin',
-          explanation: { ru: 'У lukea перед i исчезает e.' },
-        },
-      ],
     },
     {
       id: 'imperfect-persons',
-      eyebrow: { ru: 'Лицо' },
       title: { ru: 'Окончание по-прежнему показывает участника' },
       paragraphs: [
         {
@@ -114,17 +119,9 @@ export const imperfectAffirmativeContent: CourseLessonContentSeed = {
         { target: 'Näin passin.', source: { ru: 'Я увидел паспорт.' } },
         { target: 'Näimme passin.', source: { ru: 'Мы увидели паспорт.' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Вставь форму nähdä для me: Me ___.' },
-          answer: 'näimme',
-          explanation: { ru: 'Основа näi- получает окончание -mme.' },
-        },
-      ],
     },
     {
       id: 'past-story',
-      eyebrow: { ru: 'Рассказ' },
       title: { ru: 'Одна временная рамка связывает события' },
       paragraphs: [
         {
@@ -144,7 +141,6 @@ export const imperfectAffirmativeContent: CourseLessonContentSeed = {
     },
     {
       id: 'imperfect-errors-register',
-      eyebrow: { ru: 'Контроль' },
       title: { ru: 'Типичные ошибки и puhekieli' },
       paragraphs: [
         {
@@ -158,12 +154,10 @@ export const imperfectAffirmativeContent: CourseLessonContentSeed = {
         {
           target: 'Mä olin kotona.',
           source: { ru: 'Я был дома.' },
-          note: { ru: 'Kirjakieli: Minä olin kotona.' },
         },
         {
           target: 'Mä näin sen.',
           source: { ru: 'Я это видел.' },
-          note: { ru: 'Kirjakieli: Minä näin sen.' },
         },
       ],
       callout: {

@@ -51,12 +51,50 @@ const nouns: CommunicationNounSeed[] = [
 ]
 
 export const questionsWordOrderContent = {
-  version: 3,
+  version: 4,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
+      id: 'sentence-types-overview',
+      title: { ru: 'Четыре основные модели предложения' },
+      paragraphs: [
+        {
+          ru: 'Сначала определи задачу предложения: сообщить факт, отрицать его, задать общий вопрос или запросить конкретную информацию. У каждой задачи своя опорная модель.',
+        },
+        {
+          ru: 'В утверждении сохраняется прямой порядок. В отрицании появляется личная форма ei. Общий вопрос начинается с формы на -ko/-kö, а специальный — с вопросительного слова.',
+        },
+      ],
+      table: {
+        headers: [{ ru: 'Задача' }, { ru: 'Модель' }, { ru: 'Пример' }],
+        rows: [
+          [{ ru: 'утверждение' }, { ru: 'кто + глагол' }, { ru: 'Hän puhuu.' }],
+          [
+            { ru: 'отрицание' },
+            { ru: 'кто + ei + глагол' },
+            { ru: 'Hän ei puhu.' },
+          ],
+          [
+            { ru: 'общий вопрос' },
+            { ru: 'глагол-ko/-kö + кто' },
+            { ru: 'Puhuuko hän?' },
+          ],
+          [
+            { ru: 'специальный вопрос' },
+            { ru: 'вопросительное слово + фраза' },
+            { ru: 'Kuka hän on?' },
+          ],
+        ],
+      },
+      examples: [
+        { target: 'Tämä on vastaus.', source: { ru: 'Это ответ.' } },
+        { target: 'Tämä ei ole vastaus.', source: { ru: 'Это не ответ.' } },
+        { target: 'Onko tämä vastaus?', source: { ru: 'Это ответ?' } },
+        { target: 'Mikä tämä on?', source: { ru: 'Что это?' } },
+      ],
+    },
+    {
       id: 'present-negative',
-      eyebrow: { ru: 'Отрицание' },
       title: { ru: 'Личное окончание переходит к ei' },
       paragraphs: [
         {
@@ -67,95 +105,64 @@ export const questionsWordOrderContent = {
         },
       ],
       table: {
-        headers: [
-          { ru: 'Лицо' },
-          { ru: 'ei' },
-          { ru: 'puhua' },
-          { ru: 'olla' },
-        ],
+        headers: [{ ru: 'Лицо' }, { ru: 'puhua' }, { ru: 'olla' }],
         rows: [
-          [{ ru: 'minä' }, { ru: 'en' }, { ru: 'en puhu' }, { ru: 'en ole' }],
-          [{ ru: 'sinä' }, { ru: 'et' }, { ru: 'et puhu' }, { ru: 'et ole' }],
-          [{ ru: 'hän' }, { ru: 'ei' }, { ru: 'ei puhu' }, { ru: 'ei ole' }],
-          [
-            { ru: 'me' },
-            { ru: 'emme' },
-            { ru: 'emme puhu' },
-            { ru: 'emme ole' },
-          ],
-          [
-            { ru: 'te' },
-            { ru: 'ette' },
-            { ru: 'ette puhu' },
-            { ru: 'ette ole' },
-          ],
-          [
-            { ru: 'he' },
-            { ru: 'eivät' },
-            { ru: 'eivät puhu' },
-            { ru: 'eivät ole' },
-          ],
+          [{ ru: 'minä' }, { ru: 'en puhu' }, { ru: 'en ole' }],
+          [{ ru: 'sinä' }, { ru: 'et puhu' }, { ru: 'et ole' }],
+          [{ ru: 'hän' }, { ru: 'ei puhu' }, { ru: 'ei ole' }],
+          [{ ru: 'me' }, { ru: 'emme puhu' }, { ru: 'emme ole' }],
+          [{ ru: 'te' }, { ru: 'ette puhu' }, { ru: 'ette ole' }],
+          [{ ru: 'he' }, { ru: 'eivät puhu' }, { ru: 'eivät ole' }],
         ],
       },
       examples: [
         { target: 'Minä en puhu.', source: { ru: 'Я не говорю.' } },
-        {
-          target: 'Hän ei ole opettaja.',
-          source: { ru: 'Он или она не преподаватель.' },
-        },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Исправь ошибку: Hän ei puhuu.' },
-          answer: 'Hän ei puhu.',
-          explanation: {
-            ru: 'После ei используется отрицательная форма без личного окончания.',
-          },
-        },
+        { target: 'Hän ei kirjoita.', source: { ru: 'Он или она не пишет.' } },
+        { target: 'Me emme ole kotona.', source: { ru: 'Мы не дома.' } },
       ],
     },
     {
       id: 'yes-no-question',
-      eyebrow: { ru: 'Общий вопрос' },
-      title: { ru: 'Частица -ko/-kö на первом слове' },
+      title: { ru: 'Общий вопрос начинается с -ko/-kö' },
       paragraphs: [
         {
-          ru: 'Общий вопрос начинается с того слова, которое проверяется. К нему присоединяется -ko или -kö: Puhutko sinä? Onko tämä kysymys?',
+          ru: 'Чтобы спросить, верно ли всё предложение, перенеси личную форму глагола в начало и присоедини к ней -ko/-kö: Sinä puhut → Puhutko sinä?',
         },
         {
-          ru: 'Если в слове есть a, o или u, выбирай -ko. Если есть только передние ä, ö, y и нейтральные e, i — выбирай -kö.',
+          ru: 'Если в слове есть a, o или u, выбирай -ko. Если есть только ä, ö, y и нейтральные e, i, выбирай -kö. Частица является частью первого слова и не добавляется второй раз.',
         },
       ],
       table: {
-        headers: [{ ru: 'Утверждение' }, { ru: 'Вопрос' }],
+        headers: [
+          { ru: 'Утверждение' },
+          { ru: 'Вопрос' },
+          { ru: 'Почему частица' },
+        ],
         rows: [
-          [{ ru: 'Sinä puhut.' }, { ru: 'Puhutko sinä?' }],
-          [{ ru: 'Hän kysyy.' }, { ru: 'Kysyykö hän?' }],
-          [{ ru: 'Tämä on vastaus.' }, { ru: 'Onko tämä vastaus?' }],
+          [{ ru: 'Sinä puhut.' }, { ru: 'Puhutko sinä?' }, { ru: 'u → -ko' }],
+          [{ ru: 'Hän kysyy.' }, { ru: 'Kysyykö hän?' }, { ru: 'y → -kö' }],
+          [
+            { ru: 'Tämä on vastaus.' },
+            { ru: 'Onko tämä vastaus?' },
+            { ru: 'o → -ko' },
+          ],
         ],
       },
       examples: [
         { target: 'Puhutko suomea?', source: { ru: 'Ты говоришь по-фински?' } },
+        { target: 'Kysyykö hän?', source: { ru: 'Он или она спрашивает?' } },
         { target: 'Onko tämä viesti?', source: { ru: 'Это сообщение?' } },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Добавь правильную частицу: kysyy___' },
-          answer: 'kysyykö',
-          explanation: { ru: 'В слове нет a, o, u, поэтому используется -kö.' },
-        },
       ],
     },
     {
       id: 'question-words',
-      eyebrow: { ru: 'Специальный вопрос' },
-      title: { ru: 'Вопросительное слово уже занимает первое место' },
+      title: { ru: 'Вопросительное слово уже обозначает вопрос' },
       paragraphs: [
         {
-          ru: 'После mitä, mikä, kuka, missä, milloin и miksi порядок обычно остаётся прямым: вопросительное слово, затем сказуемое и подлежащее.',
+          ru: 'Mitä, mikä, kuka, missä, milloin и miksi сами показывают, какую информацию нужно назвать. Поэтому дополнительная частица -ko/-kö не требуется.',
         },
         {
-          ru: 'К сказуемому не добавляется -ko/-kö, если вопрос уже начинается с вопросительного слова: Mikä tämä on?',
+          ru: 'После вопросительного слова используется обычный порядок членов фразы. Не копируй русскую инверсию механически: Missä puhelin on? — буквально «где телефон находится?».',
         },
       ],
       examples: [
@@ -166,38 +173,9 @@ export const questionsWordOrderContent = {
           source: { ru: 'Почему он или она спрашивает?' },
         },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Нужна ли частица -ko в вопросе Missä puhelin on?' },
-          answer: 'Нет.',
-          explanation: { ru: 'Missä уже обозначает вопрос и стоит в начале.' },
-        },
-      ],
-    },
-    {
-      id: 'neutral-word-order',
-      eyebrow: { ru: 'Порядок слов' },
-      title: { ru: 'Нейтральная модель и тема в начале' },
-      paragraphs: [
-        {
-          ru: 'Нейтральное утверждение обычно следует порядку подлежащее → сказуемое → дополнение. Обстоятельство времени или места можно поставить первым, если оно задаёт тему: Tässä on vastaus.',
-        },
-        {
-          ru: 'Перенос в начало меняет информационный акцент, а не только оформление. Поэтому переставлять слова без причины не следует.',
-        },
-      ],
-      examples: [
-        { target: 'Tämä on vastaus.', source: { ru: 'Это ответ.' } },
-        { target: 'Tässä on vastaus.', source: { ru: 'Здесь есть ответ.' } },
-        {
-          target: 'Puhelin ei ole tässä.',
-          source: { ru: 'Телефон не здесь.' },
-        },
-      ],
     },
     {
       id: 'spoken-questions',
-      eyebrow: { ru: 'Регистр' },
       title: { ru: 'Вопросы в puhekieli' },
       paragraphs: [
         {
@@ -211,18 +189,15 @@ export const questionsWordOrderContent = {
         {
           target: 'Puhutsä suomea?',
           source: { ru: 'Ты говоришь по-фински?' },
-          note: { ru: 'Kirjakieli: Puhutko sinä suomea?' },
         },
         {
           target: 'Ook sä kotona?',
           source: { ru: 'Ты дома?' },
-          note: { ru: 'Kirjakieli: Oletko sinä kotona?' },
         },
       ],
     },
     {
       id: 'negative-question-errors',
-      eyebrow: { ru: 'Самопроверка' },
       title: { ru: 'Типичные ошибки' },
       paragraphs: [
         {
@@ -236,17 +211,14 @@ export const questionsWordOrderContent = {
         {
           target: 'Hän ei kirjoita.',
           source: { ru: 'Он или она не пишет.' },
-          note: { ru: 'Не: hän ei kirjoittaa.' },
         },
         {
           target: 'Onko tämä virhe?',
           source: { ru: 'Это ошибка?' },
-          note: { ru: 'Не: tämä onko virhe?' },
         },
         {
           target: 'Missä vastaus on?',
           source: { ru: 'Где ответ?' },
-          note: { ru: 'После missä частица -ko не нужна.' },
         },
       ],
       callout: {

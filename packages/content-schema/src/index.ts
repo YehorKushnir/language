@@ -16,11 +16,12 @@ export const localizedTextSchema = z
   .record(z.string().min(2).max(12), z.string().trim().min(1))
   .refine((value) => Boolean(value.ru), 'Russian localization is required')
 
-const explanationExampleSchema = z.object({
-  target: z.string().trim().min(1),
-  source: localizedTextSchema,
-  note: localizedTextSchema.optional(),
-})
+const explanationExampleSchema = z
+  .object({
+    target: z.string().trim().min(1),
+    source: localizedTextSchema,
+  })
+  .strict()
 
 const explanationTableSchema = z
   .object({
@@ -39,22 +40,16 @@ const explanationTableSchema = z
     })
   })
 
-const explanationQuickCheckSchema = z.object({
-  prompt: localizedTextSchema,
-  answer: z.string().trim().min(1),
-  explanation: localizedTextSchema.optional(),
-})
-
-const explanationScreenSchema = z.object({
-  id: identifierSchema,
-  eyebrow: localizedTextSchema.optional(),
-  title: localizedTextSchema,
-  paragraphs: z.array(localizedTextSchema).min(1),
-  table: explanationTableSchema.optional(),
-  examples: z.array(explanationExampleSchema).min(1).optional(),
-  quickChecks: z.array(explanationQuickCheckSchema).min(1).optional(),
-  callout: localizedTextSchema.optional(),
-})
+const explanationScreenSchema = z
+  .object({
+    id: identifierSchema,
+    title: localizedTextSchema,
+    paragraphs: z.array(localizedTextSchema).min(1),
+    table: explanationTableSchema.optional(),
+    examples: z.array(explanationExampleSchema).min(1).optional(),
+    callout: localizedTextSchema.optional(),
+  })
+  .strict()
 
 export const lessonContentSchema = z.object({
   version: z.number().int().positive(),

@@ -107,6 +107,22 @@ describe('validateLessonBundle', () => {
       /references unknown vocabulary item/u,
     )
   })
+
+  it('rejects service fields inside a lesson explanation', () => {
+    const invalidBundle = structuredClone(validBundle)
+    const screen = invalidBundle.content.explanationScreens[0]!
+    ;(screen as unknown as Record<string, unknown>).quickChecks = []
+    ;(screen.examples[0] as unknown as Record<string, unknown>).note = {
+      ru: 'Лишнее пояснение.',
+    }
+
+    expect(() => validateLessonBundle(invalidBundle)).toThrowError(
+      ContentValidationError,
+    )
+    expect(() => validateLessonBundle(invalidBundle)).toThrow(
+      /Unrecognized key/u,
+    )
+  })
 })
 
 describe('validatePreparedTexts', () => {

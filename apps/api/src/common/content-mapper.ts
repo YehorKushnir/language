@@ -115,7 +115,6 @@ function toExplanationScreen(value: unknown): LessonExplanationScreen | null {
     return null
   }
 
-  const eyebrow = toNullableLocalizedText(candidate.eyebrow)
   const table = toExplanationTable(candidate.table)
   const examples = Array.isArray(candidate.examples)
     ? candidate.examples
@@ -128,7 +127,6 @@ function toExplanationScreen(value: unknown): LessonExplanationScreen | null {
 
   return {
     id: candidate.id,
-    ...(eyebrow ? { eyebrow } : {}),
     title: toLocalizedText(candidate.title),
     paragraphs: Array.isArray(candidate.paragraphs)
       ? candidate.paragraphs.map(toLocalizedText)

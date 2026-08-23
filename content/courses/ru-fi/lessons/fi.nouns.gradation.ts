@@ -34,36 +34,62 @@ export const nounsGradationSkills: CourseSkillSeed[] = [
 ]
 
 export const nounsGradationContent: CourseLessonContentSeed = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
-      id: 'noun-stem',
-      eyebrow: { ru: 'Основа' },
-      title: { ru: 'Падежное окончание присоединяется к основе' },
+      id: 'noun-stem-overview',
+      title: { ru: 'Какие изменения происходят перед окончанием' },
       paragraphs: [
         {
-          ru: 'Словарная форма не всегда показывает основу, к которой добавляется падежное окончание. Генитив помогает увидеть эту основу: kirja → kirjan, kone → koneen.',
+          ru: 'Падежное окончание присоединяется не всегда к словарной форме, а к падежной основе. Генитив на -n помогает увидеть эту основу и основные типы изменений.',
         },
         {
-          ru: 'Полезная словарная пара для существительного — nominatiivi + genetiivi. От неё позднее строятся многие другие падежи.',
+          ru: 'Слово может остаться прозрачным, перейти в слабую ступень, изменить конец основы или измениться только в последней части сложного слова. Поэтому полезная словарная пара — nominatiivi + genetiivi.',
         },
       ],
+      table: {
+        headers: [
+          { ru: 'Модель' },
+          { ru: 'Словарная форма' },
+          { ru: 'Генитив' },
+          { ru: 'Что изменилось' },
+        ],
+        rows: [
+          [
+            { ru: 'прозрачная' },
+            { ru: 'kirja' },
+            { ru: 'kirjan' },
+            { ru: '+ n' },
+          ],
+          [
+            { ru: 'чередование' },
+            { ru: 'lamppu' },
+            { ru: 'lampun' },
+            { ru: 'pp → p' },
+          ],
+          [
+            { ru: 'новая основа' },
+            { ru: 'lautanen' },
+            { ru: 'lautasen' },
+            { ru: '-nen → -se-' },
+          ],
+          [
+            { ru: 'сложное слово' },
+            { ru: 'tietokone' },
+            { ru: 'tietokoneen' },
+            { ru: 'изменяется kone' },
+          ],
+        ],
+      },
       examples: [
         { target: 'kirja → kirjan', source: { ru: 'книга → книги' } },
-        { target: 'kone → koneen', source: { ru: 'машина → машины' } },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Образуй генитив: kirja → ___' },
-          answer: 'kirjan',
-          explanation: { ru: 'К основе kirja- добавляется -n.' },
-        },
+        { target: 'lamppu → lampun', source: { ru: 'лампа → лампы' } },
+        { target: 'lautanen → lautasen', source: { ru: 'тарелка → тарелки' } },
       ],
     },
     {
       id: 'noun-gradation-table',
-      eyebrow: { ru: 'Чередование' },
       title: { ru: 'Сильная ступень становится слабой' },
       paragraphs: [
         {
@@ -86,7 +112,6 @@ export const nounsGradationContent: CourseLessonContentSeed = {
     },
     {
       id: 'stem-changes',
-      eyebrow: { ru: 'Другие модели' },
       title: { ru: 'Не каждое изменение — чередование k, p, t' },
       paragraphs: [
         {
@@ -97,19 +122,9 @@ export const nounsGradationContent: CourseLessonContentSeed = {
         { target: 'lautanen → lautasen', source: { ru: 'тарелка → тарелки' } },
         { target: 'pyyhe → pyyhkeen', source: { ru: 'полотенце → полотенца' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Выбери генитив: lautanen → ___' },
-          answer: 'lautasen',
-          explanation: {
-            ru: 'Окончание -nen заменяется основой -se- перед -n.',
-          },
-        },
-      ],
     },
     {
       id: 'compound-nouns',
-      eyebrow: { ru: 'Сложные слова' },
       title: { ru: 'Изменяется последняя часть сложного слова' },
       paragraphs: [
         {
@@ -118,19 +133,11 @@ export const nounsGradationContent: CourseLessonContentSeed = {
       ],
       examples: [
         { target: 'tietokoneen näyttö', source: { ru: 'экран компьютера' } },
-        { target: 'television ääni', source: { ru: 'звук телевизора' } },
-      ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Образуй генитив: tietokone → ___' },
-          answer: 'tietokoneen',
-          explanation: { ru: 'Форму получает последний компонент kone.' },
-        },
+        { target: 'jääkaapin ovi', source: { ru: 'дверь холодильника' } },
       ],
     },
     {
       id: 'noun-form-strategy',
-      eyebrow: { ru: 'Стратегия' },
       title: { ru: 'Как выбирать основу без угадывания' },
       paragraphs: [
         {
@@ -144,7 +151,6 @@ export const nounsGradationContent: CourseLessonContentSeed = {
     },
     {
       id: 'noun-gradation-errors-register',
-      eyebrow: { ru: 'Контроль' },
       title: { ru: 'Типичные ошибки и разговорная речь' },
       paragraphs: [
         {
@@ -158,14 +164,10 @@ export const nounsGradationContent: CourseLessonContentSeed = {
         {
           target: 'tietsikan näyttö',
           source: { ru: 'экран компьютера' },
-          note: {
-            ru: 'Разговорное tietsikka; kirjakieli: tietokoneen näyttö.',
-          },
         },
         {
           target: 'telkkarin ääni',
           source: { ru: 'звук телевизора' },
-          note: { ru: 'Разговорное telkkari; kirjakieli: television ääni.' },
         },
       ],
       callout: { ru: 'Учи не правило для буквы, а пару конкретных основ.' },

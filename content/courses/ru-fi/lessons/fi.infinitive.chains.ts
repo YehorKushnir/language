@@ -37,36 +37,59 @@ export const infinitiveChainsSkills: CourseSkillSeed[] = [
 ]
 
 export const infinitiveChainsContent: CourseLessonContentSeed = {
-  version: 2,
+  version: 3,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
       id: 'a-infinitive-role',
-      eyebrow: { ru: 'Основа' },
-      title: { ru: 'Второе действие остаётся в A-инфинитиве' },
+      title: { ru: 'Как устроена цепочка из двух глаголов' },
       paragraphs: [
         {
-          ru: 'После haluta, voida и osata второе действие ставится в словарную форму — A-инфинитив. Лицо и время выражает только первый глагол.',
+          ru: 'После haluta, voida и osata второе действие ставится в словарную форму — A-инфинитив. Лицо, число, отрицание и вопрос выражает первый глагол; второй называет само действие.',
         },
         {
-          ru: 'Сравни: minä haluan lukea, sinä haluat lukea. Меняется haluta, а lukea остаётся одинаковым.',
+          ru: 'В таблице меняется только левый глагол: haluan, voit, osaa. Правый глагол остаётся в форме lukea, tulla или laulaa.',
         },
       ],
+      table: {
+        headers: [
+          { ru: 'Значение' },
+          { ru: 'Первый глагол' },
+          { ru: 'A-инфинитив' },
+          { ru: 'Вместе' },
+        ],
+        rows: [
+          [
+            { ru: 'хотеть' },
+            { ru: 'haluan' },
+            { ru: 'lukea' },
+            { ru: 'haluan lukea' },
+          ],
+          [
+            { ru: 'мочь' },
+            { ru: 'voit' },
+            { ru: 'tulla' },
+            { ru: 'voit tulla' },
+          ],
+          [
+            { ru: 'уметь' },
+            { ru: 'hän osaa' },
+            { ru: 'laulaa' },
+            { ru: 'hän osaa laulaa' },
+          ],
+        ],
+      },
       examples: [
         { target: 'Haluan lukea.', source: { ru: 'Я хочу читать.' } },
         { target: 'Voimme tulla.', source: { ru: 'Мы можем прийти.' } },
-      ],
-      quickChecks: [
         {
-          prompt: { ru: 'Заверши: Minä haluan ___ (читать).' },
-          answer: 'lukea',
-          explanation: { ru: 'После haluan нужен A-инфинитив lukea.' },
+          target: 'Hän osaa laulaa.',
+          source: { ru: 'Он или она умеет петь.' },
         },
       ],
     },
     {
       id: 'modal-table',
-      eyebrow: { ru: 'Формы' },
       title: { ru: 'Кто получает личное окончание' },
       paragraphs: [
         {
@@ -102,7 +125,6 @@ export const infinitiveChainsContent: CourseLessonContentSeed = {
     },
     {
       id: 'chain-negation',
-      eyebrow: { ru: 'Отрицание' },
       title: { ru: 'Отрицается первый глагол' },
       paragraphs: [
         {
@@ -116,19 +138,9 @@ export const infinitiveChainsContent: CourseLessonContentSeed = {
           source: { ru: 'Они не хотят уходить.' },
         },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Исправь форму: En voin tulla.' },
-          answer: 'En voi tulla.',
-          explanation: {
-            ru: 'После en используется отрицательная форма voi, не voin.',
-          },
-        },
-      ],
     },
     {
       id: 'chain-questions',
-      eyebrow: { ru: 'Вопрос' },
       title: { ru: 'Частица -ko/-kö ставится на первый глагол' },
       paragraphs: [
         {
@@ -142,21 +154,16 @@ export const infinitiveChainsContent: CourseLessonContentSeed = {
         },
         { target: 'Voiko hän auttaa?', source: { ru: 'Он может помочь?' } },
       ],
-      quickChecks: [
-        {
-          prompt: { ru: 'Поставь первым: sinä / haluat / laulaa?' },
-          answer: 'Haluatko sinä laulaa?',
-          explanation: { ru: 'Частица присоединяется к личной форме haluat.' },
-        },
-      ],
     },
     {
       id: 'chain-semantics',
-      eyebrow: { ru: 'Значение' },
       title: { ru: 'Не каждый первый глагол допускает A-инфинитив' },
       paragraphs: [
         {
-          ru: 'Модель нужно связывать с управлением: haluta tehdä, voida tehdä, osata tehdä. Нельзя автоматически ставить A-инфинитив после любого глагола только потому, что в русском рядом стоят два действия.',
+          ru: 'Модель нужно связывать с конкретным первым глаголом: haluta tehdä, voida tehdä, osata tehdä, yrittää tehdä. Нельзя автоматически ставить A-инфинитив после любого глагола только потому, что в русском рядом стоят два действия.',
+        },
+        {
+          ru: 'Например, aloittaa в базовой модели соединяется с предметом: aloitan työn. Другие способы присоединить к нему действие будут изучаться позднее.',
         },
       ],
       examples: [
@@ -164,15 +171,11 @@ export const infinitiveChainsContent: CourseLessonContentSeed = {
         {
           target: 'Aloitan työn.',
           source: { ru: 'Я начинаю работу.' },
-          note: {
-            ru: 'С существительным используется объект, а не инфинитивная цепочка.',
-          },
         },
       ],
     },
     {
       id: 'chain-register-errors',
-      eyebrow: { ru: 'Контроль' },
       title: { ru: 'Типичные ошибки и puhekieli' },
       paragraphs: [
         {
@@ -186,12 +189,10 @@ export const infinitiveChainsContent: CourseLessonContentSeed = {
         {
           target: 'Mä voin tulla.',
           source: { ru: 'Я могу прийти.' },
-          note: { ru: 'Kirjakieli: Minä voin tulla.' },
         },
         {
           target: 'Sä haluut lähteä.',
           source: { ru: 'Ты хочешь уйти.' },
-          note: { ru: 'Kirjakieli: Sinä haluat lähteä.' },
         },
       ],
       callout: {
