@@ -139,7 +139,7 @@ function LessonVocabularyPage() {
           activePart="vocabulary"
         />
         <section className="mt-7 rounded-lg border bg-card p-6 text-center sm:p-8">
-          <span className="mx-auto grid size-10 place-items-center rounded-full bg-primary text-primary-foreground">
+          <span className="motion-success mx-auto grid size-10 place-items-center rounded-full bg-primary text-primary-foreground">
             <CheckIcon className="size-5" />
           </span>
           <h2 className="mt-4 font-serif text-2xl font-semibold">
@@ -214,7 +214,7 @@ function LessonVocabularyPage() {
           aria-label="Прогресс изучения слов"
         />
 
-        <div className="relative mt-6">
+        <div className="relative mt-5">
           <span
             aria-hidden="true"
             data-slot="flashcard-transition-cover"
@@ -228,7 +228,7 @@ function LessonVocabularyPage() {
           <button
             type="button"
             aria-label={revealed ? 'Перевод открыт' : 'Показать перевод'}
-            className="relative block min-h-72 w-full overflow-hidden rounded-lg border bg-card text-left shadow-sm transition-colors hover:border-primary/30"
+            className="interactive-surface relative block min-h-60 w-full overflow-hidden rounded-xl border bg-card text-left shadow-xs"
             disabled={revealed || study.isPending || cardChanging}
             onClick={() => setRevealed(true)}
           >
@@ -240,8 +240,8 @@ function LessonVocabularyPage() {
                 cardChanging
                   ? 'pointer-events-none translate-y-0 opacity-0 transition-none'
                   : revealed
-                    ? 'pointer-events-none -translate-y-2 opacity-0 transition-[opacity,transform] duration-300 ease-out'
-                    : 'translate-y-0 opacity-100 transition-[opacity,transform] duration-300 ease-out',
+                    ? 'pointer-events-none -translate-y-2 opacity-0 transition-[opacity,transform] duration-200 ease-out'
+                    : 'translate-y-0 opacity-100 transition-[opacity,transform] duration-200 ease-out',
               )}
             >
               <span className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -263,8 +263,8 @@ function LessonVocabularyPage() {
                 cardChanging
                   ? 'pointer-events-none translate-y-2 opacity-0 transition-none'
                   : revealed
-                    ? 'translate-y-0 opacity-100 transition-[opacity,transform] duration-300 ease-out'
-                    : 'pointer-events-none translate-y-2 opacity-0 transition-[opacity,transform] duration-300 ease-out',
+                    ? 'translate-y-0 opacity-100 transition-[opacity,transform] duration-200 ease-out'
+                    : 'pointer-events-none translate-y-2 opacity-0 transition-[opacity,transform] duration-200 ease-out',
               )}
             >
               <span className="text-xs uppercase tracking-wider text-muted-foreground">

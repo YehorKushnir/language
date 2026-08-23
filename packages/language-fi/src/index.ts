@@ -1,5 +1,7 @@
 export * from './exercise-template.js'
 export * from './identity-realizer.js'
+export * from './learner-dictionary.js'
 export * from './prepared-variation-realizer.js'
+export * from './text-form-translations.js'
 export * from './types.js'
 export * from './voikko-analyzer.js'

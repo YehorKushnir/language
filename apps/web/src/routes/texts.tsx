@@ -1,22 +1,15 @@
+import type { PreparedTextSummaryResponse } from '@language/contracts'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ArrowRightIcon, HeadphonesIcon } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowRightIcon, FileTextIcon } from 'lucide-react'
 
 import { courseQuery, preparedTextsQuery } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { LearningPageHeader } from '@/components/learning-page-header'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
-import {
-  filterPreparedTexts,
-  getTextFilterOptions,
-  type TextCatalogFilters,
-} from '@/lib/text-filters'
 
 export const Route = createFileRoute('/texts')({
   loader: ({ context }) =>
@@ -26,13 +19,16 @@ export const Route = createFileRoute('/texts')({
   component: TextsPage,
 })
 
+const textCategories = [
+  { level: 'A1', title: 'Начальный уровень' },
+  { level: 'A2', title: 'Базовый уровень' },
+  { level: 'B1', title: 'Средний уровень' },
+  { level: 'B2', title: 'Выше среднего' },
+] as const
+
+type TextCategory = (typeof textCategories)[number]['level']
+
 function TextsPage() {
-  const [filters, setFilters] = useState<TextCatalogFilters>({
-    level: 'all',
-    topic: 'all',
-    grammarItemId: 'all',
-    familiarity: 'all',
-  })
   const course = useQuery(courseQuery)
   const routeVersionId = course.data?.route?.id ?? ''
   const texts = useQuery({
@@ -45,174 +41,101 @@ function TextsPage() {
     return <PageState message={(course.error ?? texts.error)?.message} />
   }
 
-  const options = getTextFilterOptions(texts.data.items)
-  const visibleTexts = filterPreparedTexts(texts.data.items, filters)
-  const hasActiveFilters = Object.values(filters).some(
-    (filter) => filter !== 'all',
+  const textsByCategory = new Map<TextCategory, PreparedTextSummaryResponse[]>(
+    textCategories.map(({ level }) => [level, []]),
   )
+
+  for (const text of texts.data.items) {
+    textsByCategory.get(toTextCategory(text.level))?.push(text)
+  }
 
   return (
     <PageShell>
       <LearningPageHeader
         eyebrow="Чтение с разбором"
         title="Тексты"
-        description="Читай короткие истории и нажимай на слова, чтобы увидеть форму и значение."
+        description="Читай тексты своего уровня и сразу проверяй значение незнакомых слов."
       />
 
-      <section className="mt-5 grid gap-2 rounded-lg border bg-card p-3 sm:grid-cols-2 lg:grid-cols-4">
-        <TextFilter
-          label="Уровень"
-          value={filters.level}
-          options={options.levels.map((value) => ({ value, label: value }))}
-          onChange={(level) => setFilters((current) => ({ ...current, level }))}
-        />
-        <TextFilter
-          label="Тема"
-          value={filters.topic}
-          options={options.topics.map((value) => ({ value, label: value }))}
-          onChange={(topic) => setFilters((current) => ({ ...current, topic }))}
-        />
-        <TextFilter
-          label="Грамматика"
-          value={filters.grammarItemId}
-          options={options.grammarItems.map((item) => ({
-            value: item.itemId,
-            label: localizedText(item.label),
-          }))}
-          onChange={(grammarItemId) =>
-            setFilters((current) => ({ ...current, grammarItemId }))
-          }
-        />
-        <TextFilter
-          label="Знакомая лексика"
-          value={filters.familiarity}
-          options={[
-            { value: 'known', label: '80% и больше' },
-            { value: 'learning', label: '30–79%' },
-            { value: 'new', label: 'меньше 30%' },
-          ]}
-          onChange={(familiarity) =>
-            setFilters((current) => ({
-              ...current,
-              familiarity: familiarity as TextCatalogFilters['familiarity'],
-            }))
-          }
-        />
-        {hasActiveFilters ? (
-          <Button
-            className="justify-self-start lg:col-span-4"
-            size="sm"
-            variant="ghost"
-            onClick={() =>
-              setFilters({
-                level: 'all',
-                topic: 'all',
-                grammarItemId: 'all',
-                familiarity: 'all',
-              })
-            }
-          >
-            Сбросить фильтры
-          </Button>
-        ) : null}
-      </section>
+      <div className="mt-7 grid gap-9">
+        {textCategories.map((category) => {
+          const categoryTexts = textsByCategory.get(category.level) ?? []
 
-      {visibleTexts.length > 0 ? (
-        <ul className="mt-5 overflow-hidden rounded-lg border bg-card">
-          {visibleTexts.map((text) => (
-            <li
-              key={text.id}
-              className="border-t px-4 py-4 first:border-t-0 sm:px-5"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <Badge variant="secondary">{text.level}</Badge>
-                    {text.topics.map((topic) => (
-                      <span
-                        key={topic}
-                        className="text-xs text-muted-foreground"
-                      >
-                        {topic}
-                      </span>
-                    ))}
-                    {text.audioUrl ? (
-                      <HeadphonesIcon
-                        aria-label="Есть запись"
-                        className="size-3.5 text-primary"
-                      />
-                    ) : null}
-                  </div>
-                  <h2 className="mt-2 text-base font-semibold">
-                    {localizedText(text.title)}
-                  </h2>
-                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                    {text.preview}
-                  </p>
-                </div>
-                <Button asChild size="icon-sm" variant="ghost">
-                  <Link
-                    to="/texts/$textId"
-                    params={{ textId: text.id }}
-                    aria-label={`Открыть ${localizedText(text.title)}`}
-                  >
-                    <ArrowRightIcon />
-                  </Link>
-                </Button>
-              </div>
-              <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-3">
-                <Progress
-                  className="h-1.5"
-                  value={text.knownPercent}
-                  aria-label={`Знакомые слова в тексте ${localizedText(text.title)}`}
-                />
-                <span className="text-xs tabular-nums text-muted-foreground">
-                  знакомо {text.knownWordCount}/{text.linkedWordCount}
+          return (
+            <section key={category.level}>
+              <header className="flex items-baseline justify-between gap-4 border-b px-1 pb-3">
+                <h2 className="font-serif text-xl font-semibold">
+                  {category.level} · {category.title}
+                </h2>
+                <span className="text-xs text-muted-foreground">
+                  {formatTextCount(categoryTexts.length)}
                 </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <section className="mt-5 rounded-lg border border-dashed p-5">
-          <h2 className="text-sm font-semibold">Подходящих текстов нет</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Измени или сбрось фильтры.
-          </p>
-        </section>
-      )}
+              </header>
+
+              {categoryTexts.length > 0 ? (
+                <ol className="mt-3 grid gap-2">
+                  {categoryTexts.map((text, index) => (
+                    <li key={text.id}>
+                      <Link
+                        to="/texts/$textId"
+                        params={{ textId: text.id }}
+                        aria-label={`Открыть ${localizedText(text.title)}`}
+                        className="interactive-row group flex min-h-16 items-center gap-3.5 rounded-xl border bg-card px-4 py-3 shadow-xs transition-[border-color,box-shadow,transform] duration-150 hover:border-primary/25 hover:shadow-sm active:scale-[0.998] sm:px-5"
+                      >
+                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-xs font-medium tabular-nums text-muted-foreground">
+                          {index + 1}
+                        </span>
+                        <FileTextIcon className="size-4 shrink-0 text-primary/65" />
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate text-[15px] font-medium leading-5 sm:text-base">
+                            {localizedText(text.title)}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {text.wordCount} слов
+                          </p>
+                        </div>
+                        <div className="hidden w-36 shrink-0 sm:block">
+                          <Progress
+                            className="h-1.5"
+                            value={text.knownPercent}
+                            aria-label={`Знакомые слова в тексте ${localizedText(text.title)}`}
+                          />
+                        </div>
+                        <span className="min-w-24 shrink-0 text-right text-xs font-medium tabular-nums text-muted-foreground">
+                          {text.knownPercent}% знакомых
+                        </span>
+                        <span className="grid size-8 shrink-0 place-items-center rounded-md text-muted-foreground transition-[background-color,color,transform] duration-150 group-hover:translate-x-0.5 group-hover:bg-secondary group-hover:text-primary">
+                          <ArrowRightIcon className="size-4" />
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <div className="mt-3 rounded-xl border border-dashed px-5 py-5 text-sm text-muted-foreground">
+                  Тексты этого уровня появятся позже.
+                </div>
+              )}
+            </section>
+          )
+        })}
+      </div>
     </PageShell>
   )
 }
 
-function TextFilter({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string
-  value: string
-  options: Array<{ value: string; label: string }>
-  onChange: (value: string) => void
-}) {
-  return (
-    <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-      {label}
-      <select
-        className="h-9 min-w-0 rounded-md border bg-background px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        <option value="all">Все</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  )
+function toTextCategory(level: string): TextCategory {
+  const normalized = level.trim().toLocaleUpperCase('en')
+  if (normalized.startsWith('A2')) return 'A2'
+  if (normalized.startsWith('B1')) return 'B1'
+  if (normalized.startsWith('B2')) return 'B2'
+  return 'A1'
+}
+
+function formatTextCount(count: number): string {
+  if (count === 1) return '1 текст'
+  if (count > 1 && count < 5) return `${count} текста`
+  return `${count} текстов`
 }
 
 function PageState({

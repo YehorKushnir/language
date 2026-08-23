@@ -275,10 +275,17 @@ export interface LessonVocabularyResponse {
 }
 
 export interface UserVocabularyItemResponse extends LessonVocabularyItemResponse {
-  introducedIn: {
-    lessonId: string
-    title: LocalizedText
-  }
+  introducedIn:
+    | {
+        kind: 'lesson'
+        lessonId: string
+        title: LocalizedText
+      }
+    | {
+        kind: 'text'
+        textId: string
+        title: LocalizedText
+      }
   memory: {
     state: ReviewMemoryState
     dueAt: string | null
@@ -331,14 +338,22 @@ export interface PreparedTextTokenLexicalResponse {
   }
 }
 
+export interface PreparedTextTokenDictionaryResponse {
+  gloss: LocalizedText
+  partOfSpeech: string
+  forms: LessonVocabularyFormResponse[]
+}
+
 export interface PreparedTextTokenResponse {
   position: number
   surface: string
   lemma: string
+  translation: LocalizedText
   analysis: Record<string, string>
   analyses: FinnishWordAnalysisResponse[]
   charStart: number
   charEnd: number
+  dictionary: PreparedTextTokenDictionaryResponse
   lexical: PreparedTextTokenLexicalResponse | null
 }
 

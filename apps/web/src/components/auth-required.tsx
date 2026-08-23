@@ -14,7 +14,7 @@ import {
 export function AuthRequired() {
   return (
     <PageShell className="grid min-h-[calc(100vh-4rem)] place-items-center py-16">
-      <Card className="w-full max-w-lg text-center shadow-lg shadow-primary/5">
+      <Card className="w-full max-w-lg text-center shadow-sm shadow-primary/5">
         <CardHeader>
           <span className="mx-auto mb-3 grid size-11 place-items-center rounded-full bg-primary/10 text-primary">
             <LockKeyholeIcon className="size-5" />

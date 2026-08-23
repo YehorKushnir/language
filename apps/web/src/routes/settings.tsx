@@ -2,7 +2,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import {
   AlertTriangleIcon,
+  CheckCircle2Icon,
   DownloadIcon,
+  LoaderCircleIcon,
   SettingsIcon,
   Trash2Icon,
 } from 'lucide-react'
@@ -25,9 +27,11 @@ function SettingsPage() {
   const [exporting, setExporting] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string>()
+  const [exported, setExported] = useState(false)
 
   async function downloadData() {
     setError(undefined)
+    setExported(false)
     setExporting(true)
     try {
       const data = await exportAccountData()
@@ -40,6 +44,7 @@ function SettingsPage() {
       anchor.download = `language-data-${new Date().toISOString().slice(0, 10)}.json`
       anchor.click()
       URL.revokeObjectURL(url)
+      setExported(true)
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -79,9 +84,16 @@ function SettingsPage() {
       />
 
       {error ? (
-        <Alert className="mt-5" variant="destructive">
+        <Alert className="motion-feedback mt-5" variant="destructive">
           <AlertTriangleIcon />
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {exported ? (
+        <Alert className="motion-feedback mt-5" aria-live="polite">
+          <CheckCircle2Icon className="text-primary" />
+          <AlertDescription>Файл с данными скачан.</AlertDescription>
         </Alert>
       ) : null}
 
@@ -98,7 +110,11 @@ function SettingsPage() {
           size="sm"
           variant="outline"
         >
-          <DownloadIcon />
+          {exporting ? (
+            <LoaderCircleIcon className="animate-spin" />
+          ) : (
+            <DownloadIcon />
+          )}
           {exporting ? 'Готовим…' : 'Скачать'}
         </Button>
       </section>
@@ -115,6 +131,7 @@ function SettingsPage() {
           <Input
             aria-label="Подтверждение удаления"
             className="sm:max-w-64"
+            placeholder="Введите УДАЛИТЬ"
             value={confirmation}
             onChange={(event) => setConfirmation(event.target.value)}
           />

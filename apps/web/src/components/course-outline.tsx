@@ -4,7 +4,7 @@ import type {
   LessonPart,
   LessonProgressResponse,
 } from '@language/contracts'
-import { Link } from '@tanstack/react-router'
+import { Link, useRouter } from '@tanstack/react-router'
 import {
   BookOpenIcon,
   CheckIcon,
@@ -79,6 +79,7 @@ export function CourseOutline({
   progress,
   selectedLessonId,
 }: CourseOutlineProps) {
+  const router = useRouter()
   const [expandedLessonId, setExpandedLessonId] = useState<string | null>(
     selectedLessonId ?? null,
   )
@@ -109,6 +110,14 @@ export function CourseOutline({
     setExpandedLessonId((currentLessonId) =>
       currentLessonId === lessonId ? null : lessonId,
     )
+    void Promise.all(
+      partLinks.map((item) =>
+        router.preloadRoute({
+          to: item.to,
+          params: { lessonId },
+        }),
+      ),
+    ).catch(() => undefined)
   }
 
   return (
@@ -153,12 +162,13 @@ export function CourseOutline({
                   className={cn(
                     'overflow-hidden rounded-xl border bg-card transition-[border-color,box-shadow] duration-200',
                     isExpanded && 'border-primary/30 shadow-sm',
+                    isAvailable && !isExpanded && 'hover:border-primary/20',
                   )}
                 >
                   <button
                     type="button"
                     className={cn(
-                      'flex min-h-14 w-full items-center gap-3.5 px-4 py-3 text-left transition-colors sm:px-5',
+                      'flex min-h-14 w-full items-center gap-3.5 px-4 py-3 text-left transition-[background-color,transform] duration-150 active:scale-[0.998] sm:px-5',
                       isAvailable
                         ? 'hover:bg-muted/45'
                         : 'cursor-default text-muted-foreground/65',
@@ -179,14 +189,7 @@ export function CourseOutline({
                     ) : (
                       <LockIcon className="size-3.5 shrink-0 opacity-45" />
                     )}
-                    <span
-                      className="min-w-0 flex-1 text-[15px] font-medium leading-5 sm:text-base"
-                      style={
-                        isExpanded
-                          ? { viewTransitionName: 'active-lesson-title' }
-                          : undefined
-                      }
-                    >
+                    <span className="min-w-0 flex-1 text-[15px] font-medium leading-5 sm:text-base">
                       {title}
                     </span>
                     {!isAvailable ? (
@@ -213,7 +216,12 @@ export function CourseOutline({
                       )}
                     >
                       <div className="overflow-hidden">
-                        <div className="border-t bg-background/45 px-4 py-4 sm:px-5 sm:pl-[4.75rem]">
+                        <div
+                          className={cn(
+                            'border-t bg-background/45 px-4 py-4 sm:px-5 sm:pl-[4.75rem]',
+                            isExpanded && 'motion-feedback',
+                          )}
+                        >
                           <p className="mb-4 max-w-2xl text-sm leading-6 text-muted-foreground">
                             {localizedText(lesson.summary)}
                           </p>
@@ -229,7 +237,7 @@ export function CourseOutline({
                                   key={item.part}
                                   to={item.to}
                                   params={{ lessonId: lesson.id }}
-                                  className="flex items-center justify-center gap-2 rounded-lg border bg-card px-3 py-2.5 text-sm font-medium transition-colors hover:border-primary/40 hover:bg-accent"
+                                  className="interactive-surface flex items-center justify-center gap-2 rounded-lg border bg-card px-3 py-2.5 text-sm font-medium"
                                 >
                                   {complete ? (
                                     <CheckIcon className="size-3.5 text-primary" />

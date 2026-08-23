@@ -151,7 +151,7 @@ describe('TextsService', () => {
           wordCount: 2,
           linkedWordCount: 1,
           knownWordCount: 1,
-          knownPercent: 100,
+          knownPercent: 50,
           audioUrl: null,
         },
       ],
@@ -163,9 +163,32 @@ describe('TextsService', () => {
 
     const result = await service.getText('user.1', 'route.1', 'text.fi.test')
 
+    expect(result.tokens[0]).toMatchObject({
+      surface: 'Minä',
+      lemma: 'minä',
+      translation: { ru: 'я' },
+      analysis: {
+        partOfSpeech: 'pronoun',
+        case: 'nominative',
+        number: 'singular',
+      },
+      dictionary: {
+        gloss: { ru: 'я' },
+        partOfSpeech: 'pronoun',
+      },
+      lexical: null,
+    })
+    expect(result.tokens[0]?.dictionary.forms).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ surface: 'minä' }),
+        expect.objectContaining({ surface: 'minulla' }),
+      ]),
+    )
+
     expect(result.tokens[1]).toMatchObject({
       surface: 'opiskelija',
       lemma: 'opiskelija',
+      translation: { ru: 'студент' },
       analysis: { partOfSpeech: 'noun', case: 'nominative' },
       analyses: [
         expect.objectContaining({
@@ -173,6 +196,11 @@ describe('TextsService', () => {
           features: { case: 'nominative', number: 'singular' },
         }),
       ],
+      dictionary: {
+        gloss: { ru: 'студент' },
+        partOfSpeech: 'noun',
+        forms: [expect.objectContaining({ surface: 'opiskelija' })],
+      },
       lexical: {
         itemId: 'word.fi.opiskelija.person',
         gloss: { ru: 'студент' },

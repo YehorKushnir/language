@@ -2,6 +2,7 @@ import type { PracticeCompletionResponse } from '@language/contracts'
 import type { FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { CheckCircle2Icon, CircleXIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { completePractice, submitExerciseAttempt } from '@/api/language-api'
@@ -198,7 +199,8 @@ function LessonPracticePage() {
           aria-label="Прогресс практики"
         />
         <h2
-          className={`mt-2 font-serif text-2xl font-semibold leading-snug transition-opacity sm:text-3xl ${
+          key={activeExerciseId}
+          className={`motion-feedback mt-2 font-serif text-2xl font-semibold leading-snug transition-opacity sm:text-3xl ${
             exercise.isFetching ? 'opacity-40' : ''
           }`}
         >
@@ -219,6 +221,7 @@ function LessonPracticePage() {
               value={answer}
               readOnly={attempt.isPending || Boolean(result)}
               disabled={exercise.isFetching}
+              aria-invalid={result ? !result.isCorrect : undefined}
               onChange={(event) => setAnswer(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key !== 'Enter') return
@@ -244,18 +247,27 @@ function LessonPracticePage() {
         </form>
 
         <div className="min-h-12 pt-3" aria-live="polite">
-          {feedback ? (
-            <p
-              className={`text-sm leading-6 ${
-                result?.isCorrect ? 'text-primary' : 'text-destructive'
+          {feedback && result ? (
+            <div
+              className={`motion-feedback flex items-start gap-2.5 rounded-lg border px-3 py-2.5 text-sm leading-6 ${
+                result.isCorrect
+                  ? 'border-primary/25 bg-primary/5 text-primary'
+                  : 'border-destructive/25 bg-destructive/5 text-destructive'
               }`}
             >
-              {feedback}{' '}
-              <span className="text-muted-foreground">
-                Нажми Enter, чтобы {isLastQuestion ? 'вернуться' : 'продолжить'}
-                .
-              </span>
-            </p>
+              {result.isCorrect ? (
+                <CheckCircle2Icon className="mt-1 size-4 shrink-0" />
+              ) : (
+                <CircleXIcon className="mt-1 size-4 shrink-0" />
+              )}
+              <p>
+                {feedback}{' '}
+                <span className="text-muted-foreground">
+                  Нажми Enter, чтобы{' '}
+                  {isLastQuestion ? 'вернуться' : 'продолжить'}.
+                </span>
+              </p>
+            </div>
           ) : null}
           {attempt.isError ? (
             <QueryError message={attempt.error.message} />

@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react'
 
 import { courseQuery, userVocabularyQuery } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
+import { LearningPageHeader } from '@/components/learning-page-header'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Badge } from '@/components/ui/badge'
@@ -73,30 +74,23 @@ function VocabularyPage() {
 
   return (
     <PageShell>
-      <header className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Личная коллекция
-          </p>
-          <h1 className="mt-1 font-serif text-2xl font-semibold tracking-tight sm:text-3xl">
-            Словарь
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {vocabulary.data.totalCount} слов · {vocabulary.data.dueCount} пора
-            повторить
-          </p>
-        </div>
-        <div className="relative w-full sm:w-72">
-          <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            aria-label="Поиск по словарю"
-            className="pl-9"
-            placeholder="Слово или перевод"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
-      </header>
+      <LearningPageHeader
+        eyebrow="Личная коллекция"
+        title="Словарь"
+        description={`${vocabulary.data.totalCount} слов · ${vocabulary.data.dueCount} пора повторить`}
+        aside={
+          <div className="relative w-full">
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              aria-label="Поиск по словарю"
+              className="pl-9"
+              placeholder="Слово или перевод"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
+        }
+      />
 
       <div className="mt-4 flex flex-wrap gap-1.5" aria-label="Фильтр слов">
         {filters.map((item) => (
@@ -104,6 +98,7 @@ function VocabularyPage() {
             key={item.id}
             size="sm"
             variant={filter === item.id ? 'secondary' : 'ghost'}
+            aria-pressed={filter === item.id}
             onClick={() => setFilter(item.id)}
           >
             {item.label}
@@ -112,7 +107,7 @@ function VocabularyPage() {
       </div>
 
       {visibleItems.length === 0 ? (
-        <section className="mt-6 rounded-lg border border-dashed p-5">
+        <section className="motion-feedback mt-6 rounded-lg border border-dashed p-5">
           <h2 className="text-sm font-semibold">Ничего не найдено</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Измени поисковый запрос или выбери другой фильтр.
@@ -131,7 +126,7 @@ function VocabularyPage() {
 
 function VocabularyRow({ item }: { item: UserVocabularyItemResponse }) {
   return (
-    <li className="grid gap-2 border-t px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] sm:items-center sm:gap-5">
+    <li className="interactive-row grid gap-2 border-t px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] sm:items-center sm:gap-5">
       <div className="min-w-0">
         <p className="truncate text-base font-semibold">{item.lemma}</p>
         <p className="text-xs text-muted-foreground">
@@ -154,12 +149,21 @@ function VocabularyRow({ item }: { item: UserVocabularyItemResponse }) {
       </div>
       <div className="flex items-center justify-between gap-3 sm:justify-end">
         <Button asChild size="sm" variant="ghost">
-          <Link
-            to="/lessons/$lessonId/vocabulary"
-            params={{ lessonId: item.introducedIn.lessonId }}
-          >
-            {localizedText(item.introducedIn.title)}
-          </Link>
+          {item.introducedIn.kind === 'lesson' ? (
+            <Link
+              to="/lessons/$lessonId/vocabulary"
+              params={{ lessonId: item.introducedIn.lessonId }}
+            >
+              {localizedText(item.introducedIn.title)}
+            </Link>
+          ) : (
+            <Link
+              to="/texts/$textId"
+              params={{ textId: item.introducedIn.textId }}
+            >
+              {localizedText(item.introducedIn.title)}
+            </Link>
+          )}
         </Button>
         <Badge variant={item.memory.isDue ? 'default' : 'outline'}>
           {item.memory.isDue ? 'Повторить' : stateLabels[item.memory.state]}

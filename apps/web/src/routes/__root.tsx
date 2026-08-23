@@ -16,6 +16,7 @@ import {
   ScrollTextIcon,
   SettingsIcon,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 import { AuthRequired } from '@/components/auth-required'
 import { PageShell } from '@/components/page-shell'
@@ -23,6 +24,19 @@ import { PageLoading } from '@/components/query-state'
 import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth-client'
 import type { RouterContext } from '@/router-context'
+
+const navigationItems: Array<{
+  to: '/' | '/lessons' | '/vocabulary' | '/texts' | '/reviews'
+  label: string
+  icon: LucideIcon
+  exact?: boolean
+}> = [
+  { to: '/', label: 'Главная', icon: HomeIcon, exact: true },
+  { to: '/lessons', label: 'Уроки', icon: BookOpenCheckIcon },
+  { to: '/vocabulary', label: 'Словарь', icon: LanguagesIcon },
+  { to: '/texts', label: 'Тексты', icon: ScrollTextIcon },
+  { to: '/reviews', label: 'Повторение', icon: BrainIcon },
+]
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
@@ -60,61 +74,45 @@ function RootLayout() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh pb-[calc(4.25rem+env(safe-area-inset-bottom))] lg:pb-0">
       <header
         data-app-header
-        className="sticky top-0 z-20 border-b bg-background/90 backdrop-blur"
+        className="sticky top-0 z-30 border-b bg-background/92 backdrop-blur-xl"
       >
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4 sm:px-5">
           <Link
-            className="flex items-center gap-2 text-sm font-semibold"
+            className="group flex items-center gap-2 text-sm font-semibold"
             to="/"
+            aria-label="Suomi — главная"
           >
-            <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground">
+            <span className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground shadow-xs transition-transform duration-150 group-active:scale-95">
               <BookOpenTextIcon className="size-4" />
             </span>
             <span className="hidden sm:inline">Suomi</span>
           </Link>
           <div className="flex items-center gap-2">
             <nav
-              className="flex items-center gap-0.5"
+              className="hidden items-center gap-0.5 lg:flex"
               aria-label="Основная навигация"
             >
-              <Button asChild variant="ghost" size="sm">
-                <Link
-                  to="/"
-                  activeOptions={{ exact: true }}
-                  aria-label="Главная"
-                  title="Главная"
-                >
-                  <HomeIcon />
-                  <span className="hidden lg:inline">Главная</span>
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/lessons" aria-label="Уроки" title="Уроки">
-                  <BookOpenCheckIcon />
-                  <span className="hidden lg:inline">Уроки</span>
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/vocabulary" aria-label="Словарь" title="Словарь">
-                  <LanguagesIcon />
-                  <span className="hidden lg:inline">Словарь</span>
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/texts" aria-label="Тексты" title="Тексты">
-                  <ScrollTextIcon />
-                  <span className="hidden lg:inline">Тексты</span>
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm">
-                <Link to="/reviews" aria-label="Повторение" title="Повторение">
-                  <BrainIcon />
-                  <span className="hidden lg:inline">Повторение</span>
-                </Link>
-              </Button>
+              {navigationItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <Button asChild key={item.to} variant="ghost" size="sm">
+                    <Link
+                      to={item.to}
+                      activeOptions={item.exact ? { exact: true } : undefined}
+                      activeProps={{
+                        className: 'bg-secondary text-secondary-foreground',
+                      }}
+                      inactiveProps={{ className: 'text-muted-foreground' }}
+                    >
+                      <Icon />
+                      {item.label}
+                    </Link>
+                  </Button>
+                )
+              })}
             </nav>
             {session.data ? (
               <div className="flex items-center gap-2 border-l pl-3">
@@ -149,6 +147,31 @@ function RootLayout() {
           </div>
         </div>
       </header>
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
+        aria-label="Мобильная навигация"
+      >
+        <div className="mx-auto grid h-16 max-w-lg grid-cols-5 gap-1 px-2 pt-1.5">
+          {navigationItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                activeOptions={item.exact ? { exact: true } : undefined}
+                activeProps={{
+                  className: 'bg-secondary/75 text-primary',
+                }}
+                inactiveProps={{ className: 'text-muted-foreground' }}
+                className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-medium transition-[color,background-color,transform] duration-150 active:scale-95"
+              >
+                <Icon className="size-4.5" />
+                <span className="max-w-full truncate">{item.label}</span>
+              </Link>
+            )
+          })}
+        </div>
+      </nav>
       {requiresSession && session.isPending ? (
         <PageShell>
           <PageLoading />

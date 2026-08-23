@@ -70,8 +70,11 @@ function SignInPage() {
 
   return (
     <AuthPageLayout>
-      <Card className="w-full max-w-md shadow-xl shadow-primary/5">
+      <Card className="w-full max-w-md shadow-sm shadow-primary/5">
         <CardHeader>
+          <span className="mb-2 grid size-10 place-items-center rounded-full bg-primary/10 text-primary">
+            <LogInIcon className="size-4.5" />
+          </span>
           <CardTitle className="font-serif text-3xl">С возвращением</CardTitle>
           <CardDescription>
             Войдите, чтобы продолжить с сохранённого места.
@@ -80,7 +83,7 @@ function SignInPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="grid gap-5">
             {error ? (
-              <Alert variant="destructive">
+              <Alert className="motion-feedback" variant="destructive">
                 <AlertCircleIcon />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>

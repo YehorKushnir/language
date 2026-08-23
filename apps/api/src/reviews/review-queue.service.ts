@@ -38,13 +38,28 @@ export class ReviewQueueService {
     const where = {
       userId,
       item: {
-        lessonItems: {
-          some: {
-            lesson: {
-              routeEntries: { some: { routeVersionId } },
+        OR: [
+          {
+            lessonItems: {
+              some: {
+                lesson: {
+                  routeEntries: { some: { routeVersionId } },
+                },
+              },
             },
           },
-        },
+          {
+            textItems: {
+              some: {
+                text: {
+                  course: {
+                    routeVersions: { some: { id: routeVersionId } },
+                  },
+                },
+              },
+            },
+          },
+        ],
       },
     }
     const now = new Date()
@@ -202,13 +217,26 @@ function createMemoryScope(userId: string, routeVersionId: string) {
   return {
     userId,
     item: {
-      lessonItems: {
-        some: {
-          lesson: {
-            routeEntries: { some: { routeVersionId } },
+      OR: [
+        {
+          lessonItems: {
+            some: {
+              lesson: {
+                routeEntries: { some: { routeVersionId } },
+              },
+            },
           },
         },
-      },
+        {
+          textItems: {
+            some: {
+              text: {
+                course: { routeVersions: { some: { id: routeVersionId } } },
+              },
+            },
+          },
+        },
+      ],
     },
   }
 }

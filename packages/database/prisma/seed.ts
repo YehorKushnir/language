@@ -11,6 +11,12 @@ import {
 import { moduleOneLessons } from '../../../content/courses/ru-fi/module-one.js'
 import { preparedTexts } from '../../../content/courses/ru-fi/texts/fi.olla.introductions.js'
 import {
+  finnishLearnerDictionaryConceptId,
+  finnishLearnerDictionaryEntries,
+  finnishLearnerDictionaryItemId,
+  finnishLearnerDictionaryLexicalEntryId,
+} from '@language/language-fi'
+import {
   validateCourseContent,
   validateFinnishMorphologyContent,
 } from './content-validation.js'
@@ -290,6 +296,92 @@ async function seedVocabulary() {
   }
 }
 
+async function seedReaderDictionary() {
+  for (const entry of finnishLearnerDictionaryEntries) {
+    const itemId = finnishLearnerDictionaryItemId(entry.lemma)
+    const conceptId = finnishLearnerDictionaryConceptId(entry.lemma)
+    const lexicalEntryId = finnishLearnerDictionaryLexicalEntryId(entry.lemma)
+
+    await prisma.concept.upsert({
+      where: { id: conceptId },
+      update: { semanticTypes: ['reader-dictionary', entry.partOfSpeech] },
+      create: {
+        id: conceptId,
+        semanticTypes: ['reader-dictionary', entry.partOfSpeech],
+      },
+    })
+
+    await prisma.lexicalEntry.upsert({
+      where: { id: lexicalEntryId },
+      update: {
+        lemma: entry.lemma,
+        partOfSpeech: entry.partOfSpeech,
+        status: ContentStatus.CURATED,
+      },
+      create: {
+        id: lexicalEntryId,
+        languageCode: 'fi',
+        lemma: entry.lemma,
+        partOfSpeech: entry.partOfSpeech,
+        status: ContentStatus.CURATED,
+      },
+    })
+
+    for (const [index, form] of entry.forms.entries()) {
+      await prisma.lexicalForm.upsert({
+        where: { id: `form.fi.reader.${entry.lemma}.${index + 1}` },
+        update: {
+          surface: form.surface,
+          features: form.features,
+          source: LexicalFormSource.CURATED,
+        },
+        create: {
+          id: `form.fi.reader.${entry.lemma}.${index + 1}`,
+          lexicalEntryId,
+          surface: form.surface,
+          features: form.features,
+          source: LexicalFormSource.CURATED,
+        },
+      })
+    }
+
+    await prisma.knowledgeItem.upsert({
+      where: { id: itemId },
+      update: {
+        kind: KnowledgeItemKind.LEXICAL_SENSE,
+        languageCode: 'fi',
+        lexicalSense: {
+          upsert: {
+            create: {
+              lexicalEntry: { connect: { id: lexicalEntryId } },
+              concept: { connect: { id: conceptId } },
+              gloss: { ru: entry.gloss },
+              status: ContentStatus.CURATED,
+            },
+            update: {
+              gloss: { ru: entry.gloss },
+              status: ContentStatus.CURATED,
+            },
+          },
+        },
+      },
+      create: {
+        id: itemId,
+        kind: KnowledgeItemKind.LEXICAL_SENSE,
+        languageCode: 'fi',
+        lexicalSense: {
+          create: {
+            lexicalEntry: { connect: { id: lexicalEntryId } },
+            concept: { connect: { id: conceptId } },
+            gloss: { ru: entry.gloss },
+            status: ContentStatus.CURATED,
+          },
+        },
+      },
+    })
+  }
+}
+
 async function seedExercise() {
   const preparedExerciseIds = moduleOneLessons.flatMap((lesson) =>
     lesson.exercises.map((exercise) => exercise.id),
@@ -542,6 +634,7 @@ async function main() {
   await seedCourse()
   await seedKnowledge()
   await seedVocabulary()
+  await seedReaderDictionary()
   await seedExerciseTemplate()
   await seedExercise()
   await seedTexts()

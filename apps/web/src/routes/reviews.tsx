@@ -5,6 +5,7 @@ import { ArrowRightIcon, BrainIcon } from 'lucide-react'
 
 import { courseQuery, reviewQueueQuery } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
+import { LearningPageHeader } from '@/components/learning-page-header'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Badge } from '@/components/ui/badge'
@@ -43,30 +44,23 @@ function ReviewsPage() {
 
   return (
     <PageShell>
-      <header className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Интервальное повторение
-          </p>
-          <h1 className="mt-1 font-serif text-2xl font-semibold tracking-tight sm:text-3xl">
-            Повторение
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {queue.data.dueCount} сейчас · {queue.data.totalCount} всего ·{' '}
-            следующее {formatDueAt(queue.data.nextDueAt).toLowerCase()}
-          </p>
-        </div>
-        {queue.data.dueCount > 0 ? (
-          <Button asChild size="sm">
-            <Link to="/reviews/session">
-              Начать <ArrowRightIcon />
-            </Link>
-          </Button>
-        ) : null}
-      </header>
+      <LearningPageHeader
+        eyebrow="Интервальное повторение"
+        title="Повторение"
+        description={`${queue.data.dueCount} сейчас · ${queue.data.totalCount} всего · следующее ${formatDueAt(queue.data.nextDueAt).toLowerCase()}`}
+        aside={
+          queue.data.dueCount > 0 ? (
+            <Button asChild className="w-full" size="sm">
+              <Link to="/reviews/session">
+                Начать <ArrowRightIcon />
+              </Link>
+            </Button>
+          ) : undefined
+        }
+      />
 
       {queue.data.items.length === 0 ? (
-        <section className="mt-6 rounded-lg border border-dashed p-5">
+        <section className="motion-feedback mt-6 rounded-lg border border-dashed p-5">
           <BrainIcon className="size-5 text-primary" />
           <h2 className="mt-3 text-sm font-semibold">Память пока пуста</h2>
           <p className="mt-1 max-w-lg text-sm leading-6 text-muted-foreground">
@@ -94,7 +88,7 @@ function ReviewsPage() {
             {queue.data.items.map((item) => (
               <li
                 key={item.itemId}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-t px-4 py-3 first:border-t-0"
+                className="interactive-row grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-t px-4 py-3 first:border-t-0"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">

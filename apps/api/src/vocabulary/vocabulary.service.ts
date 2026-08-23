@@ -74,6 +74,34 @@ export class VocabularyService {
       )
     }
 
+    const readerItems = await this.prisma.knowledgeItem.findMany({
+      where: {
+        kind: KnowledgeItemKind.LEXICAL_SENSE,
+        textItems: { some: { text: { courseId: route.courseId } } },
+        lessonItems: { none: {} },
+      },
+      include: {
+        userMemories: { where: { userId }, take: 1 },
+        textItems: {
+          orderBy: { textId: 'asc' },
+          take: 1,
+          include: { text: { select: { id: true, title: true } } },
+        },
+        lexicalSense: {
+          include: {
+            lexicalEntry: {
+              include: {
+                forms: {
+                  orderBy: { id: 'asc' },
+                  include: { audioAsset: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+
     const now = new Date()
     const items = new Map<string, UserVocabularyResponse['items'][number]>()
 
@@ -98,6 +126,7 @@ export class VocabularyService {
           })),
           status: sense.status,
           introducedIn: {
+            kind: 'lesson',
             lessonId: entry.lesson.id,
             title: toLocalizedText(entry.lesson.title),
           },
@@ -110,6 +139,41 @@ export class VocabularyService {
           },
         })
       }
+    }
+
+    for (const item of readerItems) {
+      const sense = item.lexicalSense
+      const text = item.textItems[0]?.text
+      if (!sense || !text || items.has(item.id)) continue
+
+      const memory = item.userMemories[0]
+      items.set(item.id, {
+        itemId: item.id,
+        lexicalEntryId: sense.lexicalEntry.id,
+        lemma: sense.lexicalEntry.lemma,
+        partOfSpeech: sense.lexicalEntry.partOfSpeech,
+        gloss: toLocalizedText(sense.gloss),
+        example: toVocabularyExample(sense.metadata),
+        forms: sense.lexicalEntry.forms.map((form) => ({
+          id: form.id,
+          surface: form.surface,
+          features: toLexicalFeatures(form.features),
+          audioUrl: this.media.resolve(form.audioAsset?.storageKey),
+        })),
+        status: sense.status,
+        introducedIn: {
+          kind: 'text',
+          textId: text.id,
+          title: toLocalizedText(text.title),
+        },
+        memory: {
+          state: memory?.state ?? 'NEW',
+          dueAt: memory?.dueAt.toISOString() ?? null,
+          isDue: Boolean(memory && memory.dueAt <= now),
+          repetitions: memory?.repetitions ?? 0,
+          lapses: memory?.lapses ?? 0,
+        },
+      })
     }
 
     const vocabularyItems = [...items.values()]
@@ -130,19 +194,40 @@ export class VocabularyService {
       where: {
         id: itemId,
         kind: KnowledgeItemKind.LEXICAL_SENSE,
-        lessonItems: {
-          some: {
-            lesson: {
-              status: ContentStatus.CURATED,
-              routeEntries: {
-                some: {
-                  routeVersionId,
-                  routeVersion: { status: ContentStatus.CURATED },
+        OR: [
+          {
+            lessonItems: {
+              some: {
+                lesson: {
+                  status: ContentStatus.CURATED,
+                  routeEntries: {
+                    some: {
+                      routeVersionId,
+                      routeVersion: { status: ContentStatus.CURATED },
+                    },
+                  },
                 },
               },
             },
           },
-        },
+          {
+            textItems: {
+              some: {
+                text: {
+                  status: ContentStatus.CURATED,
+                  course: {
+                    routeVersions: {
+                      some: {
+                        id: routeVersionId,
+                        status: ContentStatus.CURATED,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
       },
       select: { id: true },
     })

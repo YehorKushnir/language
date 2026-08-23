@@ -41,7 +41,7 @@ export function ExerciseReport({
     return (
       <p
         className={cn(
-          'flex items-center gap-1.5 text-xs text-muted-foreground',
+          'motion-feedback flex items-center gap-1.5 text-xs text-muted-foreground',
           className,
         )}
       >
@@ -58,7 +58,7 @@ export function ExerciseReport({
         </Button>
       ) : (
         <form
-          className="grid gap-2 rounded-md border bg-muted/20 p-3 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_auto]"
+          className="motion-feedback grid gap-2 rounded-md border bg-muted/20 p-3 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_auto]"
           onSubmit={(event) => {
             event.preventDefault()
             if (!report.isPending) report.mutate()
@@ -67,7 +67,7 @@ export function ExerciseReport({
           <label className="grid gap-1 text-xs font-medium text-muted-foreground">
             Причина
             <select
-              className="h-9 rounded-md border bg-background px-2.5 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+              className="h-9 rounded-md border bg-background px-2.5 text-sm text-foreground shadow-xs outline-none transition-[border-color,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-ring/30"
               value={reason}
               onChange={(event) =>
                 setReason(event.target.value as ExerciseReportReason)

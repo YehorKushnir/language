@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { CheckIcon, LightbulbIcon, LoaderCircleIcon } from 'lucide-react'
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  LightbulbIcon,
+  LoaderCircleIcon,
+} from 'lucide-react'
 
 import { completeLessonPart } from '@/api/language-api'
 import { courseProgressQuery, courseQuery, lessonQuery } from '@/api/queries'
@@ -92,7 +97,7 @@ function LessonExplanationPage() {
               </div>
 
               {screen.table ? (
-                <div className="mt-5 overflow-hidden rounded-md border">
+                <div className="mt-5 overflow-hidden rounded-lg border shadow-xs">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -149,17 +154,20 @@ function LessonExplanationPage() {
                   {screen.quickChecks.map((quickCheck, index) => (
                     <details
                       key={`${screen.id}-check-${index}`}
-                      className="group rounded-md border bg-muted/20 px-3 py-2.5"
+                      className="group rounded-lg border bg-muted/20 px-3 py-2.5 transition-colors duration-150 open:bg-muted/35 hover:bg-muted/30"
                     >
-                      <summary className="cursor-pointer list-none text-sm font-medium marker:hidden">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                          Быстрая проверка
+                      <summary className="grid cursor-pointer list-none grid-cols-[1fr_auto] items-center gap-3 text-sm font-medium marker:hidden">
+                        <span>
+                          <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                            Быстрая проверка
+                          </span>
+                          <span className="mt-1 block">
+                            {localizedText(quickCheck.prompt)}
+                          </span>
                         </span>
-                        <span className="mt-1 block">
-                          {localizedText(quickCheck.prompt)}
-                        </span>
+                        <ChevronDownIcon className="size-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
                       </summary>
-                      <div className="mt-3 border-t pt-3 text-sm">
+                      <div className="motion-feedback mt-3 border-t pt-3 text-sm">
                         <p className="font-semibold">{quickCheck.answer}</p>
                         {quickCheck.explanation ? (
                           <p className="mt-1 text-muted-foreground">

@@ -8,7 +8,6 @@ interface LearningPageHeaderProps {
   description: string
   aside?: ReactNode
   children?: ReactNode
-  transitionTitle?: boolean
   className?: string
 }
 
@@ -18,7 +17,6 @@ export function LearningPageHeader({
   description,
   aside,
   children,
-  transitionTitle = false,
   className,
 }: LearningPageHeaderProps) {
   return (
@@ -28,21 +26,14 @@ export function LearningPageHeader({
           <div className="flex min-h-5 items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
             {eyebrow}
           </div>
-          <h1
-            className="mt-1 max-w-3xl font-serif text-3xl font-semibold leading-tight tracking-tight sm:text-4xl"
-            style={
-              transitionTitle
-                ? { viewTransitionName: 'active-lesson-title' }
-                : undefined
-            }
-          >
+          <h1 className="mt-1 max-w-3xl text-balance font-serif text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
             {title}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             {description}
           </p>
         </div>
-        {aside ? <div className="w-full shrink-0 sm:w-56">{aside}</div> : null}
+        {aside ? <div className="w-full shrink-0 sm:w-64">{aside}</div> : null}
       </div>
       {children}
     </header>

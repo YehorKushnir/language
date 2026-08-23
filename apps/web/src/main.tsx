@@ -19,8 +19,12 @@ const router = createRouter({
   routeTree,
   defaultPreload: 'viewport',
   defaultPreloadDelay: 0,
-  defaultPreloadStaleTime: 30_000,
-  defaultViewTransition: true,
+  // React Query owns data freshness; keep a visible link's route preload hot
+  // inside the default five-minute query cache window.
+  defaultPreloadStaleTime: 4 * 60_000,
+  defaultViewTransition: false,
+  scrollRestoration: true,
+  scrollRestorationBehavior: 'instant',
   context: { queryClient },
 })
 

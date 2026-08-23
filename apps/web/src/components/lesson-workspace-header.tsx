@@ -62,9 +62,11 @@ export function LessonWorkspaceHeader({
       }
       title={lessonTitle}
       description={lessonSummary}
-      transitionTitle
     >
-      <nav className="mt-5 flex gap-1 overflow-x-auto" aria-label="Части урока">
+      <nav
+        className="mt-5 flex w-fit max-w-full gap-1 overflow-x-auto rounded-lg bg-muted/35 p-1"
+        aria-label="Части урока"
+      >
         {parts.map((item) => {
           const Icon = item.icon
           const active = item.part === activePart
@@ -76,9 +78,9 @@ export function LessonWorkspaceHeader({
               resetScroll={false}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                'inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-[color,background-color,transform] duration-150 active:scale-[0.98]',
                 active
-                  ? 'bg-secondary text-secondary-foreground'
+                  ? 'bg-background text-foreground shadow-xs'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
             >

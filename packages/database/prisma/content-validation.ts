@@ -6,6 +6,10 @@ import {
   validatePreparedTexts,
 } from '@language/content-schema'
 import {
+  finnishLearnerDictionaryEntries,
+  finnishLearnerDictionaryItemId,
+  getFinnishLearnerDictionaryEntry,
+  getFinnishTextFormTranslation,
   realizeFinnishIdentity,
   validateFinnishIdentityTemplate,
   VoikkoFinnishMorphologyAnalyzer,
@@ -70,6 +74,9 @@ export function validateCourseContent(): CourseContentValidationReport {
     item.lemma.toLocaleLowerCase('fi'),
   )
   const routeItemIds = new Set([...skillIds, ...vocabularyIds])
+  for (const entry of finnishLearnerDictionaryEntries) {
+    routeItemIds.add(finnishLearnerDictionaryItemId(entry.lemma))
+  }
   const issues: string[] = []
 
   requireExactCount(moduleOneLessons, 16, 'module-one lessons', issues)
@@ -112,6 +119,28 @@ export function validateCourseContent(): CourseContentValidationReport {
     for (const itemId of text.knowledgeItemIds) {
       if (!routeItemIds.has(itemId)) {
         issues.push(`${text.id} references item outside module one: ${itemId}`)
+      }
+    }
+    for (const token of text.tokens) {
+      if (token.analysis.partOfSpeech === 'unknown') {
+        issues.push(`${text.id} leaves «${token.surface}» unrecognized`)
+      }
+      if (
+        !token.lexicalSenseId &&
+        !getFinnishLearnerDictionaryEntry(token.lemma)
+      ) {
+        issues.push(
+          `${text.id} has no dictionary entry for «${token.surface}» (${token.lemma})`,
+        )
+      }
+      if (
+        token.surface.toLocaleLowerCase('fi') !==
+          token.lemma.toLocaleLowerCase('fi') &&
+        !getFinnishTextFormTranslation(token.surface)
+      ) {
+        issues.push(
+          `${text.id} has no contextual translation for «${token.surface}»`,
+        )
       }
     }
   }

@@ -7,6 +7,10 @@ import type {
   ReviewMemoryState,
 } from '@language/contracts'
 import { ContentStatus } from '@language/database'
+import {
+  getFinnishLearnerDictionaryEntry,
+  getFinnishTextFormTranslation,
+} from '@language/language-fi'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 
 import {
@@ -217,9 +221,9 @@ export class TextsService {
       linkedWordCount: linkedTokens.length,
       knownWordCount,
       knownPercent:
-        linkedTokens.length === 0
+        text.tokens.length === 0
           ? 0
-          : Math.round((knownWordCount / linkedTokens.length) * 100),
+          : Math.round((knownWordCount / text.tokens.length) * 100),
       audioUrl: this.media.resolve(text.audioAsset?.storageKey),
     }
   }
@@ -230,15 +234,67 @@ export class TextsService {
   ): PreparedTextTokenResponse {
     const sense = token.lexicalSense
     const memory = sense?.knowledgeItem.userMemories[0]
+    const coreEntry = getFinnishLearnerDictionaryEntry(
+      token.lemma ?? token.surface,
+    )
+    const dictionary = sense
+      ? {
+          gloss: toLocalizedText(sense.gloss),
+          partOfSpeech: sense.lexicalEntry.partOfSpeech,
+          forms: sense.lexicalEntry.forms.map((form) => ({
+            id: form.id,
+            surface: form.surface,
+            features: toLexicalFeatures(form.features),
+            audioUrl: this.media.resolve(form.audioAsset?.storageKey),
+          })),
+        }
+      : coreEntry
+        ? {
+            gloss: { ru: coreEntry.gloss },
+            partOfSpeech: coreEntry.partOfSpeech,
+            forms: coreEntry.forms.map((form, index) => ({
+              id: `dictionary.${coreEntry.lemma}.${index + 1}`,
+              surface: form.surface,
+              features: form.features,
+              audioUrl: null,
+            })),
+          }
+        : {
+            gloss: { ru: token.lemma ?? token.surface },
+            partOfSpeech: toAnalysis(token.analysis).partOfSpeech ?? 'unknown',
+            forms: [],
+          }
+    const preferredAnalysis = selectPreferredAnalysis(
+      analyses,
+      token.lemma ?? token.surface,
+      dictionary.partOfSpeech,
+    )
+    const analysis = preferredAnalysis
+      ? toPreparedAnalysis(preferredAnalysis, dictionary.partOfSpeech)
+      : toAnalysis(token.analysis)
+    const dictionaryForms = ensureDictionaryForms(
+      dictionary.forms,
+      token.surface,
+      token.lemma ?? token.surface,
+      analysis,
+    )
 
     return {
       position: token.position,
       surface: token.surface,
       lemma: token.lemma ?? token.surface.toLocaleLowerCase('fi'),
-      analysis: toAnalysis(token.analysis),
+      translation: {
+        ru:
+          getFinnishTextFormTranslation(token.surface) ??
+          dictionary.gloss.ru ??
+          token.lemma ??
+          token.surface,
+      },
+      analysis,
       analyses,
       charStart: token.charStart,
       charEnd: token.charEnd,
+      dictionary: { ...dictionary, forms: dictionaryForms },
       lexical: sense
         ? {
             itemId: sense.id,
@@ -260,6 +316,73 @@ export class TextsService {
         : null,
     }
   }
+}
+
+function selectPreferredAnalysis(
+  analyses: FinnishWordAnalysisResponse[],
+  lemma: string,
+  partOfSpeech: string,
+): FinnishWordAnalysisResponse | undefined {
+  const normalizedLemma = lemma.toLocaleLowerCase('fi')
+  return (
+    analyses.find(
+      (analysis) =>
+        analysis.lemma.toLocaleLowerCase('fi') === normalizedLemma &&
+        analysis.partOfSpeech === partOfSpeech,
+    ) ??
+    analyses.find(
+      (analysis) => analysis.lemma.toLocaleLowerCase('fi') === normalizedLemma,
+    )
+  )
+}
+
+function toPreparedAnalysis(
+  analysis: FinnishWordAnalysisResponse,
+  dictionaryPartOfSpeech: string,
+): Record<string, string> {
+  return {
+    partOfSpeech:
+      analysis.partOfSpeech === 'unknown'
+        ? dictionaryPartOfSpeech
+        : analysis.partOfSpeech,
+    ...Object.fromEntries(
+      Object.entries(analysis.features).flatMap(([key, value]) =>
+        value === undefined ? [] : [[key, String(value)]],
+      ),
+    ),
+  }
+}
+
+function ensureDictionaryForms(
+  forms: PreparedTextTokenResponse['dictionary']['forms'],
+  surface: string,
+  lemma: string,
+  analysis: Record<string, string>,
+): PreparedTextTokenResponse['dictionary']['forms'] {
+  const values = [...forms]
+  const normalizedSurfaces = new Set(
+    values.map((form) => form.surface.toLocaleLowerCase('fi')),
+  )
+  if (!normalizedSurfaces.has(lemma.toLocaleLowerCase('fi'))) {
+    values.unshift({
+      id: `dictionary.${lemma}.lemma`,
+      surface: lemma,
+      features: { form: 'lemma' },
+      audioUrl: null,
+    })
+    normalizedSurfaces.add(lemma.toLocaleLowerCase('fi'))
+  }
+  if (!normalizedSurfaces.has(surface.toLocaleLowerCase('fi'))) {
+    values.push({
+      id: `dictionary.${lemma}.current`,
+      surface,
+      features: Object.fromEntries(
+        Object.entries(analysis).filter(([key]) => key !== 'partOfSpeech'),
+      ),
+      audioUrl: null,
+    })
+  }
+  return values
 }
 
 function toAnalysis(value: unknown): Record<string, string> {

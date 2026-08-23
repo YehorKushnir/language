@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { getFinnishTextFormTranslation } from '@language/language-fi'
 
 import {
   lessonContent,
@@ -58,6 +59,24 @@ describe('lesson one content', () => {
       uniqueLemmaCount: 401,
       exerciseCount: 960,
     })
+  })
+
+  it('provides a dictionary entry and morphology for every text word', () => {
+    const tokens = preparedTexts.flatMap((text) => text.tokens)
+
+    expect(tokens).toHaveLength(215)
+    expect(
+      tokens.filter((token) => token.analysis.partOfSpeech === 'unknown'),
+    ).toEqual([])
+    expect(tokens.filter((token) => !token.lexicalSenseId)).toEqual([])
+    expect(
+      tokens.filter(
+        (token) =>
+          token.surface.toLocaleLowerCase('fi') !==
+            token.lemma.toLocaleLowerCase('fi') &&
+          !getFinnishTextFormTranslation(token.surface),
+      ),
+    ).toEqual([])
   })
 
   it('contains only forms recognized by Finnish morphology', async () => {

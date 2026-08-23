@@ -1,4 +1,8 @@
 import { moduleOneVocabularyByLemma } from '../module-one.js'
+import {
+  finnishLearnerDictionaryItemId,
+  getFinnishLearnerDictionaryEntry,
+} from '../../../../packages/language-fi/src/learner-dictionary.js'
 
 interface TokenReference {
   lemma: string
@@ -65,71 +69,146 @@ const grammarReferences: Record<string, TokenReference> = {
 }
 
 const inflectedVocabularyReferences: Record<string, string> = {
+  aamulla: 'aamu',
+  aluksi: 'alku',
   avaimen: 'avain',
   asun: 'asua',
   asuu: 'asua',
+  asumme: 'asua',
   auttoi: 'auttaa',
   bussilla: 'bussi',
+  eikä: 'ei',
+  enemmän: 'enemmän',
+  esiin: 'esiin',
   elokuvan: 'elokuva',
   haluan: 'haluta',
+  haluaa: 'haluta',
   haluamme: 'haluta',
   heräsimme: 'herätä',
   hotellissa: 'hotelli',
   hotellin: 'hotelli',
+  hotelliin: 'hotelli',
+  illalla: 'ilta',
+  iltapäivällä: 'iltapäivä',
+  iloa: 'ilo',
+  ikkunasta: 'ikkuna',
   järven: 'järvi',
+  joen: 'joki',
+  jossa: 'joka',
   juon: 'juoda',
+  juustoa: 'juusto',
   kahvia: 'kahvi',
   kahvilassa: 'kahvila',
+  kalaa: 'kala',
   katsoimme: 'katsoa',
+  kaikkea: 'kaikki',
   kaupungissa: 'kaupunki',
+  kerran: 'kerta',
   kertoo: 'kertoa',
   kirjastossa: 'kirjasto',
   kirjaa: 'kirja',
   keskustelemme: 'keskustelu',
+  kirjoitin: 'kirjoittaa',
   kirjoitan: 'kirjoittaa',
+  kotiin: 'koti',
+  kuukausi: 'kuukausi',
+  kävelimme: 'kävellä',
+  käymme: 'käydä',
   kysyy: 'kysyä',
+  junalla: 'juna',
+  lauantaina: 'lauantai',
   laukun: 'laukku',
   leipää: 'leipä',
   lipun: 'lippu',
   luen: 'lukea',
   lukemisesta: 'lukeminen',
   lähdimme: 'lähteä',
+  lämmitti: 'lämmittää',
+  maitoa: 'maito',
   maksoin: 'maksaa',
   matkaa: 'matka',
+  matkustin: 'matkustaa',
   matkusti: 'matkustaa',
   meren: 'meri',
   menemme: 'mennä',
   menin: 'mennä',
   metsän: 'metsä',
+  minulla: 'minä',
   museossa: 'museo',
   musiikista: 'musiikki',
+  näin: 'nähdä',
+  nyt: 'nyt',
   omenoita: 'omena',
   odotimme: 'odottaa',
+  oli: 'olla',
+  olin: 'olla',
+  olivat: 'olla',
+  opiskelin: 'opiskella',
+  opiskelua: 'opiskelu',
   opimme: 'oppia',
   opin: 'oppia',
+  osaa: 'osata',
   ostamme: 'ostaa',
   ostin: 'ostaa',
   oven: 'ovi',
   palasimme: 'palata',
+  pidän: 'pitää',
+  päivänä: 'päivä',
+  päivässä: 'päivä',
   perunoita: 'peruna',
   puistossa: 'puisto',
   puhuimme: 'puhua',
+  rannalle: 'ranta',
+  rautatieasemalta: 'rautatieasema',
+  ravintolassa: 'ravintola',
   ruoka: 'ruoka',
   ruokaa: 'ruoka',
+  sanan: 'sana',
+  seuraavana: 'seuraava',
+  sen: 'se',
+  suomeen: 'Suomi',
+  suomea: 'Suomi',
+  suuren: 'suuri',
   suunnittelemme: 'suunnitella',
+  sää: 'sää',
   söimme: 'syödä',
+  tarvitsemme: 'tarvita',
   teetä: 'tee',
+  torilta: 'tori',
   torilla: 'tori',
   torille: 'tori',
+  tuli: 'tulla',
   tulimme: 'tulla',
+  tulin: 'tulla',
+  tullut: 'tulla',
   uutisia: 'uutinen',
   uuden: 'uusi',
   vastaa: 'vastata',
+  vastaan: 'vastata',
   viestin: 'viesti',
+  viikonloppuna: 'viikonloppu',
+  voimakas: 'voimakas',
+  voin: 'voida',
   vuoren: 'vuori',
   ymmärrä: 'ymmärtää',
+  ymmärrän: 'ymmärtää',
   yliopistoon: 'yliopisto',
+  ystävälle: 'ystävä',
   ystäväni: 'ystävä',
+}
+
+const tokenAnalysisOverrides: Record<string, Record<string, string>> = {
+  esiin: { partOfSpeech: 'adverb', form: 'invariable' },
+  lukemisesta: {
+    partOfSpeech: 'noun',
+    case: 'elative',
+    number: 'singular',
+  },
+  tullut: {
+    partOfSpeech: 'verb',
+    form: 'past_participle',
+    number: 'singular',
+  },
 }
 
 function pronoun(
@@ -175,11 +254,32 @@ function vocabularyReference(lemma: string): TokenReference | undefined {
 
 function resolveReference(surface: string): TokenReference | undefined {
   const normalized = surface.toLocaleLowerCase('fi')
-  const inflectedLemma = inflectedVocabularyReferences[normalized]
-  return (
-    grammarReferences[normalized] ??
-    vocabularyReference(inflectedLemma ?? normalized)
+  const lemma = inflectedVocabularyReferences[normalized] ?? normalized
+  const grammarReference = grammarReferences[normalized]
+  const dictionary = getFinnishLearnerDictionaryEntry(
+    grammarReference?.lemma ?? lemma,
   )
+  const resolvedReference =
+    grammarReference ??
+    vocabularyReference(lemma) ??
+    (dictionary
+      ? {
+          lemma: dictionary.lemma,
+          lexicalSenseId: finnishLearnerDictionaryItemId(dictionary.lemma),
+          analysis: { partOfSpeech: dictionary.partOfSpeech },
+        }
+      : undefined)
+  const reference =
+    resolvedReference && dictionary && !resolvedReference.lexicalSenseId
+      ? {
+          ...resolvedReference,
+          lexicalSenseId: finnishLearnerDictionaryItemId(dictionary.lemma),
+        }
+      : resolvedReference
+  const analysisOverride = tokenAnalysisOverrides[normalized]
+  return reference && analysisOverride
+    ? { ...reference, analysis: analysisOverride }
+    : reference
 }
 
 function tokenize(body: string): PreparedTextSeed['tokens'] {

@@ -11,7 +11,7 @@ import {
   SendIcon,
   XCircleIcon,
 } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { submitExerciseAttempt } from '@/api/language-api'
 import {
@@ -27,7 +27,7 @@ import { PageLoading, QueryError } from '@/components/query-state'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
@@ -46,6 +46,7 @@ function ReviewSessionPage() {
   const routeVersionId = course.data?.route?.id ?? ''
   const [answer, setAnswer] = useState('')
   const [completedExerciseIds, setCompletedExerciseIds] = useState<string[]>([])
+  const answerInput = useRef<HTMLInputElement>(null)
   const initialDueCount = useRef<number | null>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
   const openedAt = useRef(Date.now())
@@ -80,6 +81,10 @@ function ReviewSessionPage() {
       ])
     },
   })
+
+  useEffect(() => {
+    if (!attempt.data && !review.isFetching) answerInput.current?.focus()
+  }, [attempt.data, review.data?.exercise?.id, review.isFetching])
 
   if (course.isPending || review.isPending) {
     return <PageState loading />
@@ -165,59 +170,61 @@ function ReviewSessionPage() {
   }
 
   return (
-    <PageShell className="sm:py-14">
-      <Button asChild variant="ghost" size="sm" className="-ml-3 mb-8">
+    <PageShell>
+      <Button asChild variant="ghost" size="sm" className="-ml-3 mb-5">
         <Link to="/reviews">
           <ArrowLeftIcon /> Завершить сессию
         </Link>
       </Button>
-      <header>
-        <Badge variant="secondary">
-          <BrainIcon /> Повторение · {completedExerciseIds.length + 1} из{' '}
-          {Math.max(total, 1)}
-        </Badge>
-        <h1 className="mt-5 font-serif text-4xl tracking-tight sm:text-5xl">
+      <header className="border-b pb-5">
+        <div className="flex items-center justify-between gap-4">
+          <Badge variant="secondary">
+            <BrainIcon /> Повторение · {completedExerciseIds.length + 1} из{' '}
+            {Math.max(total, 1)}
+          </Badge>
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {Math.round(progress)}%
+          </span>
+        </div>
+        <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
           Вспомни конструкцию
         </h1>
-        <p className="mt-4 leading-7 text-muted-foreground">
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
           Задание выбрано по навыку, срок повторения которого уже наступил.
         </p>
         <Progress
-          className="mt-7 h-2"
+          className="mt-4 h-1.5"
           value={progress}
           aria-label="Прогресс повторения"
         />
       </header>
 
-      <Card className="mt-8">
-        <CardHeader>
-          <div className="flex items-center justify-between gap-3">
-            <Badge variant="outline">Перевод на финский</Badge>
-            <span className="text-xs uppercase tracking-wider text-muted-foreground">
-              {exercise.targetLanguage}
-            </span>
-          </div>
-          <CardTitle className="pt-4 font-serif text-2xl leading-snug sm:text-3xl">
-            {exercise.prompt}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={submit}>
-            <label htmlFor="review-answer" className="text-sm font-medium">
-              Твой ответ
-            </label>
+      <section className="mt-7">
+        <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span>Перевод на финский</span>
+          <span>{exercise.targetLanguage}</span>
+        </div>
+        <h2 className="motion-feedback mt-2 font-serif text-2xl font-semibold leading-snug sm:text-3xl">
+          {exercise.prompt.replace(/^Переведи на финский:\s*/u, '')}
+        </h2>
+        <form className="mt-6" onSubmit={submit}>
+          <label htmlFor="review-answer" className="sr-only">
+            Твой ответ
+          </label>
+          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_10rem]">
             <Input
+              ref={answerInput}
               id="review-answer"
               autoComplete="off"
-              autoFocus
-              className="mt-2 h-12 text-base"
+              className="h-11 text-base"
               placeholder="Напиши фразу по-фински"
               value={answer}
               disabled={attempt.isPending || exerciseCompleted}
+              aria-invalid={result ? !result.isCorrect : undefined}
               onChange={(event) => setAnswer(event.target.value)}
             />
             <Button
-              className="mt-4 w-full sm:w-auto"
+              className="h-11 w-full"
               type="submit"
               disabled={
                 !answer.trim() || attempt.isPending || exerciseCompleted
@@ -230,13 +237,13 @@ function ReviewSessionPage() {
               )}
               Проверить
             </Button>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+        </form>
+      </section>
 
       {result ? (
         <Alert
-          className="mt-5"
+          className="motion-feedback mt-5"
           variant={result.isCorrect ? 'default' : 'destructive'}
         >
           {result.isCorrect ? <CheckCircle2Icon /> : <XCircleIcon />}
@@ -253,7 +260,7 @@ function ReviewSessionPage() {
 
       {result ? (
         <ExerciseReport
-          className="mt-3"
+          className="motion-feedback mt-3"
           exerciseId={exercise.id}
           attemptId={result.attemptId}
         />
@@ -265,17 +272,18 @@ function ReviewSessionPage() {
         </div>
       ) : null}
 
-      {result && !result.isCorrect ? (
-        <Button className="mt-5" variant="outline" onClick={retry}>
-          <RotateCcwIcon /> Попробовать снова
-        </Button>
-      ) : null}
-
-      {exerciseCompleted ? (
-        <div className="mt-7 flex justify-end">
-          <Button onClick={nextExercise}>
-            Продолжить <ArrowRightIcon />
-          </Button>
+      {result ? (
+        <div className="motion-feedback mt-5 flex justify-end">
+          {!result.isCorrect ? (
+            <Button variant="outline" onClick={retry}>
+              <RotateCcwIcon /> Попробовать снова
+            </Button>
+          ) : null}
+          {exerciseCompleted ? (
+            <Button onClick={nextExercise}>
+              Продолжить <ArrowRightIcon />
+            </Button>
+          ) : null}
         </div>
       ) : null}
     </PageShell>

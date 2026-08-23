@@ -11,7 +11,7 @@ describe('VocabularyService', () => {
     courseRouteVersion: {
       findUnique: vi.fn(),
     },
-    knowledgeItem: { findFirst: vi.fn() },
+    knowledgeItem: { findFirst: vi.fn(), findMany: vi.fn() },
     userMemory: { upsert: vi.fn() },
   }
   const media = { resolve: vi.fn(() => null) }
@@ -22,6 +22,7 @@ describe('VocabularyService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    prisma.knowledgeItem.findMany.mockResolvedValue([])
   })
 
   it('returns course words in route order with user memory', async () => {
@@ -103,6 +104,7 @@ describe('VocabularyService', () => {
           ],
           status: ContentStatus.CURATED,
           introducedIn: {
+            kind: 'lesson',
             lessonId: 'lesson.1',
             title: { ru: 'Первый урок' },
           },
