@@ -63,9 +63,12 @@ if command -v git > /dev/null 2>&1; then
   revision=$(git -C "$PROJECT_DIR" rev-parse --verify HEAD 2>/dev/null || printf unknown)
 fi
 
+image_tag=$(sed -n 's/^IMAGE_TAG=//p' "$ENV_FILE" | tail -n 1)
+[ -n "$image_tag" ] || image_tag=unknown
+
 postgres_version=$(compose exec -T postgres postgres --version)
-printf 'created_at=%s\ngit_revision=%s\npostgres_version=%s\n' \
-  "$timestamp" "$revision" "$postgres_version" > "$metadata"
+printf 'created_at=%s\ngit_revision=%s\nimage_tag=%s\npostgres_version=%s\n' \
+  "$timestamp" "$revision" "$image_tag" "$postgres_version" > "$metadata"
 
 (
   cd "$BACKUP_DIR"

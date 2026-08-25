@@ -114,6 +114,8 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=64m,mode=1777
+      - /config:size=16m,mode=0755
+      - /data:size=16m,mode=0755
     pids_limit: 128
     cap_drop:
       - ALL
