@@ -115,6 +115,7 @@ import {
   verbTypesFourSixVocabulary,
 } from './lessons/fi.verb-types.four-six.js'
 import { withFinnishParadigm } from './finnish-paradigms.js'
+import { sequenceExercisesByConstruction } from './lessons/exercise-sequencing.js'
 
 type PartOfSpeech = LessonVocabularySeed['partOfSpeech']
 
@@ -877,10 +878,23 @@ const moduleOneLessonsWithoutFullParadigms: CourseLessonSeed[] = [
 ]
 
 export const moduleOneLessons: CourseLessonSeed[] =
-  moduleOneLessonsWithoutFullParadigms.map((lesson) => ({
-    ...lesson,
-    vocabulary: lesson.vocabulary.map(withFinnishParadigm),
-  }))
+  moduleOneLessonsWithoutFullParadigms.map((lesson) => {
+    const exercises = sequenceExercisesByConstruction(lesson.exercises)
+    const template =
+      lesson.template?.frame === 'prepared-variation'
+        ? {
+            ...lesson.template,
+            exerciseIds: exercises.map((exercise) => exercise.id),
+          }
+        : lesson.template
+
+    return {
+      ...lesson,
+      exercises,
+      vocabulary: lesson.vocabulary.map(withFinnishParadigm),
+      template,
+    }
+  })
 
 export const moduleOneVocabulary = moduleOneLessons.flatMap(
   (lesson) => lesson.vocabulary,

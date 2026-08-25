@@ -221,13 +221,13 @@ function ReviewSessionPage() {
   }
 
   return (
-    <PageShell>
-      <Button asChild variant="ghost" size="sm" className="-ml-3 mb-5">
+    <PageShell className="py-4 sm:py-10">
+      <Button asChild variant="ghost" size="sm" className="-ml-3 mb-3 sm:mb-5">
         <Link to="/vocabulary">
           <ArrowLeftIcon /> Завершить сессию
         </Link>
       </Button>
-      <header className="border-b pb-5">
+      <header className="border-b pb-3 sm:pb-5">
         <div className="flex items-center justify-between gap-4">
           <Badge variant="secondary">
             <BrainIcon /> Повторение · {Math.min(total, completedItemCount + 1)}{' '}
@@ -237,20 +237,17 @@ function ReviewSessionPage() {
             {Math.round(progress)}%
           </span>
         </div>
-        <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="mt-2 font-serif text-2xl font-semibold tracking-tight sm:mt-3 sm:text-4xl">
           Вспомни конструкцию
         </h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Задание выбрано по навыку, срок повторения которого уже наступил.
-        </p>
         <Progress
-          className="mt-4 h-1.5"
+          className="mt-3 h-1.5 sm:mt-4"
           value={progress}
           aria-label="Прогресс повторения"
         />
       </header>
 
-      <section className="mt-7">
+      <section className="mt-5 sm:mt-7">
         <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <span>Перевод на финский</span>
           <span>{exercise.targetLanguage}</span>
@@ -258,11 +255,11 @@ function ReviewSessionPage() {
         <h2 className="motion-feedback mt-2 font-serif text-2xl font-semibold leading-snug sm:text-3xl">
           {exercise.prompt.replace(/^Переведи на финский:\s*/u, '')}
         </h2>
-        <form className="mt-6" onSubmit={submit}>
+        <form className="mt-4 sm:mt-6" onSubmit={submit}>
           <label htmlFor="review-answer" className="sr-only">
             Твой ответ
           </label>
-          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_10rem]">
+          <div className="grid grid-cols-[minmax(0,1fr)_7.5rem] gap-2 sm:grid-cols-[minmax(0,1fr)_10rem]">
             <Input
               ref={answerInput}
               id="review-answer"
@@ -326,12 +323,12 @@ function ReviewSessionPage() {
       {result ? (
         <div className="motion-feedback mt-5 flex justify-end">
           {!result.isCorrect ? (
-            <Button variant="outline" onClick={retry}>
+            <Button autoFocus variant="outline" onClick={retry}>
               <RotateCcwIcon /> Попробовать снова
             </Button>
           ) : null}
           {exerciseCompleted ? (
-            <Button onClick={nextExercise}>
+            <Button autoFocus onClick={nextExercise}>
               Продолжить <ArrowRightIcon />
             </Button>
           ) : null}
@@ -364,16 +361,21 @@ function ReviewFlashcard({
   onRate: (result: 'SUCCESS' | 'FAILURE') => void
   onReveal: () => void
 }) {
+  const continueButton = useRef<HTMLButtonElement>(null)
   const progress = total > 0 ? Math.min(100, (completed / total) * 100) : 100
 
+  useEffect(() => {
+    if (result) continueButton.current?.focus()
+  }, [result])
+
   return (
-    <PageShell>
-      <Button asChild variant="ghost" size="sm" className="-ml-3 mb-5">
+    <PageShell className="py-4 sm:py-10">
+      <Button asChild variant="ghost" size="sm" className="-ml-3 mb-3 sm:mb-5">
         <Link to="/vocabulary">
           <ArrowLeftIcon /> Завершить сессию
         </Link>
       </Button>
-      <header className="border-b pb-5">
+      <header className="border-b pb-3 sm:pb-5">
         <div className="flex items-center justify-between gap-4">
           <Badge variant="secondary">
             <BrainIcon /> Повторение · {Math.min(total, completed + 1)} из{' '}
@@ -383,20 +385,17 @@ function ReviewFlashcard({
             {Math.round(progress)}%
           </span>
         </div>
-        <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="mt-2 font-serif text-2xl font-semibold tracking-tight sm:mt-3 sm:text-4xl">
           Вспомни слово
         </h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Сначала вспомни значение, затем оцени ответ.
-        </p>
         <Progress
-          className="mt-4 h-1.5"
+          className="mt-3 h-1.5 sm:mt-4"
           value={progress}
           aria-label="Прогресс повторения"
         />
       </header>
 
-      <section className="mt-7 rounded-xl border bg-card p-6 text-center shadow-xs sm:p-8">
+      <section className="mt-5 rounded-xl border bg-card p-5 text-center shadow-xs sm:mt-7 sm:p-8">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Финский
         </p>
@@ -433,7 +432,11 @@ function ReviewFlashcard({
       {revealed ? (
         <div className="mt-4 grid grid-cols-2 gap-2">
           {result ? (
-            <Button className="col-span-2" onClick={onContinue}>
+            <Button
+              ref={continueButton}
+              className="col-span-2"
+              onClick={onContinue}
+            >
               Продолжить <ArrowRightIcon />
             </Button>
           ) : (

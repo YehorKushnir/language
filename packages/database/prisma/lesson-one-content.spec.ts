@@ -30,18 +30,18 @@ describe('lesson one content', () => {
     expect(lessonContent.explanationScreens).toHaveLength(5)
   })
 
-  it('keeps stable ordering for the original five exercises', () => {
+  it('keeps a stable mixed ordering for the opening exercises', () => {
     expect(
       lessonExercises.slice(0, 5).map(({ id, selectionOrder }) => ({
         id,
         selectionOrder,
       })),
     ).toEqual([
-      { id: 'exercise.fi.olla.negative.001', selectionOrder: 1 },
-      { id: 'exercise.fi.olla.affirmative.001', selectionOrder: 2 },
-      { id: 'exercise.fi.olla.question.001', selectionOrder: 3 },
-      { id: 'exercise.fi.olla.negative.002', selectionOrder: 4 },
-      { id: 'exercise.fi.olla.question.002', selectionOrder: 5 },
+      { id: 'exercise.fi.olla.affirmative.001', selectionOrder: 1 },
+      { id: 'exercise.fi.olla.affirmative.2sg.finnish', selectionOrder: 2 },
+      { id: 'exercise.fi.olla.negative.001', selectionOrder: 3 },
+      { id: 'exercise.fi.olla.question.001', selectionOrder: 4 },
+      { id: 'exercise.fi.olla.negative.002', selectionOrder: 5 },
     ])
   })
 

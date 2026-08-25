@@ -201,18 +201,21 @@ export interface CourseProgressResponse {
   lessons: LessonProgressResponse[]
 }
 
-export interface PracticeCompletionRequest {
-  attemptIds: string[]
+export interface PracticeCorrectionResponse {
+  exerciseId: string
+  retryAfterAttempt: number
 }
 
 export interface PracticeSessionResponse {
   startedAt: string
   totalExercises: number
   requiredCorrectAnswers: number
+  correctionDelay: number
   answeredExercises: number
   correctAnswers: number
   attemptIds: string[]
   completedExerciseIds: string[]
+  pendingCorrections: PracticeCorrectionResponse[]
 }
 
 export interface PracticeCompletionResponse {
@@ -222,6 +225,35 @@ export interface PracticeCompletionResponse {
   scorePercent: number
   passed: boolean
   progress: CourseProgressResponse
+}
+
+export interface LessonVocabularyStudyProgressResponse {
+  itemId: string
+  correctAnswers: number
+  attempts: number
+  completedAt: string | null
+}
+
+export interface LessonVocabularyStudySessionResponse {
+  lessonId: string
+  requiredCorrectAnswers: number
+  totalItems: number
+  completedItems: number
+  totalCorrectAnswers: number
+  items: LessonVocabularyStudyProgressResponse[]
+}
+
+export interface LessonVocabularyAnswerRequest {
+  answer: string
+  idempotencyKey: string
+}
+
+export interface LessonVocabularyAnswerResponse {
+  itemId: string
+  isCorrect: boolean
+  expectedAnswer: string
+  itemProgress: LessonVocabularyStudyProgressResponse
+  session: LessonVocabularyStudySessionResponse
 }
 
 export type ReviewMemoryState = 'NEW' | 'LEARNING' | 'REVIEW' | 'RELEARNING'
@@ -418,6 +450,25 @@ export interface AccountDataExportResponse {
     vocabularyCompletedAt: string | null
     practiceCompletedAt: string | null
     completedAt: string | null
+  }>
+  vocabularyStudyProgress: Array<{
+    routeVersionId: string
+    lessonId: string
+    itemId: string
+    correctAnswers: number
+    attempts: number
+    completedAt: string | null
+    lastAnsweredAt: string | null
+  }>
+  vocabularyStudyAttempts: Array<{
+    id: string
+    routeVersionId: string
+    lessonId: string
+    itemId: string
+    answerText: string
+    isCorrect: boolean
+    correctAnswersAfter: number
+    answeredAt: string
   }>
   memories: Array<{
     itemId: string

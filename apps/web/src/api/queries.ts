@@ -3,6 +3,7 @@ import { queryOptions } from '@tanstack/react-query'
 import {
   getCourse,
   getCourseProgress,
+  getExercise,
   getLesson,
   getLessonVocabulary,
   getNextExercise,
@@ -11,6 +12,7 @@ import {
   getPreparedTexts,
   getUserVocabulary,
   startOrResumePractice,
+  startOrResumeVocabulary,
 } from './language-api'
 
 export const courseQuery = queryOptions({
@@ -51,6 +53,17 @@ export function nextExerciseQuery(
   })
 }
 
+export function practiceExerciseQuery(
+  lessonId: string,
+  exerciseId: string,
+  routeVersionId: string,
+) {
+  return queryOptions({
+    queryKey: ['practice-exercise', routeVersionId, lessonId, exerciseId, 'ru'],
+    queryFn: () => getExercise(lessonId, exerciseId, routeVersionId, 'ru'),
+  })
+}
+
 export function courseProgressQuery(routeVersionId: string) {
   return queryOptions({
     queryKey: ['course-progress', routeVersionId],
@@ -62,6 +75,19 @@ export function practiceSessionQuery(lessonId: string, routeVersionId: string) {
   return queryOptions({
     queryKey: ['practice-session', routeVersionId, lessonId],
     queryFn: () => startOrResumePractice(routeVersionId, lessonId),
+    staleTime: 0,
+    gcTime: 1_000,
+    refetchOnMount: 'always',
+  })
+}
+
+export function vocabularyStudySessionQuery(
+  lessonId: string,
+  routeVersionId: string,
+) {
+  return queryOptions({
+    queryKey: ['vocabulary-study-session', routeVersionId, lessonId],
+    queryFn: () => startOrResumeVocabulary(routeVersionId, lessonId),
     staleTime: 0,
     gcTime: 1_000,
     refetchOnMount: 'always',

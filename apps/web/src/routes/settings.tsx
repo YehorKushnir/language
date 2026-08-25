@@ -1,10 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import {
   AlertTriangleIcon,
   CheckCircle2Icon,
   DownloadIcon,
   LoaderCircleIcon,
+  LogOutIcon,
   SettingsIcon,
   Trash2Icon,
 } from 'lucide-react'
@@ -16,16 +17,19 @@ import { PageShell } from '@/components/page-shell'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/settings')({
   component: SettingsPage,
 })
 
 function SettingsPage() {
+  const router = useRouter()
   const queryClient = useQueryClient()
   const [confirmation, setConfirmation] = useState('')
   const [exporting, setExporting] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const [error, setError] = useState<string>()
   const [exported, setExported] = useState(false)
 
@@ -71,6 +75,13 @@ function SettingsPage() {
     }
   }
 
+  async function signOut() {
+    setSigningOut(true)
+    await authClient.signOut()
+    queryClient.clear()
+    await router.navigate({ to: '/' })
+  }
+
   return (
     <PageShell>
       <LearningPageHeader
@@ -98,6 +109,28 @@ function SettingsPage() {
       ) : null}
 
       <section className="mt-6 grid gap-4 rounded-lg border bg-card p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+        <div>
+          <h2 className="text-sm font-semibold">Выйти из аккаунта</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            Данные останутся сохранены для следующего входа.
+          </p>
+        </div>
+        <Button
+          disabled={signingOut}
+          onClick={() => void signOut()}
+          size="sm"
+          variant="outline"
+        >
+          {signingOut ? (
+            <LoaderCircleIcon className="animate-spin" />
+          ) : (
+            <LogOutIcon />
+          )}
+          {signingOut ? 'Выходим…' : 'Выйти'}
+        </Button>
+      </section>
+
+      <section className="mt-4 grid gap-4 rounded-lg border bg-card p-4 sm:grid-cols-[1fr_auto] sm:items-center">
         <div>
           <h2 className="text-sm font-semibold">Выгрузить данные</h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">

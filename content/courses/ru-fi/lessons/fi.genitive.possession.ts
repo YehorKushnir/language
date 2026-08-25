@@ -6,7 +6,7 @@ import type {
 
 export const GENITIVE_POSSESSION_SKILL_ID = 'grammar.fi.genitive.possession'
 export const MINULLA_ON_SKILL_ID = 'grammar.fi.possession.minulla-on'
-export const POSSESSION_NEGATIVE_SKILL_ID = 'grammar.fi.possession.negative'
+export const POSSESSION_QUESTION_SKILL_ID = 'grammar.fi.possession.question'
 
 export const genitivePossessionSkills: CourseSkillSeed[] = [
   {
@@ -24,10 +24,10 @@ export const genitivePossessionSkills: CourseSkillSeed[] = [
     prerequisiteSkillIds: [GENITIVE_POSSESSION_SKILL_ID],
   },
   {
-    id: POSSESSION_NEGATIVE_SKILL_ID,
+    id: POSSESSION_QUESTION_SKILL_ID,
     kind: 'SPECIFIC_SKILL',
-    name: { ru: 'Отрицание обладания' },
-    description: { ru: 'Minulla ei ole и предмет в партитиве.' },
+    name: { ru: 'Вопрос о наличии' },
+    description: { ru: 'Onko + владелец на -lla/-llä + предмет.' },
     prerequisiteSkillIds: [MINULLA_ON_SKILL_ID],
   },
 ]
@@ -44,7 +44,7 @@ export const genitivePossessionContent: CourseLessonContentSeed = {
           ru: 'Чтобы назвать владельца предмета, финский использует генитив на -n: äidin koti — «дом матери». Чтобы сообщить о наличии, владелец получает форму на -lla/-llä: äidillä on koti — «у матери есть дом».',
         },
         {
-          ru: 'Это разные конструкции, хотя обе связаны с принадлежностью. В отрицании наличия используется ei ole, а предмет принимает партитивную форму, которую пока можно запоминать внутри готовой фразы.',
+          ru: 'Это разные конструкции, хотя обе связаны с принадлежностью. Вопрос о наличии начинается с onko: onko äidillä koti — «есть ли у матери дом?».',
         },
       ],
       table: {
@@ -61,11 +61,6 @@ export const genitivePossessionContent: CourseLessonContentSeed = {
             { ru: 'Äidillä on koti.' },
           ],
           [
-            { ru: 'у кого нет' },
-            { ru: 'владелец-lla/-llä + ei ole' },
-            { ru: 'Äidillä ei ole autoa.' },
-          ],
-          [
             { ru: 'есть ли у кого' },
             { ru: 'onko + владелец-lla/-llä' },
             { ru: 'Onko äidillä auto?' },
@@ -75,10 +70,7 @@ export const genitivePossessionContent: CourseLessonContentSeed = {
       examples: [
         { target: 'Tämä on äidin koti.', source: { ru: 'Это дом матери.' } },
         { target: 'Äidillä on koti.', source: { ru: 'У матери есть дом.' } },
-        {
-          target: 'Äidillä ei ole autoa.',
-          source: { ru: 'У матери нет автомобиля.' },
-        },
+        { target: 'Onko äidillä koti?', source: { ru: 'У матери есть дом?' } },
       ],
     },
     {
@@ -132,21 +124,21 @@ export const genitivePossessionContent: CourseLessonContentSeed = {
       ],
     },
     {
-      id: 'possession-negative-question',
-      title: { ru: 'Minulla ei ole и onko sinulla' },
+      id: 'possession-question',
+      title: { ru: 'Как спросить, есть ли предмет' },
       paragraphs: [
         {
-          ru: 'В отрицании используется ei ole, а предмет обычно переходит в партитив: minulla ei ole autoa. В вопросе on получает частицу -ko и ставится первым.',
+          ru: 'В вопросе on получает частицу -ko и ставится первым. Форма владельца и словарная форма предмета сохраняются: onko sinulla parveke?',
         },
       ],
       examples: [
         {
-          target: 'Minulla ei ole avainta.',
-          source: { ru: 'У меня нет ключа.' },
+          target: 'Onko sinulla avain?',
+          source: { ru: 'У тебя есть ключ?' },
         },
         {
-          target: 'Onko sinulla parveke?',
-          source: { ru: 'У тебя есть балкон?' },
+          target: 'Onko hänellä parveke?',
+          source: { ru: 'У него или неё есть балкон?' },
         },
       ],
     },
@@ -180,8 +172,8 @@ export const genitivePossessionContent: CourseLessonContentSeed = {
           source: { ru: 'У меня есть ключ.' },
         },
         {
-          target: 'Sul ei oo parveketta.',
-          source: { ru: 'У тебя нет балкона.' },
+          target: 'Sul on parveke.',
+          source: { ru: 'У тебя есть балкон.' },
         },
       ],
       callout: {
@@ -273,7 +265,7 @@ export const genitivePossessionExercises: PreparedExerciseSeed[] = [
   ...group('context', 38, 8, (index) =>
     possession(index + 12, 'sinulla', true),
   ),
-  ...group('context', 46, 8, (index) => negativePossession(index + 4)),
+  ...group('context', 46, 8, (index) => timedThirdPersonPossession(index + 4)),
   ...group('pair', 54, 6, (index) => possessionQuestion(index + 15)),
 ]
 
@@ -330,24 +322,20 @@ function possession(
   })
 }
 
-function negativePossession(index: number) {
+function timedThirdPersonPossession(index: number) {
   const vocabulary = genitivePossessionVocabulary[index % nouns.length]!
-  const targetText = `Minulla ei ole ${vocabulary.partitive}.`
+  const targetText = `Tänään hänellä on ${vocabulary.lemma}.`
   return exercise(vocabulary, {
-    prompt: `У меня нет ${vocabulary.sourceGenitive}.`,
+    prompt: `Сегодня у него или неё есть ${vocabulary.gloss}.`,
     targetText,
-    acceptedVariants: [targetText, `Ei ole ${vocabulary.partitive}.`],
+    acceptedVariants: [targetText],
     slots: [
-      grammarSlot('possessor', ['minulla'], POSSESSION_NEGATIVE_SKILL_ID, true),
-      grammarSlot('negativeVerb', ['ei'], POSSESSION_NEGATIVE_SKILL_ID),
-      grammarSlot('copula', ['ole'], POSSESSION_NEGATIVE_SKILL_ID),
-      vocabularySlot(
-        'partitivePossessed',
-        vocabulary.partitive,
-        vocabulary.itemId,
-      ),
+      grammarSlot('timeAdverb', ['tänään'], MINULLA_ON_SKILL_ID),
+      grammarSlot('possessor', ['hänellä'], MINULLA_ON_SKILL_ID),
+      grammarSlot('copula', ['on'], MINULLA_ON_SKILL_ID),
+      vocabularySlot('possessed', vocabulary.lemma, vocabulary.itemId),
     ],
-    secondaryItemIds: [POSSESSION_NEGATIVE_SKILL_ID],
+    secondaryItemIds: [MINULLA_ON_SKILL_ID],
   })
 }
 
@@ -359,11 +347,11 @@ function possessionQuestion(index: number) {
     targetText,
     acceptedVariants: [targetText],
     slots: [
-      grammarSlot('questionCopula', ['onko'], MINULLA_ON_SKILL_ID),
-      grammarSlot('possessor', ['sinulla'], MINULLA_ON_SKILL_ID),
+      grammarSlot('questionCopula', ['onko'], POSSESSION_QUESTION_SKILL_ID),
+      grammarSlot('possessor', ['sinulla'], POSSESSION_QUESTION_SKILL_ID),
       vocabularySlot('possessed', vocabulary.lemma, vocabulary.itemId),
     ],
-    secondaryItemIds: [MINULLA_ON_SKILL_ID],
+    secondaryItemIds: [POSSESSION_QUESTION_SKILL_ID],
   })
 }
 

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 interface LearningPageHeaderProps {
   eyebrow: ReactNode
   title: string
-  description: string
+  description?: string
   aside?: ReactNode
   children?: ReactNode
   className?: string
@@ -29,9 +29,11 @@ export function LearningPageHeader({
           <h1 className="mt-1 max-w-3xl text-balance font-serif text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
             {title}
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            {description}
-          </p>
+          {description ? (
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              {description}
+            </p>
+          ) : null}
         </div>
         {aside ? <div className="w-full shrink-0 sm:w-64">{aside}</div> : null}
       </div>

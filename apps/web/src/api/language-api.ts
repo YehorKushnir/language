@@ -6,11 +6,13 @@ import type {
   ExerciseAttemptResponse,
   ExerciseReportRequest,
   ExerciseReportResponse,
+  LessonVocabularyAnswerRequest,
+  LessonVocabularyAnswerResponse,
   LessonDetailResponse,
   LessonPart,
+  LessonVocabularyStudySessionResponse,
   LessonVocabularyResponse,
   NextReviewResponse,
-  PracticeCompletionRequest,
   PracticeCompletionResponse,
   PracticeSessionResponse,
   PreparedExerciseResponse,
@@ -86,6 +88,18 @@ export function getNextExercise(
   }
   return request<PreparedExerciseResponse>(
     `/lessons/${lessonId}/exercises/next?${search.toString()}`,
+  )
+}
+
+export function getExercise(
+  lessonId: string,
+  exerciseId: string,
+  routeVersionId: string,
+  sourceLanguage = 'ru',
+) {
+  const search = new URLSearchParams({ sourceLanguage, routeVersionId })
+  return request<PreparedExerciseResponse>(
+    `/lessons/${lessonId}/exercises/${exerciseId}?${search.toString()}`,
   )
 }
 
@@ -191,18 +205,10 @@ export function completeLessonPart(
   )
 }
 
-export function completePractice(
-  routeVersionId: string,
-  lessonId: string,
-  completion: PracticeCompletionRequest,
-) {
+export function completePractice(routeVersionId: string, lessonId: string) {
   return request<PracticeCompletionResponse>(
     `/me/course-progress/${routeVersionId}/lessons/${lessonId}/practice-completion`,
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(completion),
-    },
+    { method: 'POST' },
   )
 }
 
@@ -216,18 +222,28 @@ export function startOrResumePractice(
   )
 }
 
-export function studyVocabularyItem(
+export function startOrResumeVocabulary(
+  routeVersionId: string,
+  lessonId: string,
+) {
+  return request<LessonVocabularyStudySessionResponse>(
+    `/me/course-progress/${routeVersionId}/lessons/${lessonId}/vocabulary-session`,
+    { method: 'PUT' },
+  )
+}
+
+export function submitVocabularyAnswer(
   routeVersionId: string,
   lessonId: string,
   itemId: string,
-  study: VocabularyStudyRequest,
+  answer: LessonVocabularyAnswerRequest,
 ) {
-  return request<VocabularyStudyResponse>(
-    `/me/course-progress/${routeVersionId}/lessons/${lessonId}/vocabulary/${itemId}`,
+  return request<LessonVocabularyAnswerResponse>(
+    `/me/course-progress/${routeVersionId}/lessons/${lessonId}/vocabulary/${itemId}/attempts`,
     {
-      method: 'PUT',
+      method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(study),
+      body: JSON.stringify(answer),
     },
   )
 }

@@ -108,6 +108,45 @@ export class ExercisesService {
     }
   }
 
+  async getExercise(
+    userId: string,
+    routeVersionId: string,
+    lessonId: string,
+    exerciseId: string,
+    sourceLanguage: string,
+  ): Promise<PreparedExerciseResponse> {
+    if (!routeVersionId) {
+      throw new BadRequestException('routeVersionId is required')
+    }
+    await assertLessonAvailable(this.prisma, userId, routeVersionId, lessonId)
+    const exercise = await this.prisma.exercise.findFirst({
+      where: {
+        id: exerciseId,
+        lessonId,
+        kind: ExerciseKind.PREPARED,
+        status: ContentStatus.CURATED,
+        prompts: { some: { sourceLanguage } },
+      },
+      include: {
+        prompts: { where: { sourceLanguage }, take: 1 },
+      },
+    })
+    const prompt = exercise?.prompts[0]
+    if (!exercise || !prompt) {
+      throw new NotFoundException(
+        `Exercise ${exerciseId} was not found in lesson ${lessonId}`,
+      )
+    }
+
+    return {
+      id: exercise.id,
+      lessonId,
+      sourceLanguage,
+      targetLanguage: exercise.targetLanguage,
+      prompt: prompt.text,
+    }
+  }
+
   async submitAttempt(
     userId: string,
     exerciseId: string,
@@ -646,18 +685,18 @@ function compareExerciseCandidates(
     userHistory: Array<{ timesSeen: number; lastSeenAt: Date }>
   },
 ): number {
+  const orderDifference =
+    getSelectionOrder(left.answerSpec) - getSelectionOrder(right.answerSpec)
+  if (orderDifference !== 0) {
+    return orderDifference
+  }
+
   const leftHistory = left.userHistory[0]
   const rightHistory = right.userHistory[0]
   const seenDifference =
     (leftHistory?.timesSeen ?? 0) - (rightHistory?.timesSeen ?? 0)
   if (seenDifference !== 0) {
     return seenDifference
-  }
-
-  const orderDifference =
-    getSelectionOrder(left.answerSpec) - getSelectionOrder(right.answerSpec)
-  if (orderDifference !== 0) {
-    return orderDifference
   }
 
   return left.id.localeCompare(right.id)

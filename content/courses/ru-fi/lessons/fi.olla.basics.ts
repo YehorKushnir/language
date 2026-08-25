@@ -4,6 +4,7 @@ import {
   finnishLearnerDictionaryLexicalEntryId,
   getFinnishLearnerDictionaryEntry,
 } from '../../../../packages/language-fi/src/learner-dictionary.js'
+import { sequenceExercisesByConstruction } from './exercise-sequencing.js'
 
 export interface LessonVocabularyFormSeed {
   id: string
@@ -111,16 +112,16 @@ export const lessonContent = {
           ru: 'После olla можно назвать профессию, национальность, состояние или место. В базовых фразах с одним человеком профессия и признак стоят в словарной форме.',
         },
         {
-          ru: 'После me, te и he профессии и признаки в этих примерах получают форму партитива множественного числа: opiskelijoita, valmiita.',
+          ru: 'В этом уроке профессии и признаки активно отрабатываются только с одним человеком. С me, te и he пока используй неизменяемые слова места: täällä «здесь» и kotona «дома».',
         },
       ],
       examples: [
         { target: 'Hän on suomalainen.', source: { ru: 'Он — финн.' } },
-        { target: 'Me olemme opiskelijoita.', source: { ru: 'Мы студенты.' } },
-        { target: 'He ovat valmiita.', source: { ru: 'Они готовы.' } },
+        { target: 'Me olemme täällä.', source: { ru: 'Мы здесь.' } },
+        { target: 'He ovat kotona.', source: { ru: 'Они дома.' } },
       ],
       callout: {
-        ru: 'Kotona «дома» и täällä «здесь» не изменяются: olen kotona, he ovat kotona.',
+        ru: 'Формы профессий и признаков для нескольких людей появятся позже. Сейчас не нужно их угадывать.',
       },
     },
     {
@@ -199,8 +200,8 @@ export const lessonContent = {
           source: { ru: 'Он или она устал(а).' },
         },
         {
-          target: 'Ne on valmiita.',
-          source: { ru: 'Они готовы.' },
+          target: 'Ne on täällä.',
+          source: { ru: 'Они здесь.' },
         },
       ],
       callout: {
@@ -475,28 +476,28 @@ export const lessonIdentityTemplateDefinition = {
 
 const exerciseMatrix = {
   affirmative: [
-    ['student', 'teacher', 'doctor', 'home'],
-    ['finnish', 'russian', 'ready', 'here'],
-    ['student', 'friend', 'happy'],
-    ['home', 'here', 'ready'],
-    ['teacher', 'doctor', 'russian'],
-    ['student', 'tired', 'finnish'],
+    ['student', 'teacher', 'doctor', 'home', 'ready'],
+    ['finnish', 'russian', 'ready', 'here', 'happy'],
+    ['student', 'friend', 'happy', 'doctor'],
+    ['home', 'here'],
+    ['home', 'here'],
+    ['home', 'here'],
   ],
   negative: [
-    ['student', 'finnish', 'tired'],
-    ['teacher', 'russian', 'ready'],
-    ['student', 'doctor', 'happy'],
-    ['home', 'here', 'student'],
-    ['teacher', 'ready', 'tired'],
-    ['doctor', 'finnish', 'russian'],
+    ['student', 'finnish', 'tired', 'doctor'],
+    ['teacher', 'russian', 'ready', 'happy'],
+    ['student', 'doctor', 'happy', 'finnish'],
+    ['home', 'here'],
+    ['home', 'here'],
+    ['home', 'here'],
   ],
   question: [
-    ['doctor', 'ready', 'home'],
-    ['student', 'happy', 'here'],
-    ['student', 'teacher', 'finnish'],
-    ['russian', 'friend', 'here'],
-    ['doctor', 'home', 'ready'],
-    ['student', 'tired', 'happy'],
+    ['doctor', 'ready', 'home', 'student'],
+    ['student', 'happy', 'here', 'russian'],
+    ['student', 'teacher', 'finnish', 'friend'],
+    ['home', 'here'],
+    ['home', 'here'],
+    ['home', 'here'],
   ],
 } as const
 
@@ -525,7 +526,7 @@ const legacyExercises = new Map<string, { id: string; selectionOrder: number }>(
   ],
 )
 
-export const lessonExercises = buildExercises()
+export const lessonExercises = sequenceExercisesByConstruction(buildExercises())
 
 export function validateLessonOneContent(): string[] {
   const errors: string[] = []
@@ -666,14 +667,14 @@ function buildExercises(): PreparedExerciseSeed[] {
     }),
     createSpokenExercise({
       id: 'exercise.fi.olla.register.004',
-      prompt: 'Переведи разговорно: Они готовы.',
-      targetText: 'Ne on valmiita.',
+      prompt: 'Переведи разговорно: Они здесь.',
+      targetText: 'Ne on täällä.',
       slots: [
         { role: 'spokenSubject', accepted: ['ne'] },
         { role: 'spokenVerb', accepted: ['on'] },
-        { role: 'complement', accepted: ['valmiita'] },
+        { role: 'complement', accepted: ['täällä'] },
       ],
-      vocabularyKey: 'ready',
+      vocabularyKey: 'here',
     }),
   ]
 

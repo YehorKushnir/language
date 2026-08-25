@@ -13,7 +13,6 @@ import { cn } from '@/lib/utils'
 interface LessonWorkspaceHeaderProps {
   lessonId: string
   lessonTitle: string
-  lessonSummary: string
   activePart: LessonPart
 }
 
@@ -41,7 +40,6 @@ const parts = [
 export function LessonWorkspaceHeader({
   lessonId,
   lessonTitle,
-  lessonSummary,
   activePart,
 }: LessonWorkspaceHeaderProps) {
   const activeLabel = parts.find((item) => item.part === activePart)?.label
@@ -61,10 +59,10 @@ export function LessonWorkspaceHeader({
         </>
       }
       title={lessonTitle}
-      description={lessonSummary}
+      className="border-b-0 pb-0 [&_h1]:text-2xl sm:[&_h1]:text-4xl"
     >
       <nav
-        className="mt-5 flex w-fit max-w-full gap-1 overflow-x-auto rounded-lg bg-muted/35 p-1"
+        className="mt-3 flex w-fit max-w-full gap-1 overflow-x-auto rounded-lg bg-muted/35 p-1 sm:mt-5"
         aria-label="Части урока"
       >
         {parts.map((item) => {

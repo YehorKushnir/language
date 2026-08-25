@@ -6,13 +6,51 @@ export function appendPracticeAttempt(
   attemptId: string,
   isCorrect: boolean,
 ): PracticeSessionResponse {
-  if (session.completedExerciseIds.includes(exerciseId)) return session
+  const isPrimaryAttempt = !session.completedExerciseIds.includes(exerciseId)
+  const attemptIds = [...session.attemptIds, attemptId]
+  const pendingCorrections = session.pendingCorrections.filter(
+    (correction) => correction.exerciseId !== exerciseId,
+  )
+
+  if (!isCorrect) {
+    pendingCorrections.push({
+      exerciseId,
+      retryAfterAttempt: attemptIds.length + session.correctionDelay,
+    })
+  }
 
   return {
     ...session,
-    answeredExercises: session.answeredExercises + 1,
-    correctAnswers: session.correctAnswers + (isCorrect ? 1 : 0),
-    attemptIds: [...session.attemptIds, attemptId],
-    completedExerciseIds: [...session.completedExerciseIds, exerciseId],
+    answeredExercises: session.answeredExercises + (isPrimaryAttempt ? 1 : 0),
+    correctAnswers:
+      session.correctAnswers + (isPrimaryAttempt && isCorrect ? 1 : 0),
+    attemptIds,
+    completedExerciseIds: isPrimaryAttempt
+      ? [...session.completedExerciseIds, exerciseId]
+      : session.completedExerciseIds,
+    pendingCorrections,
   }
+}
+
+export function getNextPracticeCorrection(
+  session: PracticeSessionResponse,
+): string | null {
+  if (session.answeredExercises >= session.totalExercises) {
+    return session.pendingCorrections[0]?.exerciseId ?? null
+  }
+
+  return (
+    session.pendingCorrections.find(
+      (correction) => correction.retryAfterAttempt <= session.attemptIds.length,
+    )?.exerciseId ?? null
+  )
+}
+
+export function practiceIsReadyToComplete(
+  session: PracticeSessionResponse,
+): boolean {
+  return (
+    session.answeredExercises === session.totalExercises &&
+    session.pendingCorrections.length === 0
+  )
 }

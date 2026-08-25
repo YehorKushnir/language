@@ -111,13 +111,15 @@ model CourseRouteVersion {
   publishedAt DateTime?
   createdAt   DateTime      @default(now())
 
-  course             Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course             Course                         @relation(fields: [courseId], references: [id], onDelete: Cascade)
   entries            CourseRouteEntry[]
   dependencies       CourseRouteDependency[]
   userProgress       UserCourseProgress[]
   lessonProgress     UserLessonProgress[]
   generatedExercises GeneratedExercise[]
   attempts           UserAttempt[]
+  vocabularyProgress UserLessonVocabularyProgress[]
+  vocabularyAttempts UserLessonVocabularyAttempt[]
 
   @@unique([courseId, version])
   @@index([courseId, status])
@@ -161,14 +163,16 @@ model Lesson {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
-  course            Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  routeEntries      CourseRouteEntry[]
-  routeDependencies CourseRouteDependency[] @relation("DependentLesson")
-  prerequisiteFor   CourseRouteDependency[] @relation("PrerequisiteLesson")
-  knowledgeItems    LessonKnowledgeItem[]
-  exercises         Exercise[]
-  progress          UserLessonProgress[]
-  currentForUsers   UserCourseProgress[]
+  course             Course                         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  routeEntries       CourseRouteEntry[]
+  routeDependencies  CourseRouteDependency[]        @relation("DependentLesson")
+  prerequisiteFor    CourseRouteDependency[]        @relation("PrerequisiteLesson")
+  knowledgeItems     LessonKnowledgeItem[]
+  exercises          Exercise[]
+  progress           UserLessonProgress[]
+  currentForUsers    UserCourseProgress[]
+  vocabularyProgress UserLessonVocabularyProgress[]
+  vocabularyAttempts UserLessonVocabularyAttempt[]
 
   @@index([courseId, status])
 }
@@ -180,13 +184,15 @@ model KnowledgeItem {
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 
-  skill           Skill?
-  lexicalSense    LexicalSense?
-  lessonItems     LessonKnowledgeItem[]
-  exerciseItems   ExerciseItem[]
-  textItems       TextKnowledgeItem[]
-  userMemories    UserMemory[]
-  attemptEvidence UserAttemptEvidence[]
+  skill              Skill?
+  lexicalSense       LexicalSense?
+  lessonItems        LessonKnowledgeItem[]
+  exerciseItems      ExerciseItem[]
+  textItems          TextKnowledgeItem[]
+  userMemories       UserMemory[]
+  attemptEvidence    UserAttemptEvidence[]
+  vocabularyProgress UserLessonVocabularyProgress[]
+  vocabularyAttempts UserLessonVocabularyAttempt[]
 
   @@index([languageCode, kind])
 }
@@ -375,14 +381,16 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  sessions        Session[]
-  accounts        Account[]
-  courseProgress  UserCourseProgress[]
-  lessonProgress  UserLessonProgress[]
-  memories        UserMemory[]
-  attempts        UserAttempt[]
-  exerciseHistory UserExerciseHistory[]
-  exerciseReports ExerciseReport[]
+  sessions           Session[]
+  accounts           Account[]
+  courseProgress     UserCourseProgress[]
+  lessonProgress     UserLessonProgress[]
+  memories           UserMemory[]
+  attempts           UserAttempt[]
+  exerciseHistory    UserExerciseHistory[]
+  exerciseReports    ExerciseReport[]
+  vocabularyProgress UserLessonVocabularyProgress[]
+  vocabularyAttempts UserLessonVocabularyAttempt[]
 }
 
 model Session {
@@ -468,6 +476,49 @@ model UserLessonProgress {
   @@id([userId, routeVersionId, lessonId])
   @@index([routeVersionId, lessonId])
   @@index([lessonId])
+}
+
+model UserLessonVocabularyProgress {
+  userId         String
+  routeVersionId String
+  lessonId       String
+  itemId         String
+  correctAnswers Int       @default(0)
+  attempts       Int       @default(0)
+  completedAt    DateTime?
+  lastAnsweredAt DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routeVersion CourseRouteVersion @relation(fields: [routeVersionId], references: [id], onDelete: Restrict)
+  lesson       Lesson             @relation(fields: [lessonId], references: [id], onDelete: Restrict)
+  item         KnowledgeItem      @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@id([userId, routeVersionId, lessonId, itemId])
+  @@index([routeVersionId, lessonId])
+  @@index([itemId])
+}
+
+model UserLessonVocabularyAttempt {
+  id                  String   @id @default(cuid())
+  userId              String
+  routeVersionId      String
+  lessonId            String
+  itemId              String
+  idempotencyKey      String
+  answerText          String
+  isCorrect           Boolean
+  correctAnswersAfter Int
+  answeredAt          DateTime @default(now())
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routeVersion CourseRouteVersion @relation(fields: [routeVersionId], references: [id], onDelete: Restrict)
+  lesson       Lesson             @relation(fields: [lessonId], references: [id], onDelete: Restrict)
+  item         KnowledgeItem      @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, idempotencyKey])
+  @@index([routeVersionId, lessonId, answeredAt])
+  @@index([itemId])
 }
 
 model UserMemory {

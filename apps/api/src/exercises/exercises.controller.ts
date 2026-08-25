@@ -60,6 +60,26 @@ export class ExercisesController {
     )
   }
 
+  @Get('lessons/:lessonId/exercises/:exerciseId')
+  @ApiOperation({ summary: 'Получить конкретное упражнение урока' })
+  @ApiOkResponse({ description: 'Задание без эталонного ответа' })
+  @ApiNotFoundResponse({ description: 'Упражнение не найдено' })
+  getExercise(
+    @CurrentUserId() userId: string,
+    @Param('lessonId') lessonId: string,
+    @Param('exerciseId') exerciseId: string,
+    @Query('routeVersionId') routeVersionId: string,
+    @Query('sourceLanguage') sourceLanguage = 'ru',
+  ): Promise<PreparedExerciseResponse> {
+    return this.exercises.getExercise(
+      userId,
+      routeVersionId,
+      lessonId,
+      exerciseId,
+      sourceLanguage,
+    )
+  }
+
   @Post('exercises/:exerciseId/attempts')
   @HttpCode(200)
   @ApiOperation({ summary: 'Проверить и сохранить ответ пользователя' })

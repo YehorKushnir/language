@@ -36,7 +36,8 @@ describe('lesson 8 curated content', () => {
       'exercise.fi.genitive.possession.word.1': 'Tämä on perheen lapsi.',
       'exercise.fi.genitive.possession.word.2': 'Tämä on äidin vauva.',
       'exercise.fi.genitive.possession.context.1': 'Minulla on perhe.',
-      'exercise.fi.genitive.possession.context.21': 'Minulla ei ole siskoa.',
+      'exercise.fi.genitive.possession.context.21':
+        'Tänään hänellä on sisko.',
       'exercise.fi.genitive.possession.pair.1': 'Onko sinulla huone?',
     })
   })

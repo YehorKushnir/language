@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils'
 import type { RouterContext } from '@/router-context'
 
 const navigationItems: Array<{
-  to: '/' | '/lessons' | '/vocabulary' | '/texts'
+  to: '/' | '/lessons' | '/vocabulary' | '/texts' | '/settings'
   label: string
   icon: LucideIcon
   exact?: boolean
@@ -35,6 +35,11 @@ const navigationItems: Array<{
   { to: '/lessons', label: 'Уроки', icon: BookOpenCheckIcon },
   { to: '/vocabulary', label: 'Словарь', icon: LanguagesIcon },
   { to: '/texts', label: 'Тексты', icon: ScrollTextIcon },
+]
+
+const mobileNavigationItems = [
+  ...navigationItems,
+  { to: '/settings' as const, label: 'Настройки', icon: SettingsIcon },
 ]
 
 export const Route = createRootRouteWithContext<RouterContext>()({
@@ -85,7 +90,10 @@ function RootLayout() {
     >
       <header
         data-app-header
-        className="sticky top-0 z-30 border-b bg-background/92 backdrop-blur-xl"
+        className={cn(
+          'sticky top-0 z-30 border-b bg-background/92 backdrop-blur-xl',
+          showLearningNavigation && 'hidden lg:block',
+        )}
       >
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4 sm:px-5">
           <Link
@@ -166,8 +174,8 @@ function RootLayout() {
           className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
           aria-label="Мобильная навигация"
         >
-          <div className="mx-auto grid h-16 max-w-lg grid-cols-4 gap-1 px-2 pt-1.5">
-            {navigationItems.map((item) => {
+          <div className="mx-auto grid h-16 max-w-lg grid-cols-5 gap-1 px-2 pt-1.5">
+            {mobileNavigationItems.map((item) => {
               const Icon = item.icon
               return (
                 <Link

@@ -1,9 +1,10 @@
 import type {
   CourseProgressResponse,
+  LessonVocabularyAnswerResponse,
+  LessonVocabularyStudySessionResponse,
   LessonPart,
   PracticeCompletionResponse,
   PracticeSessionResponse,
-  VocabularyStudyResponse,
 } from '@language/contracts'
 import {
   Body,
@@ -21,8 +22,7 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { CurrentUserId } from '../identity/current-user.decorator'
 import { SessionIdentityGuard } from '../identity/session-identity.guard'
 import { CourseProgressService } from './course-progress.service'
-import { PracticeCompletionDto } from './practice-completion.dto'
-import { VocabularyStudyDto } from './vocabulary-study.dto'
+import { VocabularyAnswerDto } from './vocabulary-answer.dto'
 
 enum LessonPartParam {
   Explanation = 'explanation',
@@ -93,33 +93,48 @@ export class CourseProgressController {
     @CurrentUserId() userId: string,
     @Param('routeVersionId') routeVersionId: string,
     @Param('lessonId') lessonId: string,
-    @Body() body: PracticeCompletionDto,
   ): Promise<PracticeCompletionResponse> {
     return this.courseProgress.completePractice(
       userId,
       routeVersionId,
       lessonId,
-      body.attemptIds,
     )
   }
 
-  @Put(':routeVersionId/lessons/:lessonId/vocabulary/:itemId')
+  @Put(':routeVersionId/lessons/:lessonId/vocabulary-session')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Оценить слово и запланировать повторение' })
-  @ApiOkResponse({ description: 'Обновлённое состояние памяти слова' })
-  studyVocabularyItem(
+  @ApiOperation({ summary: 'Начать или продолжить изучение слов урока' })
+  @ApiOkResponse({ description: 'Сохранённый прогресс активного вспоминания' })
+  startOrResumeVocabulary(
+    @CurrentUserId() userId: string,
+    @Param('routeVersionId') routeVersionId: string,
+    @Param('lessonId') lessonId: string,
+  ): Promise<LessonVocabularyStudySessionResponse> {
+    return this.courseProgress.startOrResumeVocabulary(
+      userId,
+      routeVersionId,
+      lessonId,
+    )
+  }
+
+  @Post(':routeVersionId/lessons/:lessonId/vocabulary/:itemId/attempts')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Проверить активный ответ на слово урока' })
+  @ApiOkResponse({ description: 'Результат и сохранённый прогресс слова' })
+  submitVocabularyAnswer(
     @CurrentUserId() userId: string,
     @Param('routeVersionId') routeVersionId: string,
     @Param('lessonId') lessonId: string,
     @Param('itemId') itemId: string,
-    @Body() body: VocabularyStudyDto,
-  ): Promise<VocabularyStudyResponse> {
-    return this.courseProgress.studyVocabularyItem(
+    @Body() body: VocabularyAnswerDto,
+  ): Promise<LessonVocabularyAnswerResponse> {
+    return this.courseProgress.submitVocabularyAnswer(
       userId,
       routeVersionId,
       lessonId,
       itemId,
-      body.result,
+      body.answer,
+      body.idempotencyKey,
     )
   }
 }

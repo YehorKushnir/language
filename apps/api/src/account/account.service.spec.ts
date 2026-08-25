@@ -32,6 +32,29 @@ describe('AccountService', () => {
         },
       ],
       lessonProgress: [],
+      vocabularyProgress: [
+        {
+          routeVersionId: 'route.1',
+          lessonId: 'lesson.1',
+          itemId: 'word.fi.test',
+          correctAnswers: 2,
+          attempts: 3,
+          completedAt: null,
+          lastAnsweredAt: new Date('2026-01-03T00:00:00.000Z'),
+        },
+      ],
+      vocabularyAttempts: [
+        {
+          id: 'vocabulary-attempt.1',
+          routeVersionId: 'route.1',
+          lessonId: 'lesson.1',
+          itemId: 'word.fi.test',
+          answerText: 'testi',
+          isCorrect: true,
+          correctAnswersAfter: 2,
+          answeredAt: new Date('2026-01-03T00:00:00.000Z'),
+        },
+      ],
       memories: [
         {
           itemId: 'word.fi.test',
@@ -68,6 +91,8 @@ describe('AccountService', () => {
 
     expect(result.user.email).toBe('learner@example.com')
     expect(result.memories[0]?.dueAt).toBe('2026-01-04T00:00:00.000Z')
+    expect(result.vocabularyStudyProgress[0]?.correctAnswers).toBe(2)
+    expect(result.vocabularyStudyAttempts[0]?.answerText).toBe('testi')
     expect(result.attempts[0]?.evidence[0]).toEqual({
       itemId: 'grammar.fi.olla',
       role: 'PRIMARY',

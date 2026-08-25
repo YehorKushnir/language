@@ -125,6 +125,18 @@ async function seedCourse() {
 
 async function seedKnowledge() {
   for (const lesson of moduleOneLessons) {
+    await prisma.lessonKnowledgeItem.deleteMany({
+      where: {
+        lessonId: lesson.id,
+        itemId: {
+          notIn: [
+            ...lesson.skills.map((skill) => skill.id),
+            ...lesson.vocabulary.map((vocabulary) => vocabulary.itemId),
+          ],
+        },
+      },
+    })
+
     for (const [position, skill] of lesson.skills.entries()) {
       const kind = KnowledgeItemKind[skill.kind]
       const role = LessonItemRole[skill.role ?? 'INTRODUCED']

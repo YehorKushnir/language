@@ -1,4 +1,4 @@
-import { AttemptOutcome, MemoryState } from '@language/database'
+import { AttemptOutcome } from '@language/database'
 import { BadRequestException, NotFoundException } from '@nestjs/common'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -7,26 +7,28 @@ import { CourseProgressService } from './course-progress.service'
 
 describe('CourseProgressService vocabulary study', () => {
   const transaction = {
-    userMemory: {
-      findUnique: vi.fn(),
+    userLessonVocabularyProgress: {
       upsert: vi.fn(),
+      updateMany: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      update: vi.fn(),
     },
-    userCourseProgress: {
-      upsert: vi.fn(),
-    },
+    userLessonVocabularyAttempt: { create: vi.fn() },
+    userMemory: { upsert: vi.fn() },
+    userCourseProgress: { upsert: vi.fn() },
   }
   const prisma = {
     courseRouteDependency: { findMany: vi.fn() },
     userLessonProgress: { count: vi.fn() },
-    courseRouteEntry: {
-      findFirst: vi.fn(),
-    },
     lessonKnowledgeItem: {
       findFirst: vi.fn(),
-    },
-    userAttempt: {
       findMany: vi.fn(),
     },
+    userLessonVocabularyProgress: {
+      findMany: vi.fn(),
+    },
+    userLessonVocabularyAttempt: { findUnique: vi.fn() },
+    userCourseProgress: { upsert: vi.fn() },
     $transaction: vi.fn(
       (callback: (client: typeof transaction) => Promise<unknown>) =>
         callback(transaction),
@@ -37,51 +39,154 @@ describe('CourseProgressService vocabulary study', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     prisma.courseRouteDependency.findMany.mockResolvedValue([])
-    prisma.lessonKnowledgeItem.findFirst.mockResolvedValue({ itemId: 'word.1' })
-    transaction.userMemory.findUnique.mockResolvedValue(null)
-    transaction.userCourseProgress.upsert.mockResolvedValue({})
-    transaction.userMemory.upsert.mockImplementation(({ create }) =>
-      Promise.resolve(create),
+    prisma.lessonKnowledgeItem.findFirst.mockResolvedValue({
+      itemId: 'word.1',
+      item: {
+        lexicalSense: { lexicalEntry: { lemma: 'opiskelija' } },
+      },
+    })
+    prisma.lessonKnowledgeItem.findMany.mockResolvedValue([
+      { itemId: 'word.1' },
+      { itemId: 'word.2' },
+    ])
+    prisma.userLessonVocabularyProgress.findMany.mockResolvedValue([])
+    prisma.userLessonVocabularyAttempt.findUnique.mockResolvedValue(null)
+    prisma.userCourseProgress.upsert.mockResolvedValue({})
+    transaction.userLessonVocabularyProgress.upsert.mockResolvedValue({})
+    transaction.userLessonVocabularyProgress.updateMany.mockResolvedValue({
+      count: 1,
+    })
+    transaction.userLessonVocabularyProgress.findUniqueOrThrow.mockResolvedValue(
+      vocabularyProgress(1),
     )
+    transaction.userLessonVocabularyAttempt.create.mockResolvedValue({})
+    transaction.userCourseProgress.upsert.mockResolvedValue({})
+    transaction.userMemory.upsert.mockResolvedValue({})
   })
 
-  it('creates a review memory for a known flashcard', async () => {
-    const before = Date.now()
-    const result = await service.studyVocabularyItem(
+  it('restores persisted counters for every lesson word', async () => {
+    prisma.userLessonVocabularyProgress.findMany.mockResolvedValue([
+      vocabularyProgress(2),
+    ])
+
+    await expect(
+      service.startOrResumeVocabulary('user.1', 'route.1', 'lesson.1'),
+    ).resolves.toMatchObject({
+      lessonId: 'lesson.1',
+      requiredCorrectAnswers: 3,
+      totalItems: 2,
+      completedItems: 0,
+      totalCorrectAnswers: 2,
+      items: [
+        { itemId: 'word.1', correctAnswers: 2 },
+        { itemId: 'word.2', correctAnswers: 0 },
+      ],
+    })
+  })
+
+  it('checks the typed answer on the server and stores one success', async () => {
+    prisma.userLessonVocabularyProgress.findMany.mockResolvedValue([
+      vocabularyProgress(1),
+    ])
+
+    const result = await service.submitVocabularyAnswer(
       'user.1',
       'route.1',
       'lesson.1',
       'word.1',
-      'SUCCESS',
+      'OPISKELIJA!',
+      'c6b2f259-064e-4f8d-8596-7489761b61dd',
     )
 
     expect(result).toMatchObject({
       itemId: 'word.1',
-      state: MemoryState.REVIEW,
-      repetitions: 1,
-      lapses: 0,
+      isCorrect: true,
+      expectedAnswer: 'opiskelija',
+      itemProgress: { correctAnswers: 1, attempts: 1 },
     })
-    expect(new Date(result.dueAt).getTime() - before).toBeGreaterThanOrEqual(
-      86_399_000,
+    expect(
+      transaction.userLessonVocabularyProgress.updateMany,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { correctAnswers: { increment: 1 } },
+      }),
     )
-    expect(transaction.userCourseProgress.upsert).toHaveBeenCalledOnce()
+    expect(transaction.userMemory.upsert).not.toHaveBeenCalled()
+  })
+
+  it('adds the word to spaced review after the third success', async () => {
+    const completed = vocabularyProgress(3, new Date())
+    transaction.userLessonVocabularyProgress.findUniqueOrThrow.mockResolvedValue(
+      vocabularyProgress(3),
+    )
+    transaction.userLessonVocabularyProgress.update.mockResolvedValue(completed)
+    prisma.lessonKnowledgeItem.findMany.mockResolvedValue([
+      { itemId: 'word.1' },
+    ])
+    prisma.userLessonVocabularyProgress.findMany.mockResolvedValue([completed])
+    const completePart = vi.spyOn(service, 'completePart').mockResolvedValue({
+      routeVersionId: 'route.1',
+      currentLessonId: 'lesson.1',
+      completedLessons: 0,
+      totalLessons: 1,
+      dueReviews: 0,
+      nextReviewAt: null,
+      lessons: [],
+    })
+
+    const result = await service.submitVocabularyAnswer(
+      'user.1',
+      'route.1',
+      'lesson.1',
+      'word.1',
+      'opiskelija',
+      '09149d1a-4580-4e70-b7e1-38820b492c3f',
+    )
+
+    expect(result.itemProgress.correctAnswers).toBe(3)
+    expect(result.session.completedItems).toBe(1)
+    expect(transaction.userMemory.upsert).toHaveBeenCalledOnce()
+    expect(completePart).toHaveBeenCalledWith(
+      'user.1',
+      'route.1',
+      'lesson.1',
+      'vocabulary',
+    )
   })
 
   it('rejects an item outside the lesson vocabulary', async () => {
     prisma.lessonKnowledgeItem.findFirst.mockResolvedValue(null)
 
     await expect(
-      service.studyVocabularyItem(
+      service.submitVocabularyAnswer(
         'user.1',
         'route.1',
         'lesson.1',
         'word.other',
-        'FAILURE',
+        'word',
+        '70eb5adb-ac8f-4716-93a5-877c8f5f26fa',
       ),
     ).rejects.toBeInstanceOf(NotFoundException)
     expect(prisma.$transaction).not.toHaveBeenCalled()
   })
 })
+
+function vocabularyProgress(
+  correctAnswers: number,
+  completedAt: Date | null = null,
+) {
+  return {
+    userId: 'user.1',
+    routeVersionId: 'route.1',
+    lessonId: 'lesson.1',
+    itemId: 'word.1',
+    correctAnswers,
+    attempts: Math.max(correctAnswers, 1),
+    completedAt,
+    lastAnsweredAt: new Date('2026-08-25T00:00:00.000Z'),
+    updatedAt: new Date('2026-08-25T00:00:00.000Z'),
+  }
+}
 
 describe('CourseProgressService lesson and course completion', () => {
   const transaction = {
@@ -96,6 +201,8 @@ describe('CourseProgressService lesson and course completion', () => {
   const prisma = {
     courseRouteDependency: { findMany: vi.fn() },
     userLessonProgress: { count: vi.fn() },
+    userLessonVocabularyProgress: { count: vi.fn() },
+    lessonKnowledgeItem: { findMany: vi.fn() },
     courseRouteEntry: { findFirst: vi.fn() },
     $transaction: vi.fn(
       (operation: (client: typeof transaction) => Promise<unknown>) =>
@@ -150,6 +257,19 @@ describe('CourseProgressService lesson and course completion', () => {
       }),
     )
   })
+
+  it('does not let the vocabulary part bypass active recall', async () => {
+    prisma.lessonKnowledgeItem.findMany.mockResolvedValue([
+      { itemId: 'word.1' },
+      { itemId: 'word.2' },
+    ])
+    prisma.userLessonVocabularyProgress.count.mockResolvedValue(1)
+
+    await expect(
+      service.completePart('user.1', 'route.1', 'lesson.1', 'vocabulary'),
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(prisma.$transaction).not.toHaveBeenCalled()
+  })
 })
 
 describe('CourseProgressService practice completion', () => {
@@ -194,8 +314,13 @@ describe('CourseProgressService practice completion', () => {
     vi.restoreAllMocks()
   })
 
-  it('completes practice after 51 correct answers out of 60', async () => {
-    const attempts = createPracticeAttempts(51)
+  it('completes practice after every initial error is corrected', async () => {
+    const attempts = createPracticeAttempts(59)
+    attempts.push({
+      id: 'attempt.61',
+      exerciseId: 'exercise.60',
+      outcome: AttemptOutcome.CORRECT,
+    })
     prisma.userAttempt.findMany.mockResolvedValue(attempts)
     const completePart = vi
       .spyOn(service, 'completePart')
@@ -205,14 +330,13 @@ describe('CourseProgressService practice completion', () => {
       'user.1',
       'route.1',
       'lesson.1',
-      attempts.map((attempt) => attempt.id),
     )
 
     expect(result).toMatchObject({
       totalExercises: 60,
-      correctAnswers: 51,
-      requiredCorrectAnswers: 51,
-      scorePercent: 85,
+      correctAnswers: 60,
+      requiredCorrectAnswers: 60,
+      scorePercent: 100,
       passed: true,
       progress,
     })
@@ -227,38 +351,27 @@ describe('CourseProgressService practice completion', () => {
     )
   })
 
-  it('does not complete practice below the 85 percent threshold', async () => {
+  it('does not complete practice while an error remains unresolved', async () => {
     const attempts = createPracticeAttempts(50)
     prisma.userAttempt.findMany.mockResolvedValue(attempts)
     const completePart = vi.spyOn(service, 'completePart')
-    vi.spyOn(service, 'getProgress').mockResolvedValue(progress)
 
-    const result = await service.completePractice(
-      'user.1',
-      'route.1',
-      'lesson.1',
-      attempts.map((attempt) => attempt.id),
-    )
-
-    expect(result.passed).toBe(false)
-    expect(result.correctAnswers).toBe(50)
-    expect(result.scorePercent).toBe(83.3)
+    await expect(
+      service.completePractice('user.1', 'route.1', 'lesson.1'),
+    ).rejects.toBeInstanceOf(BadRequestException)
     expect(completePart).not.toHaveBeenCalled()
-    expect(prisma.userLessonProgress.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { practiceStartedAt: null } }),
-    )
+    expect(prisma.userLessonProgress.update).not.toHaveBeenCalled()
   })
 
   it('rejects an incomplete set of attempts', async () => {
+    prisma.userAttempt.findMany.mockResolvedValue(
+      createPracticeAttempts(59).slice(0, 59),
+    )
+
     await expect(
-      service.completePractice(
-        'user.1',
-        'route.1',
-        'lesson.1',
-        Array.from({ length: 59 }, (_, index) => `attempt.${index + 1}`),
-      ),
+      service.completePractice('user.1', 'route.1', 'lesson.1'),
     ).rejects.toBeInstanceOf(BadRequestException)
-    expect(prisma.userAttempt.findMany).not.toHaveBeenCalled()
+    expect(prisma.userAttempt.findMany).toHaveBeenCalled()
   })
 
   it('rejects historical attempts outside an active practice session', async () => {
@@ -267,12 +380,7 @@ describe('CourseProgressService practice completion', () => {
     })
 
     await expect(
-      service.completePractice(
-        'user.1',
-        'route.1',
-        'lesson.1',
-        createPracticeAttempts(60).map((attempt) => attempt.id),
-      ),
+      service.completePractice('user.1', 'route.1', 'lesson.1'),
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(prisma.userAttempt.findMany).not.toHaveBeenCalled()
   })
@@ -287,12 +395,7 @@ describe('CourseProgressService practice completion', () => {
     prisma.userAttempt.findMany.mockResolvedValue(attempts)
 
     await expect(
-      service.completePractice(
-        'user.1',
-        'route.1',
-        'lesson.1',
-        attempts.map((attempt) => attempt.id),
-      ),
+      service.completePractice('user.1', 'route.1', 'lesson.1'),
     ).rejects.toBeInstanceOf(BadRequestException)
   })
 })
@@ -341,9 +444,13 @@ describe('CourseProgressService resumable practice', () => {
     expect(result).toMatchObject({
       startedAt: startedAt.toISOString(),
       totalExercises: 60,
-      requiredCorrectAnswers: 51,
+      requiredCorrectAnswers: 60,
+      correctionDelay: 12,
       answeredExercises: 36,
       correctAnswers: 30,
+      pendingCorrections: expect.arrayContaining([
+        { exerciseId: 'exercise.31', retryAfterAttempt: 43 },
+      ]),
     })
     expect(result.attemptIds).toHaveLength(36)
     expect(result.completedExerciseIds).toHaveLength(36)
@@ -365,6 +472,7 @@ describe('CourseProgressService resumable practice', () => {
     )
 
     expect(result.answeredExercises).toBe(0)
+    expect(result.pendingCorrections).toEqual([])
     expect(transaction.userLessonProgress.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         update: { practiceStartedAt: expect.any(Date) },

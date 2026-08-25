@@ -6,6 +6,7 @@ import {
   type CourseLessonSeed,
 } from '../../../content/courses/ru-fi/module-one.js'
 import { preparedTexts } from '../../../content/courses/ru-fi/texts/fi.olla.introductions.js'
+import { inspectCurriculumProgression } from './curriculum-progression.js'
 
 const MINIMUM_EXPLANATION_SECTIONS = 5
 const MINIMUM_EXPLANATION_EXAMPLES = 12
@@ -40,6 +41,7 @@ export function inspectMvpContentReadiness(
       `prepared texts must cover at least 2 levels, received ${[...levels].join(', ')}`,
     )
   }
+  courseIssues.push(...inspectCurriculumProgression(lessons))
 
   const readyLessonCount = lessonReports.filter((lesson) => lesson.ready).length
   return {

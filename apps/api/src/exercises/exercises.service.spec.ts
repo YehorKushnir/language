@@ -19,7 +19,7 @@ describe('ExercisesService morphology diagnostics', () => {
     courseRouteDependency: { findMany: vi.fn() },
     userLessonProgress: { count: vi.fn() },
     userAttempt: { findUnique: vi.fn(), findFirst: vi.fn() },
-    exercise: { findFirst: vi.fn() },
+    exercise: { findFirst: vi.fn(), findMany: vi.fn() },
     exerciseReport: { upsert: vi.fn() },
     courseRouteEntry: { findFirst: vi.fn() },
     $transaction: vi.fn(
@@ -163,6 +163,34 @@ describe('ExercisesService morphology diagnostics', () => {
         }),
       }),
     )
+  })
+
+  it('keeps the curated mixed exercise order ahead of attempt history', async () => {
+    prisma.exercise.findMany.mockResolvedValue([
+      {
+        id: 'exercise.second',
+        targetLanguage: 'fi',
+        answerSpec: { selectionOrder: 2 },
+        prompts: [{ text: 'Второе задание' }],
+        userHistory: [],
+      },
+      {
+        id: 'exercise.first',
+        targetLanguage: 'fi',
+        answerSpec: { selectionOrder: 1 },
+        prompts: [{ text: 'Первое задание' }],
+        userHistory: [
+          { timesSeen: 8, lastSeenAt: new Date('2026-08-24T00:00:00.000Z') },
+        ],
+      },
+    ])
+
+    await expect(
+      service.getNextExercise('user.1', 'route.1', 'lesson.1', 'ru', []),
+    ).resolves.toMatchObject({
+      id: 'exercise.first',
+      prompt: 'Первое задание',
+    })
   })
 
   it('diagnoses olla when a valid optional subject is omitted', async () => {

@@ -15,6 +15,14 @@ export class AccountService {
         lessonProgress: {
           orderBy: [{ routeVersionId: 'asc' }, { lessonId: 'asc' }],
         },
+        vocabularyProgress: {
+          orderBy: [
+            { routeVersionId: 'asc' },
+            { lessonId: 'asc' },
+            { itemId: 'asc' },
+          ],
+        },
+        vocabularyAttempts: { orderBy: { answeredAt: 'asc' } },
         memories: { orderBy: { itemId: 'asc' } },
         attempts: {
           orderBy: { answeredAt: 'asc' },
@@ -52,6 +60,25 @@ export class AccountService {
         practiceCompletedAt:
           progress.practiceCompletedAt?.toISOString() ?? null,
         completedAt: progress.completedAt?.toISOString() ?? null,
+      })),
+      vocabularyStudyProgress: user.vocabularyProgress.map((progress) => ({
+        routeVersionId: progress.routeVersionId,
+        lessonId: progress.lessonId,
+        itemId: progress.itemId,
+        correctAnswers: progress.correctAnswers,
+        attempts: progress.attempts,
+        completedAt: progress.completedAt?.toISOString() ?? null,
+        lastAnsweredAt: progress.lastAnsweredAt?.toISOString() ?? null,
+      })),
+      vocabularyStudyAttempts: user.vocabularyAttempts.map((attempt) => ({
+        id: attempt.id,
+        routeVersionId: attempt.routeVersionId,
+        lessonId: attempt.lessonId,
+        itemId: attempt.itemId,
+        answerText: attempt.answerText,
+        isCorrect: attempt.isCorrect,
+        correctAnswersAfter: attempt.correctAnswersAfter,
+        answeredAt: attempt.answeredAt.toISOString(),
       })),
       memories: user.memories.map((memory) => ({
         itemId: memory.itemId,

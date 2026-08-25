@@ -61,7 +61,6 @@ function LessonExplanationPage() {
       <LessonWorkspaceHeader
         lessonId={lessonId}
         lessonTitle={localizedText(lesson.data.title)}
-        lessonSummary={localizedText(lesson.data.summary)}
         activePart="explanation"
       />
 

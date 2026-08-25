@@ -1,30 +1,35 @@
-import type { VocabularyStudyResult } from '@language/contracts'
+import type {
+  LessonVocabularyAnswerResponse,
+  LessonVocabularyItemResponse,
+} from '@language/contracts'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   ArrowRightIcon,
+  CheckCircle2Icon,
   CheckIcon,
-  EyeIcon,
-  LoaderCircleIcon,
+  CircleXIcon,
   RotateCcwIcon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 
-import { completeLessonPart, studyVocabularyItem } from '@/api/language-api'
+import { submitVocabularyAnswer } from '@/api/language-api'
 import {
   courseProgressQuery,
   courseQuery,
   lessonQuery,
   lessonVocabularyQuery,
   userVocabularyQuery,
+  vocabularyStudySessionQuery,
 } from '@/api/queries'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
-import { cn } from '@/lib/utils'
+import { getNextVocabularyItemId } from '@/lib/vocabulary-study-session'
 
 export const Route = createFileRoute('/lessons/$lessonId_/vocabulary')({
   loader: ({ context, params }) =>
@@ -38,55 +43,41 @@ export const Route = createFileRoute('/lessons/$lessonId_/vocabulary')({
   component: LessonVocabularyPage,
 })
 
-const featureLabels: Record<string, string> = {
-  nominative: 'именительный',
-  genitive: 'родительный',
-  partitive: 'партитив',
-  singular: 'ед. число',
-  plural: 'мн. число',
-  invariant: 'неизменяемая форма',
-}
-
-const partOfSpeechLabels: Record<string, string> = {
-  adjective: 'прилагательное',
-  adverb: 'наречие',
-  noun: 'существительное',
-  pronoun: 'местоимение',
-  verb: 'глагол',
-}
-
 function LessonVocabularyPage() {
   const { lessonId } = Route.useParams()
   const queryClient = useQueryClient()
-  const [cardIndex, setCardIndex] = useState(0)
-  const [revealed, setRevealed] = useState(false)
-  const [cardChanging, setCardChanging] = useState(false)
-  const [sessionCompleted, setSessionCompleted] = useState(false)
+  const answerInput = useRef<HTMLInputElement>(null)
+  const idempotencyKey = useRef(crypto.randomUUID())
+  const [activeItemId, setActiveItemId] = useState<string | null>(null)
+  const [answer, setAnswer] = useState('')
+  const [showSummary, setShowSummary] = useState(false)
   const lesson = useQuery(lessonQuery(lessonId))
   const vocabulary = useQuery(lessonVocabularyQuery(lessonId))
   const course = useQuery(courseQuery)
   const routeVersionId = course.data?.route?.id ?? ''
-
-  const completion = useMutation({
-    mutationFn: () =>
-      completeLessonPart(routeVersionId, lessonId, 'vocabulary'),
-    onSuccess: (updatedProgress) => {
-      queryClient.setQueryData(
-        courseProgressQuery(routeVersionId).queryKey,
-        updatedProgress,
-      )
-    },
+  const session = useQuery({
+    ...vocabularyStudySessionQuery(lessonId, routeVersionId),
+    enabled: Boolean(routeVersionId),
   })
-
   const study = useMutation({
-    mutationFn: (result: VocabularyStudyResult) => {
-      const item = vocabulary.data?.items[cardIndex]
-      if (!item) throw new Error('Карточка не найдена')
-      return studyVocabularyItem(routeVersionId, lessonId, item.itemId, {
-        result,
-      })
-    },
-    onSuccess: () => {
+    mutationFn: ({
+      itemId,
+      value,
+      requestId,
+    }: {
+      itemId: string
+      value: string
+      requestId: string
+    }) =>
+      submitVocabularyAnswer(routeVersionId, lessonId, itemId, {
+        answer: value,
+        idempotencyKey: requestId,
+      }),
+    onSuccess: (result) => {
+      queryClient.setQueryData(
+        vocabularyStudySessionQuery(lessonId, routeVersionId).queryKey,
+        result.session,
+      )
       void Promise.all([
         queryClient.invalidateQueries({
           queryKey: courseProgressQuery(routeVersionId).queryKey,
@@ -95,258 +86,343 @@ function LessonVocabularyPage() {
           queryKey: userVocabularyQuery(routeVersionId).queryKey,
         }),
       ])
-      const isLastCard = cardIndex === (vocabulary.data?.items.length ?? 0) - 1
-      if (isLastCard) {
-        setSessionCompleted(true)
-        completion.mutate()
-        return
-      }
-      setCardChanging(true)
-      window.setTimeout(() => {
-        setCardIndex((index) => index + 1)
-        setRevealed(false)
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => setCardChanging(false))
-        })
-      }, 80)
     },
   })
 
-  if (lesson.isPending || vocabulary.isPending || course.isPending) {
+  useEffect(() => {
+    if (!session.data || !vocabulary.data) return
+    if (study.data) return
+    const activeProgress = session.data.items.find(
+      (item) => item.itemId === activeItemId,
+    )
+    if (
+      activeItemId &&
+      activeProgress &&
+      activeProgress.correctAnswers < session.data.requiredCorrectAnswers
+    ) {
+      return
+    }
+    setActiveItemId(
+      getNextVocabularyItemId(
+        vocabulary.data.items.map((item) => item.itemId),
+        session.data,
+      ),
+    )
+  }, [activeItemId, session.data, study.data, vocabulary.data])
+
+  useEffect(() => {
+    if (!study.isPending) answerInput.current?.focus()
+  }, [activeItemId, study.data, study.isPending])
+
+  if (
+    lesson.isPending ||
+    vocabulary.isPending ||
+    course.isPending ||
+    session.isPending
+  ) {
     return <PartPageState loading />
   }
-  if (lesson.isError || vocabulary.isError || course.isError) {
+  if (
+    lesson.isError ||
+    vocabulary.isError ||
+    course.isError ||
+    session.isError
+  ) {
     return (
       <PartPageState
-        message={(lesson.error ?? vocabulary.error ?? course.error)?.message}
+        message={
+          (lesson.error ?? vocabulary.error ?? course.error ?? session.error)
+            ?.message
+        }
       />
     )
   }
 
   const items = vocabulary.data.items
-  const item = items[cardIndex]
-  if (!item) {
+  if (items.length === 0) {
     return <PartPageState message="В этом уроке пока нет слов." />
   }
-  const cardForms =
-    item.partOfSpeech === 'pronoun'
-      ? item.forms.filter((form) => form.features.case === 'nominative')
-      : item.forms
+  const sessionCompleted =
+    session.data.totalItems > 0 &&
+    session.data.completedItems === session.data.totalItems
+  const shouldShowSummary = sessionCompleted && (!study.data || showSummary)
 
-  if (sessionCompleted) {
+  if (shouldShowSummary) {
     return (
-      <PageShell>
-        <LessonWorkspaceHeader
-          lessonId={lessonId}
-          lessonTitle={localizedText(lesson.data.title)}
-          lessonSummary={localizedText(lesson.data.summary)}
-          activePart="vocabulary"
-        />
-        <section className="mt-7 rounded-lg border bg-card p-6 text-center sm:p-8">
-          <span className="motion-success mx-auto grid size-10 place-items-center rounded-full bg-primary text-primary-foreground">
-            <CheckIcon className="size-5" />
-          </span>
-          <h2 className="mt-4 font-serif text-2xl font-semibold">
-            Все {items.length} слов изучены
-          </h2>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-            Слова добавлены в интервальное повторение. Знакомые вернутся позже,
-            сложные — раньше.
-          </p>
-          {completion.isPending ? (
-            <p className="mt-5 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <LoaderCircleIcon className="size-4 animate-spin" /> Сохраняем
-              прогресс…
-            </p>
-          ) : completion.isError ? (
-            <div className="mt-5 text-left">
-              <QueryError message={completion.error.message} />
-              <Button
-                className="mt-3"
-                size="sm"
-                variant="outline"
-                onClick={() => completion.mutate()}
-              >
-                <RotateCcwIcon /> Сохранить завершение ещё раз
-              </Button>
-            </div>
-          ) : (
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              <Button asChild size="sm" variant="outline">
-                <Link to="/vocabulary">Перейти к словарю</Link>
-              </Button>
-              <Button asChild size="sm">
-                <Link to="/lessons/$lessonId/practice" params={{ lessonId }}>
-                  Практика <ArrowRightIcon />
-                </Link>
-              </Button>
-            </div>
-          )}
-        </section>
-      </PageShell>
+      <VocabularySummary
+        itemCount={items.length}
+        lessonId={lessonId}
+        lessonTitle={localizedText(lesson.data.title)}
+      />
     )
   }
 
-  const progress = ((cardIndex + (revealed ? 0.5 : 0)) / items.length) * 100
+  const item =
+    items.find((candidate) => candidate.itemId === activeItemId) ?? items[0]!
+  const itemProgress = session.data.items.find(
+    (progress) => progress.itemId === item.itemId,
+  ) ?? {
+    itemId: item.itemId,
+    correctAnswers: 0,
+    attempts: 0,
+    completedAt: null,
+  }
+  const feedback = study.data?.itemId === item.itemId ? study.data : undefined
+  const totalRequired =
+    session.data.totalItems * session.data.requiredCorrectAnswers
+  const progress = totalRequired
+    ? (session.data.totalCorrectAnswers / totalRequired) * 100
+    : 0
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (feedback) {
+      continueStudy(feedback)
+      return
+    }
+    if (!answer.trim() || study.isPending || !routeVersionId) return
+    study.mutate({
+      itemId: item.itemId,
+      value: answer,
+      requestId: idempotencyKey.current,
+    })
+  }
+
+  function continueStudy(result: LessonVocabularyAnswerResponse) {
+    if (
+      result.session.totalItems > 0 &&
+      result.session.completedItems === result.session.totalItems
+    ) {
+      setShowSummary(true)
+      return
+    }
+    const nextItemId = getNextVocabularyItemId(
+      items.map((candidate) => candidate.itemId),
+      result.session,
+      item.itemId,
+    )
+    setActiveItemId(nextItemId)
+    setAnswer('')
+    study.reset()
+    idempotencyKey.current = crypto.randomUUID()
+  }
 
   return (
-    <PageShell>
+    <PageShell className="py-4 sm:py-10">
       <LessonWorkspaceHeader
         lessonId={lessonId}
         lessonTitle={localizedText(lesson.data.title)}
-        lessonSummary={localizedText(lesson.data.summary)}
         activePart="vocabulary"
       />
 
-      <section className="mt-7">
+      <section className="mt-4 sm:mt-7">
         <header className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-              Карточки
-            </p>
-            <h2 className="mt-1 font-serif text-2xl font-semibold">
-              Карточка {cardIndex + 1} из {items.length}
-            </h2>
-          </div>
+          <h2 className="font-serif text-xl font-semibold sm:text-2xl">
+            Изучено {session.data.completedItems} из {session.data.totalItems}
+          </h2>
           <span className="text-xs tabular-nums text-muted-foreground">
             {Math.round(progress)}%
           </span>
         </header>
         <Progress
           value={progress}
-          className="mt-3 h-1.5"
+          className="mt-2 h-1.5"
           aria-label="Прогресс изучения слов"
         />
 
-        <div className="relative mt-5">
-          <span
-            aria-hidden="true"
-            data-slot="flashcard-transition-cover"
-            className={cn(
-              'pointer-events-none absolute inset-0 z-10 rounded-lg border bg-card transition-opacity ease-out',
-              cardChanging
-                ? 'opacity-100 duration-0'
-                : 'opacity-0 duration-150',
-            )}
-          />
-          <button
-            type="button"
-            aria-label={revealed ? 'Перевод открыт' : 'Показать перевод'}
-            className="interactive-surface relative block min-h-60 w-full overflow-hidden rounded-xl border bg-card text-left shadow-xs"
-            disabled={revealed || study.isPending || cardChanging}
-            onClick={() => setRevealed(true)}
-          >
-            <span
-              aria-hidden={revealed}
-              data-slot="flashcard-front"
-              className={cn(
-                'absolute inset-0 flex flex-col items-center justify-center p-6 text-center',
-                cardChanging
-                  ? 'pointer-events-none translate-y-0 opacity-0 transition-none'
-                  : revealed
-                    ? 'pointer-events-none -translate-y-2 opacity-0 transition-[opacity,transform] duration-200 ease-out'
-                    : 'translate-y-0 opacity-100 transition-[opacity,transform] duration-200 ease-out',
-              )}
-            >
-              <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                {partOfSpeechLabels[item.partOfSpeech] ?? item.partOfSpeech}
-              </span>
-              <span className="mt-3 font-serif text-4xl font-semibold tracking-tight">
-                {item.lemma}
-              </span>
-              <span className="mt-8 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <EyeIcon className="size-3.5" /> Нажми, чтобы увидеть перевод
-              </span>
-            </span>
-
-            <span
-              aria-hidden={!revealed}
-              data-slot="flashcard-back"
-              className={cn(
-                'absolute inset-0 flex flex-col overflow-y-auto p-6',
-                cardChanging
-                  ? 'pointer-events-none translate-y-2 opacity-0 transition-none'
-                  : revealed
-                    ? 'translate-y-0 opacity-100 transition-[opacity,transform] duration-200 ease-out'
-                    : 'pointer-events-none translate-y-2 opacity-0 transition-[opacity,transform] duration-200 ease-out',
-              )}
-            >
-              <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                {item.lemma}
-              </span>
-              <span className="mt-2 font-serif text-3xl font-semibold">
+        <article
+          className="mt-4 rounded-xl border bg-card p-4 shadow-xs sm:mt-5 sm:p-7"
+          data-item-id={item.itemId}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h3 className="font-serif text-2xl font-semibold sm:text-4xl">
                 {localizedText(item.gloss)}
-              </span>
+              </h3>
               {item.example ? (
-                <span className="mt-4 border-l-2 border-primary/30 pl-3 text-left">
-                  <span className="block text-sm font-medium">
-                    {item.example.target}
-                  </span>
-                  <span className="mt-0.5 block text-xs text-muted-foreground">
-                    {localizedText(item.example.source)}
-                  </span>
-                </span>
+                <p className="mt-2 text-sm text-muted-foreground sm:mt-3">
+                  {localizedText(item.example.source)}
+                </p>
               ) : null}
-              <span className="mt-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Формы
-              </span>
-              <span className="mt-2 flex flex-wrap gap-2">
-                {cardForms.map((form) => {
-                  const labels = Object.values(form.features).map(
-                    (feature) =>
-                      featureLabels[String(feature)] ?? String(feature),
-                  )
-                  return (
-                    <span
-                      key={form.id}
-                      className="rounded-md border bg-muted/30 px-2.5 py-1.5"
-                    >
-                      <span className="text-sm font-semibold">
-                        {form.surface}
-                      </span>
-                      {labels.length ? (
-                        <span className="ml-1.5 text-xs text-muted-foreground">
-                          {labels.join(' · ')}
-                        </span>
-                      ) : null}
-                    </span>
-                  )
-                })}
-              </span>
-            </span>
-          </button>
-        </div>
-
-        {study.isError ? (
-          <div className="mt-4">
-            <QueryError message={study.error.message} />
+            </div>
+            <AnswerMarkers
+              correctAnswers={itemProgress.correctAnswers}
+              required={session.data.requiredCorrectAnswers}
+            />
           </div>
-        ) : null}
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button
-            variant="outline"
-            disabled={
-              !revealed || study.isPending || cardChanging || !routeVersionId
-            }
-            aria-busy={study.isPending}
-            onClick={() => study.mutate('FAILURE')}
-          >
-            Ещё раз
+          <form className="mt-5 sm:mt-7" onSubmit={submit}>
+            <label className="sr-only" htmlFor="vocabulary-answer">
+              Слово по-фински
+            </label>
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_10rem]">
+              <Input
+                ref={answerInput}
+                id="vocabulary-answer"
+                autoComplete="off"
+                className="h-11 text-base"
+                placeholder="Слово по-фински"
+                readOnly={study.isPending || Boolean(feedback)}
+                value={answer}
+                onChange={(event) => setAnswer(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter') return
+                  event.preventDefault()
+                  event.currentTarget.form?.requestSubmit()
+                }}
+              />
+              {feedback ? (
+                <Button className="h-11" type="submit">
+                  {sessionCompleted ? 'Завершить' : 'Продолжить'}
+                  <ArrowRightIcon />
+                </Button>
+              ) : (
+                <Button
+                  className="h-11"
+                  disabled={!answer.trim() || study.isPending}
+                  type="submit"
+                >
+                  {study.isPending ? 'Проверяем…' : 'Проверить'}
+                </Button>
+              )}
+            </div>
+          </form>
+
+          <div className="pt-3" aria-live="polite">
+            {feedback ? (
+              <VocabularyFeedback item={item} result={feedback} />
+            ) : study.isError ? (
+              <div>
+                <QueryError message={study.error.message} />
+                <Button
+                  className="mt-3"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    study.mutate({
+                      itemId: item.itemId,
+                      value: answer,
+                      requestId: idempotencyKey.current,
+                    })
+                  }
+                >
+                  <RotateCcwIcon /> Повторить отправку
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </article>
+      </section>
+    </PageShell>
+  )
+}
+
+function AnswerMarkers({
+  correctAnswers,
+  required,
+}: {
+  correctAnswers: number
+  required: number
+}) {
+  return (
+    <span
+      role="progressbar"
+      aria-label={`Правильных ответов: ${correctAnswers} из ${required}`}
+      aria-valuemin={0}
+      aria-valuemax={required}
+      aria-valuenow={correctAnswers}
+      className="mt-0.5 text-[11px] font-medium tabular-nums text-muted-foreground"
+      title="Правильные ответы"
+    >
+      {correctAnswers}/{required}
+    </span>
+  )
+}
+
+function VocabularyFeedback({
+  item,
+  result,
+}: {
+  item: LessonVocabularyItemResponse
+  result: LessonVocabularyAnswerResponse
+}) {
+  return (
+    <div
+      className={`motion-feedback rounded-lg border px-4 py-3 text-sm ${
+        result.isCorrect
+          ? 'border-primary/25 bg-primary/5 text-primary'
+          : 'border-destructive/25 bg-destructive/5 text-destructive'
+      }`}
+    >
+      <div className="flex items-start gap-2.5">
+        {result.isCorrect ? (
+          <CheckCircle2Icon className="mt-0.5 size-4 shrink-0" />
+        ) : (
+          <CircleXIcon className="mt-0.5 size-4 shrink-0" />
+        )}
+        <div>
+          <p className="font-semibold">
+            {result.isCorrect
+              ? result.itemProgress.completedAt
+                ? 'Слово изучено'
+                : `Верно · ${result.itemProgress.correctAnswers} из ${result.session.requiredCorrectAnswers}`
+              : 'Пока неверно'}
+          </p>
+          <p className="mt-1 text-foreground">
+            Правильный ответ:{' '}
+            <span className="font-serif text-lg font-semibold" lang="fi">
+              {result.expectedAnswer}
+            </span>
+          </p>
+          {item.example ? (
+            <p className="mt-2 text-muted-foreground">
+              <span lang="fi">{item.example.target}</span> —{' '}
+              {localizedText(item.example.source)}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function VocabularySummary({
+  itemCount,
+  lessonId,
+  lessonTitle,
+}: {
+  itemCount: number
+  lessonId: string
+  lessonTitle: string
+}) {
+  return (
+    <PageShell>
+      <LessonWorkspaceHeader
+        lessonId={lessonId}
+        lessonTitle={lessonTitle}
+        activePart="vocabulary"
+      />
+      <section className="mt-7 rounded-xl border bg-card p-6 text-center shadow-xs sm:p-8">
+        <span className="motion-success mx-auto grid size-10 place-items-center rounded-full bg-primary text-primary-foreground">
+          <CheckIcon className="size-5" />
+        </span>
+        <h2 className="mt-4 font-serif text-2xl font-semibold">
+          Все {itemCount} слов изучены
+        </h2>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+          Каждое слово вспомнено правильно три раза. Результат сохранён, а слова
+          добавлены в интервальное повторение.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link to="/vocabulary">Перейти к словарю</Link>
           </Button>
-          <Button
-            disabled={
-              !revealed || study.isPending || cardChanging || !routeVersionId
-            }
-            aria-busy={study.isPending}
-            onClick={() => study.mutate('SUCCESS')}
-          >
-            Знаю
+          <Button asChild size="sm">
+            <Link to="/lessons/$lessonId/practice" params={{ lessonId }}>
+              Практика <ArrowRightIcon />
+            </Link>
           </Button>
         </div>
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          «Ещё раз» вернёт слово через 10 минут, «Знаю» — через день.
-        </p>
       </section>
     </PageShell>
   )
