@@ -269,7 +269,7 @@ const verbs: CuratedPresentVerb[] = [
 ]
 
 export const verbTypesTwoThreeContent = {
-  version: 5,
+  version: 6,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {

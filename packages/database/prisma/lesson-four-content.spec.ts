@@ -61,6 +61,24 @@ describe('lesson four: verb types two and three', () => {
     ).toEqual(['He saavat nyt.', 'Nyt he saavat.'])
   })
 
+  it('asks for sentence translations instead of naming Finnish forms', () => {
+    const byId = new Map(
+      verbTypesTwoThreeExercises.map((exercise) => [exercise.id, exercise]),
+    )
+
+    expect(byId.get('exercise.fi.verb-types.two-three.first.001')?.prompt).toBe(
+      'Я получаю.',
+    )
+    expect(
+      byId.get('exercise.fi.verb-types.two-three.second-now.001')?.prompt,
+    ).toBe('Ты сейчас приходишь.')
+    expect(
+      verbTypesTwoThreeExercises.some((exercise) =>
+        exercise.prompt.startsWith('Поставь '),
+      ),
+    ).toBe(false)
+  })
+
   it('passes the strict lesson readiness gate', () => {
     expect(
       inspectMvpContentReadiness().lessons.find(

@@ -44,20 +44,20 @@ describe('lesson two: present tense type one verbs', () => {
     })
   })
 
-  it('names the intended verb instead of asking for an ambiguous translation', () => {
+  it('uses natural translations while keeping similar verbs distinct', () => {
     const byId = new Map(
       presentCommonExercises.map((exercise) => [exercise.id, exercise]),
     )
 
     expect(byId.get('exercise.fi.present.common.first.001')?.prompt).toBe(
-      'Поставь puhua («говорить») в форму minä.',
+      'Я говорю.',
     )
     expect(byId.get('exercise.fi.present.common.first.004')?.prompt).toBe(
-      'Поставь sanoa («сказать») в форму minä.',
+      'Я произношу.',
     )
     expect(byId.get('exercise.fi.present.common.second-now.001')).toMatchObject(
       {
-        prompt: 'Поставь käyttää («использовать») в форму sinä и добавь nyt.',
+        prompt: 'Ты сейчас используешь.',
         acceptedVariants: expect.arrayContaining([
           'Sinä käytät nyt.',
           'Käytät nyt.',
@@ -70,6 +70,11 @@ describe('lesson two: present tense type one verbs', () => {
       byId.get('exercise.fi.present.common.third-plural-now.001')
         ?.acceptedVariants,
     ).toEqual(['He puhuvat nyt.', 'Nyt he puhuvat.'])
+    expect(
+      presentCommonExercises.some((exercise) =>
+        exercise.prompt.startsWith('Поставь '),
+      ),
+    ).toBe(false)
   })
 
   it('passes the strict lesson readiness gate', () => {

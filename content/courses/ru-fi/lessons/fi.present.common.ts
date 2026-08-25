@@ -49,10 +49,17 @@ const verbs: TypeOneVerbSeed[] = [
   ),
   verb(
     'sanoa',
-    'сказать',
+    'сказать; произносить',
     ['sanon', 'sanot', 'sanoo', 'sanomme', 'sanotte', 'sanovat'],
     'sano',
-    ['говорю', 'говоришь', 'говорит', 'говорим', 'говорите', 'говорят'],
+    [
+      'произношу',
+      'произносишь',
+      'произносит',
+      'произносим',
+      'произносите',
+      'произносят',
+    ],
     'transitive',
   ),
   verb(
@@ -103,10 +110,17 @@ const verbs: TypeOneVerbSeed[] = [
   ),
   verb(
     'oppia',
-    'учиться',
+    'усваивать; научиться',
     ['opin', 'opit', 'oppii', 'opimme', 'opitte', 'oppivat'],
     'opi',
-    ['учусь', 'учишься', 'учится', 'учимся', 'учитесь', 'учатся'],
+    [
+      'усваиваю',
+      'усваиваешь',
+      'усваивает',
+      'усваиваем',
+      'усваиваете',
+      'усваивают',
+    ],
     'ambitransitive',
   ),
   verb(
@@ -313,7 +327,7 @@ const pronouns = [
 ] as const
 
 export const presentCommonContent = {
-  version: 5,
+  version: 6,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
@@ -569,7 +583,7 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.first.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму minä.`,
+        prompt: `Я ${item.source[0]}.`,
         targetText,
         acceptedVariants: [targetText, `${capitalize(item.forms[0])}.`],
         slots: [
@@ -587,7 +601,7 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.second-now.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму sinä и добавь nyt.`,
+        prompt: `Ты сейчас ${item.source[1]}.`,
         targetText: `Sinä ${item.forms[1]} nyt.`,
         acceptedVariants: [
           `Sinä ${item.forms[1]} nyt.`,
@@ -611,7 +625,7 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.third.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму hän.`,
+        prompt: `Он или она ${item.source[2]}.`,
         targetText: `Hän ${item.forms[2]}.`,
         acceptedVariants: [`Hän ${item.forms[2]}.`],
         slots: [
@@ -629,7 +643,7 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.first-plural-now.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму me, начав с nyt.`,
+        prompt: `Сейчас мы ${item.source[3]}.`,
         targetText: `Nyt me ${item.forms[3]}.`,
         acceptedVariants: [`Nyt me ${item.forms[3]}.`, `Nyt ${item.forms[3]}.`],
         slots: [
@@ -648,7 +662,7 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.second-plural.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму te.`,
+        prompt: `Вы ${item.source[4]}.`,
         targetText: `Te ${item.forms[4]}.`,
         acceptedVariants: [
           `Te ${item.forms[4]}.`,
@@ -669,7 +683,7 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.third-plural-now.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму he и добавь nyt.`,
+        prompt: `Они сейчас ${item.source[5]}.`,
         targetText: `He ${item.forms[5]} nyt.`,
         acceptedVariants: [
           `He ${item.forms[5]} nyt.`,

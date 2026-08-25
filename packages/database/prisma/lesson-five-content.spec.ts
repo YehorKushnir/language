@@ -47,6 +47,24 @@ describe('lesson five: verb types four through six', () => {
     })
   })
 
+  it('uses natural and disambiguated Russian prompts', () => {
+    const byId = new Map(
+      verbTypesFourSixExercises.map((exercise) => [exercise.id, exercise]),
+    )
+
+    expect(byId.get('exercise.fi.verb-types.four-six.first.007')?.prompt).toBe(
+      'Я беру взаймы.',
+    )
+    expect(
+      byId.get('exercise.fi.verb-types.four-six.second-now.001')?.prompt,
+    ).toBe('Ты сейчас возвращаешься.')
+    expect(
+      verbTypesFourSixExercises.some((exercise) =>
+        exercise.prompt.startsWith('Поставь '),
+      ),
+    ).toBe(false)
+  })
+
   it('passes the strict lesson readiness gate', () => {
     expect(
       inspectMvpContentReadiness().lessons.find(
