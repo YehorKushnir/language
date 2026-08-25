@@ -313,7 +313,7 @@ const pronouns = [
 ] as const
 
 export const presentCommonContent = {
-  version: 4,
+  version: 5,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
@@ -569,7 +569,7 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.first.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Я ${item.source[0]}.`,
+        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму minä.`,
         targetText,
         acceptedVariants: [targetText, `${capitalize(item.forms[0])}.`],
         slots: [
@@ -587,11 +587,13 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.second-now.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Ты сейчас ${item.source[1]}.`,
+        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму sinä и добавь nyt.`,
         targetText: `Sinä ${item.forms[1]} nyt.`,
         acceptedVariants: [
           `Sinä ${item.forms[1]} nyt.`,
           `${capitalize(item.forms[1])} nyt.`,
+          `Nyt sinä ${item.forms[1]}.`,
+          `Nyt ${item.forms[1]}.`,
         ],
         slots: [
           grammarSlot('subject', ['sinä'], true),
@@ -609,7 +611,7 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.third.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Он или она ${item.source[2]}.`,
+        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму hän.`,
         targetText: `Hän ${item.forms[2]}.`,
         acceptedVariants: [`Hän ${item.forms[2]}.`],
         slots: [
@@ -627,7 +629,7 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.first-plural-now.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Сейчас мы ${item.source[3]}.`,
+        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму me, начав с nyt.`,
         targetText: `Nyt me ${item.forms[3]}.`,
         acceptedVariants: [`Nyt me ${item.forms[3]}.`, `Nyt ${item.forms[3]}.`],
         slots: [
@@ -646,7 +648,7 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.second-plural.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Вы ${item.source[4]}.`,
+        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму te.`,
         targetText: `Te ${item.forms[4]}.`,
         acceptedVariants: [
           `Te ${item.forms[4]}.`,
@@ -667,9 +669,12 @@ function buildExercises(): PreparedExerciseSeed[] {
       exercise({
         id: `exercise.fi.present.common.third-plural-now.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Они сейчас ${item.source[5]}.`,
+        prompt: `Поставь ${item.lemma} («${item.gloss}») в форму he и добавь nyt.`,
         targetText: `He ${item.forms[5]} nyt.`,
-        acceptedVariants: [`He ${item.forms[5]} nyt.`],
+        acceptedVariants: [
+          `He ${item.forms[5]} nyt.`,
+          `Nyt he ${item.forms[5]}.`,
+        ],
         slots: [
           grammarSlot('subject', ['he']),
           vocabularySlot('mainVerb', [item.forms[5]], vocabulary.itemId),

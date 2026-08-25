@@ -44,6 +44,34 @@ describe('lesson two: present tense type one verbs', () => {
     })
   })
 
+  it('names the intended verb instead of asking for an ambiguous translation', () => {
+    const byId = new Map(
+      presentCommonExercises.map((exercise) => [exercise.id, exercise]),
+    )
+
+    expect(byId.get('exercise.fi.present.common.first.001')?.prompt).toBe(
+      'Поставь puhua («говорить») в форму minä.',
+    )
+    expect(byId.get('exercise.fi.present.common.first.004')?.prompt).toBe(
+      'Поставь sanoa («сказать») в форму minä.',
+    )
+    expect(byId.get('exercise.fi.present.common.second-now.001')).toMatchObject(
+      {
+        prompt: 'Поставь käyttää («использовать») в форму sinä и добавь nyt.',
+        acceptedVariants: expect.arrayContaining([
+          'Sinä käytät nyt.',
+          'Käytät nyt.',
+          'Nyt sinä käytät.',
+          'Nyt käytät.',
+        ]),
+      },
+    )
+    expect(
+      byId.get('exercise.fi.present.common.third-plural-now.001')
+        ?.acceptedVariants,
+    ).toEqual(['He puhuvat nyt.', 'Nyt he puhuvat.'])
+  })
+
   it('passes the strict lesson readiness gate', () => {
     const report = inspectMvpContentReadiness()
     expect(

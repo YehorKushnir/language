@@ -263,7 +263,7 @@ const verbs: CuratedPresentVerb[] = [
 ]
 
 export const verbTypesFourSixContent = {
-  version: 4,
+  version: 5,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {

@@ -154,6 +154,8 @@ export function buildPresentVerbExercises(input: {
     acceptedVariants: [
       `Sinä ${item.forms[1]} nyt.`,
       `${capitalize(item.forms[1])} nyt.`,
+      `Nyt sinä ${item.forms[1]}.`,
+      `Nyt ${item.forms[1]}.`,
     ],
     slots: [
       skillSlot('subject', ['sinä'], skillId, true),
@@ -192,7 +194,7 @@ export function buildPresentVerbExercises(input: {
   addGroup(0, 8, 'third-plural-now', ({ item, skillId, vocabulary }) => ({
     prompt: `Поставь ${item.lemma} («${item.gloss}») в форму he и добавь nyt.`,
     targetText: `He ${item.forms[5]} nyt.`,
-    acceptedVariants: [`He ${item.forms[5]} nyt.`],
+    acceptedVariants: [`He ${item.forms[5]} nyt.`, `Nyt he ${item.forms[5]}.`],
     slots: [
       skillSlot('subject', ['he'], skillId),
       vocabularySlot('mainVerb', [item.forms[5]], skillId, vocabulary.itemId),
