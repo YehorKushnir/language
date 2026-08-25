@@ -1,6 +1,7 @@
 import type { PreparedAnswerSpec } from '@language/contracts'
 
-export const EXERCISE_CHECKER_VERSION = 'structured-v4-all-diagnostics-voikko'
+export const EXERCISE_CHECKER_VERSION =
+  'structured-v5-split-lexical-grammar-evidence-voikko'
 
 export function toPreparedAnswerSpec(value: unknown): PreparedAnswerSpec {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {

@@ -460,7 +460,7 @@ test('text-only vocabulary enters review as a flashcard', async ({ page }) => {
 
   await page.goto('/vocabulary')
   await expect(
-    page.getByText(/1 слово в словаре · 1 пора повторить/u),
+    page.getByText(/1 слово · 0 конструкций · 1 пора повторить/u),
   ).toBeVisible()
   await page.getByRole('link', { name: 'Повторить' }).click()
   await expect(
@@ -635,6 +635,60 @@ test('new learner is not sent into an empty review session', async ({
   await expect(
     page.getByRole('button', { name: 'Повторений пока нет' }),
   ).toBeDisabled()
+})
+
+test('a grammar mistake automatically appears in the grammar section', async ({
+  page,
+}) => {
+  await signUpLearner(page, 'Grammar memory learner')
+  const courseResponse = await page.request.get('/api/v1/courses/course.ru-fi')
+  const course = (await courseResponse.json()) as { route: { id: string } }
+  const routeVersionId = course.route.id
+
+  const sessionResponse = await page.request.put(
+    `/api/v1/me/course-progress/${routeVersionId}/lessons/fi.olla.basics/practice-session`,
+  )
+  expect(sessionResponse.ok()).toBe(true)
+  const attemptResponse = await page.request.post(
+    '/api/v1/exercises/exercise.fi.olla.negative.001/attempts',
+    {
+      data: {
+        answer: 'xyz',
+        idempotencyKey: randomUUID(),
+        routeVersionId,
+        durationMs: 100,
+      },
+    },
+  )
+  expect(attemptResponse.ok()).toBe(true)
+  const attempt = (await attemptResponse.json()) as {
+    evidence: Array<{ itemId: string; result: string }>
+  }
+  const failedGrammar = attempt.evidence.find(
+    (item) => item.itemId.startsWith('grammar.') && item.result === 'FAILURE',
+  )
+  expect(failedGrammar).toBeDefined()
+
+  const vocabularyResponse = await page.request.get(
+    `/api/v1/me/vocabulary/${routeVersionId}`,
+  )
+  expect(vocabularyResponse.ok()).toBe(true)
+  const vocabulary = (await vocabularyResponse.json()) as {
+    grammarItems: Array<{ itemId: string; name: { ru: string } }>
+  }
+  const grammarItem = vocabulary.grammarItems.find(
+    (item) => item.itemId === failedGrammar?.itemId,
+  )
+  expect(grammarItem).toBeDefined()
+
+  await page.goto('/vocabulary?section=grammar')
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Мои знания' }),
+  ).toBeVisible()
+  await expect(
+    page.getByText(grammarItem!.name.ru, { exact: true }),
+  ).toBeVisible()
+  await expectAccessible(page)
 })
 
 test('text catalog has no horizontal overflow on a phone', async ({ page }) => {

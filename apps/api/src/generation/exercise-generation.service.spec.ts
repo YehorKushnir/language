@@ -91,7 +91,7 @@ describe('ExerciseGenerationService', () => {
         acceptedVariants: ['Minä olen opiskelija.'],
         slots: [],
       },
-      checkerVersion: 'structured-v4-all-diagnostics-voikko',
+      checkerVersion: 'structured-v5-split-lexical-grammar-evidence-voikko',
       reviewItemIds: ['grammar.affirmative'],
     })
     expect(prisma.exerciseTemplate.findMany).not.toHaveBeenCalled()

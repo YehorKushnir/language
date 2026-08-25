@@ -20,6 +20,7 @@ import {
   nextExerciseQuery,
   practiceExerciseQuery,
   practiceSessionQuery,
+  userVocabularyQuery,
 } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
@@ -170,6 +171,9 @@ function LessonPracticePage() {
     },
     onSuccess: (result) => {
       if (!exercise.data || !practiceSession.data) return
+      void queryClient.invalidateQueries({
+        queryKey: userVocabularyQuery(routeVersionId).queryKey,
+      })
       const updatedSession = appendPracticeAttempt(
         {
           ...practiceSession.data,

@@ -1,4 +1,8 @@
-import { ContentStatus, MemoryState } from '@language/database'
+import {
+  ContentStatus,
+  KnowledgeItemKind,
+  MemoryState,
+} from '@language/database'
 import { NotFoundException } from '@nestjs/common'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -145,6 +149,8 @@ describe('VocabularyService', () => {
           },
         },
       ],
+      grammarCounts: { all: 0, due: 0, new: 0, learning: 0, review: 0 },
+      grammarItems: [],
     })
     expect(prisma.userMemory.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -166,6 +172,76 @@ describe('VocabularyService', () => {
       dueCount: 0,
       counts: { all: 0, due: 0, new: 0, learning: 0, review: 0 },
       items: [],
+      grammarCounts: { all: 0, due: 0, new: 0, learning: 0, review: 0 },
+      grammarItems: [],
+    })
+  })
+
+  it('returns a grammar skill after practice created its memory', async () => {
+    prisma.courseRouteVersion.findUnique.mockResolvedValue({
+      courseId: 'course.ru-fi',
+    })
+    prisma.userMemory.findMany.mockResolvedValue([
+      {
+        userId: 'user.1',
+        itemId: 'grammar.fi.present.common',
+        state: MemoryState.RELEARNING,
+        dueAt: new Date('2020-01-01T00:00:00.000Z'),
+        repetitions: 3,
+        lapses: 2,
+        item: {
+          kind: KnowledgeItemKind.GRAMMAR,
+          lessonItems: [
+            {
+              lesson: {
+                id: 'fi.present.common',
+                title: { ru: 'Настоящее время' },
+              },
+            },
+          ],
+          textItems: [],
+          lexicalSense: null,
+          skill: {
+            name: { ru: 'Настоящее время частых глаголов' },
+            description: {
+              ru: 'Личные формы глагола и согласование с подлежащим.',
+            },
+          },
+        },
+      },
+    ])
+
+    await expect(
+      service.getUserVocabulary('user.1', 'route.1'),
+    ).resolves.toEqual({
+      routeVersionId: 'route.1',
+      totalCount: 1,
+      dueCount: 1,
+      counts: { all: 0, due: 0, new: 0, learning: 0, review: 0 },
+      items: [],
+      grammarCounts: { all: 1, due: 1, new: 0, learning: 1, review: 0 },
+      grammarItems: [
+        {
+          itemId: 'grammar.fi.present.common',
+          kind: KnowledgeItemKind.GRAMMAR,
+          name: { ru: 'Настоящее время частых глаголов' },
+          description: {
+            ru: 'Личные формы глагола и согласование с подлежащим.',
+          },
+          introducedIn: {
+            kind: 'lesson',
+            lessonId: 'fi.present.common',
+            title: { ru: 'Настоящее время' },
+          },
+          memory: {
+            state: MemoryState.RELEARNING,
+            dueAt: '2020-01-01T00:00:00.000Z',
+            isDue: true,
+            repetitions: 3,
+            lapses: 2,
+          },
+        },
+      ],
     })
   })
 

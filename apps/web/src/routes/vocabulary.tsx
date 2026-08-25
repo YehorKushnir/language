@@ -1,5 +1,6 @@
 import type {
   ReviewMemoryState,
+  UserGrammarItemResponse,
   UserVocabularyItemResponse,
 } from '@language/contracts'
 import { useQuery } from '@tanstack/react-query'
@@ -8,6 +9,7 @@ import {
   BookOpenIcon,
   BrainIcon,
   ChevronDownIcon,
+  LanguagesIcon,
   SearchIcon,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -23,6 +25,7 @@ import { Input } from '@/components/ui/input'
 import { localizedText } from '@/lib/localized-text'
 import { cn } from '@/lib/utils'
 import {
+  matchesGrammarSearch,
   matchesVocabularyFilter,
   matchesVocabularySearch,
   type VocabularyFilter,
@@ -43,6 +46,7 @@ export const Route = createFileRoute('/vocabulary')({
         ? search.q.slice(0, 100)
         : undefined,
     filter: isVocabularyFilter(search.filter) ? search.filter : undefined,
+    section: isVocabularySection(search.section) ? search.section : undefined,
   }),
   loader: ({ context }) =>
     preloadCourseRoute(context.queryClient, (routeVersionId, queryClient) =>
@@ -62,7 +66,10 @@ const filters: Array<{ id: VocabularyFilter; label: string }> = [
 interface VocabularySearch {
   q?: string
   filter?: VocabularyFilter
+  section?: VocabularySection
 }
+
+type VocabularySection = 'words' | 'grammar'
 
 const stateLabels: Record<ReviewMemoryState, string> = {
   NEW: 'Новое',
@@ -86,6 +93,7 @@ function VocabularyPage() {
   const navigate = Route.useNavigate()
   const search = searchParams.q ?? ''
   const filter = searchParams.filter ?? 'all'
+  const section = searchParams.section ?? 'words'
   const course = useQuery(courseQuery)
   const routeVersionId = course.data?.route?.id ?? ''
   const vocabulary = useQuery({
@@ -101,6 +109,15 @@ function VocabularyPage() {
       ) ?? [],
     [filter, search, vocabulary.data?.items],
   )
+  const visibleGrammarItems = useMemo(
+    () =>
+      vocabulary.data?.grammarItems.filter(
+        (item) =>
+          matchesGrammarSearch(item, search) &&
+          matchesVocabularyFilter(item, filter),
+      ) ?? [],
+    [filter, search, vocabulary.data?.grammarItems],
+  )
 
   if (course.isPending || vocabulary.isPending) return <PageState loading />
   if (course.isError || vocabulary.isError) {
@@ -108,16 +125,20 @@ function VocabularyPage() {
   }
 
   const firstLessonId = course.data.route?.lessons[0]?.id
-  const hasWords = vocabulary.data.counts.all > 0
+  const activeCounts =
+    section === 'words' ? vocabulary.data.counts : vocabulary.data.grammarCounts
+  const hasItems = activeCounts.all > 0
+  const visibleCount =
+    section === 'words' ? visibleItems.length : visibleGrammarItems.length
 
   return (
     <PageShell>
       <LearningPageHeader
-        eyebrow="Слова и повторение"
-        title="Мои слова"
-        description={`${formatWordCount(vocabulary.data.counts.all)} в словаре · ${formatDueCount(vocabulary.data.counts.due)}`}
+        eyebrow="Слова, грамматика и повторение"
+        title="Мои знания"
+        description={`${formatWordCount(vocabulary.data.counts.all)} · ${formatGrammarCount(vocabulary.data.grammarCounts.all)} · ${formatDueCount(vocabulary.data.dueCount)}`}
         aside={
-          vocabulary.data.counts.due > 0 ? (
+          vocabulary.data.dueCount > 0 ? (
             <Button asChild className="w-full" size="sm">
               <Link to="/reviews/session">
                 <BrainIcon /> Повторить
@@ -131,13 +152,57 @@ function VocabularyPage() {
         }
       />
 
+      <nav
+        className="mt-5 flex w-fit rounded-lg border bg-muted/25 p-1"
+        aria-label="Раздел словаря"
+      >
+        <Button
+          size="sm"
+          variant={section === 'words' ? 'secondary' : 'ghost'}
+          aria-current={section === 'words' ? 'page' : undefined}
+          onClick={() => {
+            void navigate({
+              replace: true,
+              search: (current) => ({ ...current, section: undefined }),
+            })
+          }}
+        >
+          <LanguagesIcon /> Слова
+          <span className="tabular-nums text-muted-foreground">
+            {vocabulary.data.counts.all}
+          </span>
+        </Button>
+        <Button
+          size="sm"
+          variant={section === 'grammar' ? 'secondary' : 'ghost'}
+          aria-current={section === 'grammar' ? 'page' : undefined}
+          onClick={() => {
+            void navigate({
+              replace: true,
+              search: (current) => ({ ...current, section: 'grammar' }),
+            })
+          }}
+        >
+          <BookOpenIcon /> Грамматика
+          <span className="tabular-nums text-muted-foreground">
+            {vocabulary.data.grammarCounts.all}
+          </span>
+        </Button>
+      </nav>
+
       <section className="mt-5" aria-label="Поиск и фильтры словаря">
         <div className="relative max-w-md">
           <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            aria-label="Поиск по слову или переводу"
+            aria-label={
+              section === 'words'
+                ? 'Поиск по слову или переводу'
+                : 'Поиск по грамматике'
+            }
             className="pl-9"
-            placeholder="Слово или перевод"
+            placeholder={
+              section === 'words' ? 'Слово или перевод' : 'Конструкция или тема'
+            }
             value={search}
             onChange={(event) => {
               const q = event.target.value
@@ -171,22 +236,27 @@ function VocabularyPage() {
             >
               {item.label}
               <span className="tabular-nums text-muted-foreground">
-                {vocabulary.data.counts[item.id]}
+                {activeCounts[item.id]}
               </span>
             </Button>
           ))}
         </div>
       </section>
 
-      {!hasWords ? (
+      {!hasItems ? (
         <section className="motion-feedback mt-6 rounded-lg border border-dashed p-5">
           <BookOpenIcon className="size-5 text-primary" />
-          <h2 className="mt-3 text-sm font-semibold">Словарь пока пуст</h2>
+          <h2 className="mt-3 text-sm font-semibold">
+            {section === 'words'
+              ? 'Список слов пока пуст'
+              : 'Список грамматики пока пуст'}
+          </h2>
           <p className="mt-1 max-w-lg text-sm leading-6 text-muted-foreground">
-            Здесь появятся только слова, которые ты начал учить в уроках или
-            добавил во время чтения.
+            {section === 'words'
+              ? 'Здесь появятся слова, которые ты начал учить в уроках или добавил во время чтения.'
+              : 'Здесь появятся грамматические конструкции и навыки, встреченные в практике. Ошибка автоматически добавит нужную тему в повторение.'}
           </p>
-          {firstLessonId ? (
+          {firstLessonId && section === 'words' ? (
             <Button asChild className="mt-4" size="sm" variant="outline">
               <Link
                 to="/lessons/$lessonId/vocabulary"
@@ -197,15 +267,17 @@ function VocabularyPage() {
             </Button>
           ) : null}
         </section>
-      ) : visibleItems.length === 0 ? (
+      ) : visibleCount === 0 ? (
         <section className="motion-feedback mt-6 rounded-lg border border-dashed p-5">
           <h2 className="text-sm font-semibold">Ничего не найдено</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Измени запрос или выбери другой фильтр.
           </p>
         </section>
-      ) : (
+      ) : section === 'words' ? (
         <VocabularyList items={visibleItems} />
+      ) : (
+        <GrammarList items={visibleGrammarItems} />
       )}
     </PageShell>
   )
@@ -213,6 +285,10 @@ function VocabularyPage() {
 
 function isVocabularyFilter(value: unknown): value is VocabularyFilter {
   return filters.some((filter) => filter.id === value)
+}
+
+function isVocabularySection(value: unknown): value is VocabularySection {
+  return value === 'words' || value === 'grammar'
 }
 
 function VocabularyList({ items }: { items: UserVocabularyItemResponse[] }) {
@@ -277,6 +353,55 @@ function VocabularyList({ items }: { items: UserVocabularyItemResponse[] }) {
             </li>
           )
         })}
+      </ul>
+    </section>
+  )
+}
+
+const grammarKindLabels: Record<UserGrammarItemResponse['kind'], string> = {
+  GRAMMAR: 'Грамматика',
+  SPECIFIC_SKILL: 'Навык',
+  REGISTER: 'Регистр',
+}
+
+function GrammarList({ items }: { items: UserGrammarItemResponse[] }) {
+  return (
+    <section className="mt-5 overflow-hidden rounded-lg border bg-card">
+      <div className="hidden grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] gap-5 bg-muted/35 px-4 py-2 text-xs font-medium text-muted-foreground sm:grid">
+        <span>Конструкция</span>
+        <span>Что нужно знать</span>
+        <span>Статус</span>
+      </div>
+      <ul>
+        {items.map((item) => (
+          <li
+            key={item.itemId}
+            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] sm:gap-5"
+          >
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold sm:text-base">
+                {localizedText(item.name)}
+              </h2>
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {grammarKindLabels[item.kind]} ·{' '}
+                {localizedText(item.introducedIn.title)}
+              </p>
+            </div>
+            <p className="text-sm leading-6 text-muted-foreground max-sm:col-span-2 max-sm:row-start-2">
+              {item.description
+                ? localizedText(item.description)
+                : 'Описание появится в материале урока.'}
+            </p>
+            <span className="flex items-center justify-end">
+              <Badge
+                className={stateClasses[item.memory.state]}
+                variant="outline"
+              >
+                {stateLabels[item.memory.state]}
+              </Badge>
+            </span>
+          </li>
+        ))}
       </ul>
     </section>
   )
@@ -479,6 +604,18 @@ function formatWordCount(count: number) {
       : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
         ? 'слова'
         : 'слов'
+  return `${count} ${ending}`
+}
+
+function formatGrammarCount(count: number) {
+  const mod10 = count % 10
+  const mod100 = count % 100
+  const ending =
+    mod10 === 1 && mod100 !== 11
+      ? 'конструкция'
+      : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+        ? 'конструкции'
+        : 'конструкций'
   return `${count} ${ending}`
 }
 

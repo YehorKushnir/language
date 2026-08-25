@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  alignStructuredAnswerSlots,
   checkExactAnswer,
   checkStructuredAnswer,
   checkStructuredAnswerItems,
@@ -391,6 +392,68 @@ describe('structured answer checker', () => {
 })
 
 describe('structured item evidence', () => {
+  it('exposes the token aligned to a combined lexical and grammar slot', () => {
+    expect(
+      alignStructuredAnswerSlots('Puhut.', {
+        acceptedVariants: ['Puhun.'],
+        slots: [
+          {
+            role: 'verb',
+            accepted: ['puhun'],
+            itemIds: ['grammar.fi.present.common', 'word.fi.puhua'],
+          },
+        ],
+      }),
+    ).toEqual({
+      isExact: false,
+      hasWordOrderError: false,
+      slots: [
+        {
+          role: 'verb',
+          accepted: ['puhun'],
+          itemIds: ['grammar.fi.present.common', 'word.fi.puhua'],
+          result: 'SUBSTITUTE',
+          actual: 'puhut',
+        },
+      ],
+      extraTokens: [],
+    })
+  })
+
+  it('keeps lexical slots matched while reporting word order separately', () => {
+    expect(
+      alignStructuredAnswerSlots('Opiskelija hän on.', {
+        ...itemAwareNegativeAnswerSpec,
+        acceptedVariants: ['Hän on opiskelija.'],
+        slots: [
+          {
+            role: 'subject',
+            accepted: ['hän'],
+            itemIds: ['grammar.fi.olla.affirmative'],
+          },
+          {
+            role: 'verb',
+            accepted: ['on'],
+            itemIds: ['grammar.fi.olla.affirmative'],
+          },
+          {
+            role: 'complement',
+            accepted: ['opiskelija'],
+            itemIds: ['word.fi.opiskelija'],
+          },
+        ],
+      }),
+    ).toMatchObject({
+      isExact: false,
+      hasWordOrderError: true,
+      slots: [
+        { role: 'subject', result: 'MATCH' },
+        { role: 'verb', result: 'MATCH' },
+        { role: 'complement', result: 'MATCH' },
+      ],
+    })
+  })
+
   it('ignores an omitted optional subject but scores the wrong verb form', () => {
     expect(
       checkStructuredAnswerItems(

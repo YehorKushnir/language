@@ -85,7 +85,7 @@ describe('ReviewQueueService', () => {
           acceptedVariants: ['Ensisijainen vastaus.'],
           slots: [],
         },
-        checkerVersion: 'structured-v4-all-diagnostics-voikko',
+        checkerVersion: 'structured-v5-split-lexical-grammar-evidence-voikko',
         reviewItemIds: ['grammar.early', 'word.later'],
       },
       flashcard: null,

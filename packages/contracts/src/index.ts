@@ -328,6 +328,31 @@ export interface UserVocabularyItemResponse extends LessonVocabularyItemResponse
   }
 }
 
+export interface UserGrammarItemResponse {
+  itemId: string
+  kind: Exclude<KnowledgeItemKind, 'LEXICAL_SENSE'>
+  name: LocalizedText
+  description: LocalizedText | null
+  introducedIn:
+    | {
+        kind: 'lesson'
+        lessonId: string
+        title: LocalizedText
+      }
+    | {
+        kind: 'text'
+        textId: string
+        title: LocalizedText
+      }
+  memory: {
+    state: ReviewMemoryState
+    dueAt: string | null
+    isDue: boolean
+    repetitions: number
+    lapses: number
+  }
+}
+
 export interface UserVocabularyResponse {
   routeVersionId: string
   totalCount: number
@@ -340,6 +365,14 @@ export interface UserVocabularyResponse {
     review: number
   }
   items: UserVocabularyItemResponse[]
+  grammarCounts: {
+    all: number
+    due: number
+    new: number
+    learning: number
+    review: number
+  }
+  grammarItems: UserGrammarItemResponse[]
 }
 
 export interface PreparedTextSummaryResponse {

@@ -12,12 +12,13 @@ import {
   EvidenceResult,
   ExerciseItemRole,
   ExerciseKind,
+  KnowledgeItemKind,
   MemoryState,
   Prisma,
 } from '@language/database'
 import {
+  alignStructuredAnswerSlots,
   checkStructuredAnswer,
-  checkStructuredAnswerItems,
   scheduleReview,
   type StructuredAnswerDiagnostic,
   type StructuredAnswerSlot,
@@ -180,7 +181,9 @@ export class ExercisesService {
         },
       },
       include: {
-        items: true,
+        items: {
+          include: { item: { select: { kind: true } } },
+        },
         generated: { select: { generatorVersion: true } },
       },
     })
@@ -215,11 +218,26 @@ export class ExercisesService {
 
     const answerSpec = toStoredAnswerSpec(exercise.answerSpec)
     const check = checkStructuredAnswer(request.answer, answerSpec)
-    const resultByItem = new Map(
-      checkStructuredAnswerItems(request.answer, answerSpec).map((result) => [
-        result.itemId,
-        result.isCorrect,
-      ]),
+    const comparisonCache = new Map<
+      string,
+      Promise<FinnishFormComparison | undefined>
+    >()
+    const compareForms = (actual: string, expected: string[]) => {
+      const key = `${actual}\u0000${expected.join('\u0000')}`
+      const cached = comparisonCache.get(key)
+      if (cached) return cached
+      const comparison = this.morphology.compareForms(actual, expected)
+      comparisonCache.set(key, comparison)
+      return comparison
+    }
+    const resultByItem = await evaluateStructuredEvidence(
+      request.answer,
+      answerSpec,
+      exercise.items.map((item) => ({
+        itemId: item.itemId,
+        kind: item.item.kind,
+      })),
+      compareForms,
     )
     const outcome = check.isCorrect
       ? AttemptOutcome.CORRECT
@@ -230,10 +248,7 @@ export class ExercisesService {
           (diagnostic.code === 'TYPO' || diagnostic.code === 'WRONG_FORM') &&
           diagnostic.actual &&
           diagnostic.expected?.length
-            ? await this.morphology.compareForms(
-                diagnostic.actual,
-                diagnostic.expected,
-              )
+            ? await compareForms(diagnostic.actual, diagnostic.expected)
             : undefined
         return toAttemptDiagnostic(diagnostic, comparison)
       }),
@@ -244,15 +259,21 @@ export class ExercisesService {
       result:
         item.role === ExerciseItemRole.CONTEXT
           ? EvidenceResult.IGNORED
-          : (resultByItem.get(item.itemId) ?? check.isCorrect)
-            ? EvidenceResult.SUCCESS
-            : EvidenceResult.FAILURE,
+          : (resultByItem.get(item.itemId) ??
+            (check.isCorrect
+              ? EvidenceResult.SUCCESS
+              : EvidenceResult.FAILURE)),
       score:
         item.role === ExerciseItemRole.CONTEXT
           ? null
-          : (resultByItem.get(item.itemId) ?? check.isCorrect)
+          : (resultByItem.get(item.itemId) ??
+                (check.isCorrect
+                  ? EvidenceResult.SUCCESS
+                  : EvidenceResult.FAILURE)) === EvidenceResult.SUCCESS
             ? 1
-            : 0,
+            : resultByItem.get(item.itemId) === EvidenceResult.IGNORED
+              ? null
+              : 0,
     }))
     const now = new Date()
 
@@ -435,6 +456,121 @@ export class ExercisesService {
 
 function toStoredAnswerSpec(value: unknown): StoredAnswerSpec {
   return toPreparedAnswerSpec(value)
+}
+
+async function evaluateStructuredEvidence(
+  answer: string,
+  spec: StoredAnswerSpec,
+  items: Array<{ itemId: string; kind: KnowledgeItemKind }>,
+  compareForms: (
+    actual: string,
+    expected: string[],
+  ) => Promise<FinnishFormComparison | undefined>,
+): Promise<Map<string, EvidenceResult>> {
+  const alignment = alignStructuredAnswerSlots(answer, spec)
+  if (alignment.isExact) {
+    return new Map(
+      items.map((item) => [item.itemId, EvidenceResult.SUCCESS] as const),
+    )
+  }
+
+  const kindByItem = new Map(items.map((item) => [item.itemId, item.kind]))
+  const resultsByItem = new Map<string, EvidenceResult[]>()
+  const record = (itemId: string, result: EvidenceResult) => {
+    const results = resultsByItem.get(itemId) ?? []
+    results.push(result)
+    resultsByItem.set(itemId, results)
+  }
+
+  for (const slot of alignment.slots) {
+    const comparison =
+      slot.result === 'SUBSTITUTE' && slot.actual
+        ? await compareForms(slot.actual, slot.accepted)
+        : undefined
+
+    for (const itemId of slot.itemIds) {
+      const kind = kindByItem.get(itemId)
+      if (!kind) continue
+      record(
+        itemId,
+        kind === KnowledgeItemKind.LEXICAL_SENSE
+          ? lexicalEvidenceForSlot(slot.result, comparison)
+          : grammarEvidenceForSlot(slot.result, comparison),
+      )
+    }
+  }
+
+  if (alignment.hasWordOrderError || alignment.extraTokens.length > 0) {
+    for (const item of items) {
+      if (
+        item.kind !== KnowledgeItemKind.LEXICAL_SENSE &&
+        resultsByItem.has(item.itemId)
+      ) {
+        record(item.itemId, EvidenceResult.FAILURE)
+      }
+    }
+  }
+
+  return new Map(
+    items.flatMap((item) => {
+      const results = resultsByItem.get(item.itemId)
+      if (!results || results.length === 0) return []
+      return [[item.itemId, combineEvidenceResults(results)] as const]
+    }),
+  )
+}
+
+function lexicalEvidenceForSlot(
+  result: 'MATCH' | 'SUBSTITUTE' | 'MISSING',
+  comparison: FinnishFormComparison | undefined,
+): EvidenceResult {
+  if (result === 'MATCH') return EvidenceResult.SUCCESS
+  if (result === 'MISSING') return EvidenceResult.FAILURE
+  return comparison?.relation === 'sameLemma'
+    ? EvidenceResult.SUCCESS
+    : EvidenceResult.FAILURE
+}
+
+function grammarEvidenceForSlot(
+  result: 'MATCH' | 'SUBSTITUTE' | 'MISSING',
+  comparison: FinnishFormComparison | undefined,
+): EvidenceResult {
+  if (result === 'MATCH') return EvidenceResult.SUCCESS
+  if (result === 'MISSING') return EvidenceResult.FAILURE
+  if (!comparison) return EvidenceResult.FAILURE
+  if (comparison.relation === 'sameLemma') return EvidenceResult.FAILURE
+  if (comparison.relation === 'differentLemma') {
+    return hasSameMorphologicalShape(comparison)
+      ? EvidenceResult.SUCCESS
+      : EvidenceResult.FAILURE
+  }
+  return EvidenceResult.IGNORED
+}
+
+function hasSameMorphologicalShape(comparison: FinnishFormComparison) {
+  const actual = comparison.actualAnalysis
+  const expected = comparison.expectedAnalysis
+  if (!actual || !expected || actual.partOfSpeech !== expected.partOfSpeech) {
+    return false
+  }
+
+  const featureNames = new Set([
+    ...Object.keys(actual.features),
+    ...Object.keys(expected.features),
+  ])
+  return [...featureNames].every(
+    (feature) =>
+      actual.features[feature as keyof typeof actual.features] ===
+      expected.features[feature as keyof typeof expected.features],
+  )
+}
+
+function combineEvidenceResults(results: EvidenceResult[]): EvidenceResult {
+  if (results.includes(EvidenceResult.FAILURE)) return EvidenceResult.FAILURE
+  if (results.every((result) => result === EvidenceResult.SUCCESS)) {
+    return EvidenceResult.SUCCESS
+  }
+  return EvidenceResult.IGNORED
 }
 
 function toAttemptDiagnostic(

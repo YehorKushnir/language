@@ -44,6 +44,24 @@ export interface StructuredAnswerItemResult {
   isCorrect: boolean
 }
 
+export type StructuredAnswerSlotEvidenceResult =
+  'MATCH' | 'SUBSTITUTE' | 'MISSING'
+
+export interface StructuredAnswerSlotEvidence {
+  role: string
+  accepted: string[]
+  itemIds: string[]
+  result: StructuredAnswerSlotEvidenceResult
+  actual?: string
+}
+
+export interface StructuredAnswerAlignment {
+  isExact: boolean
+  hasWordOrderError: boolean
+  slots: StructuredAnswerSlotEvidence[]
+  extraTokens: string[]
+}
+
 interface NormalizedAnswerSlot extends StructuredAnswerSlot {
   accepted: string[]
 }
@@ -242,23 +260,16 @@ export function checkStructuredAnswerItems(
   const itemIds = [...new Set(spec.slots.flatMap((slot) => slot.itemIds ?? []))]
   if (itemIds.length === 0) return []
 
-  if (checkExactAnswer(answer, spec).isCorrect) {
+  const alignment = alignStructuredAnswerSlots(answer, spec)
+  if (alignment.isExact) {
     return itemIds.map((itemId) => ({ itemId, isCorrect: true }))
   }
 
-  const actualTokens = tokenizeNormalizedAnswer(normalizeExactAnswer(answer))
-  const slots = selectBestSlotSequence(normalizeSlots(spec.slots), actualTokens)
-  const unmatchedTokens = [...actualTokens]
   const resultByItem = new Map(itemIds.map((itemId) => [itemId, true]))
 
-  for (const slot of slots) {
-    const tokenIndex = unmatchedTokens.findIndex((token) =>
-      slot.accepted.includes(token),
-    )
-    const slotMatches = tokenIndex >= 0
-    if (slotMatches) unmatchedTokens.splice(tokenIndex, 1)
-
-    for (const itemId of slot.itemIds ?? []) {
+  for (const slot of alignment.slots) {
+    const slotMatches = slot.result === 'MATCH'
+    for (const itemId of slot.itemIds) {
       resultByItem.set(itemId, Boolean(resultByItem.get(itemId)) && slotMatches)
     }
   }
@@ -266,6 +277,83 @@ export function checkStructuredAnswerItems(
   return [...resultByItem].map(([itemId, isCorrect]) => ({
     itemId,
     isCorrect,
+  }))
+}
+
+export function alignStructuredAnswerSlots(
+  answer: string,
+  spec: StructuredAnswerSpec,
+): StructuredAnswerAlignment {
+  const actualTokens = tokenizeNormalizedAnswer(normalizeExactAnswer(answer))
+  const expectedSlots = normalizeSlots(spec.slots)
+  const candidates = expandOptionalSlots(expectedSlots)
+  const exactCandidate = candidates.find(
+    (slots) =>
+      slots.length === actualTokens.length &&
+      slots.every((slot, index) =>
+        slot.accepted.includes(actualTokens[index]!),
+      ),
+  )
+
+  if (checkExactAnswer(answer, spec).isCorrect || exactCandidate) {
+    return {
+      isExact: true,
+      hasWordOrderError: false,
+      slots: toMatchedSlotEvidence(exactCandidate ?? expectedSlots),
+      extraTokens: [],
+    }
+  }
+
+  const wordOrderCandidate = candidates.find((slots) =>
+    tokensMatchWithoutOrder(slots, actualTokens),
+  )
+  if (wordOrderCandidate) {
+    return {
+      isExact: false,
+      hasWordOrderError: true,
+      slots: toMatchedSlotEvidence(wordOrderCandidate),
+      extraTokens: [],
+    }
+  }
+
+  const selectedSlots = selectBestSlotSequence(expectedSlots, actualTokens)
+  const alignment = alignSlots(selectedSlots, actualTokens)
+  return {
+    isExact: false,
+    hasWordOrderError: false,
+    slots: alignment.operations.flatMap((operation) => {
+      if (operation.type === 'extra') return []
+      return [
+        {
+          role: operation.slot.role,
+          accepted: operation.slot.accepted,
+          itemIds: operation.slot.itemIds ?? [],
+          result:
+            operation.type === 'match'
+              ? ('MATCH' as const)
+              : operation.type === 'substitute'
+                ? ('SUBSTITUTE' as const)
+                : ('MISSING' as const),
+          ...(operation.type === 'match' || operation.type === 'substitute'
+            ? { actual: operation.token }
+            : {}),
+        },
+      ]
+    }),
+    extraTokens: alignment.operations.flatMap((operation) =>
+      operation.type === 'extra' ? [operation.token] : [],
+    ),
+  }
+}
+
+function toMatchedSlotEvidence(
+  slots: NormalizedAnswerSlot[],
+): StructuredAnswerSlotEvidence[] {
+  return slots.map((slot) => ({
+    role: slot.role,
+    accepted: slot.accepted,
+    itemIds: slot.itemIds ?? [],
+    result: 'MATCH',
   }))
 }
 

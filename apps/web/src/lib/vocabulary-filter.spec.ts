@@ -1,7 +1,11 @@
-import type { UserVocabularyItemResponse } from '@language/contracts'
+import type {
+  UserGrammarItemResponse,
+  UserVocabularyItemResponse,
+} from '@language/contracts'
 import { describe, expect, it } from 'vitest'
 
 import {
+  matchesGrammarSearch,
   matchesVocabularyFilter,
   matchesVocabularySearch,
 } from './vocabulary-filter'
@@ -36,6 +40,25 @@ const item: UserVocabularyItemResponse = {
   },
 }
 
+const grammarItem: UserGrammarItemResponse = {
+  itemId: 'grammar.fi.present.common',
+  kind: 'GRAMMAR',
+  name: { ru: 'Настоящее время частых глаголов' },
+  description: { ru: 'Личные формы и согласование с подлежащим.' },
+  introducedIn: {
+    kind: 'lesson',
+    lessonId: 'lesson.2',
+    title: { ru: 'Глаголы первого типа' },
+  },
+  memory: {
+    state: 'RELEARNING',
+    dueAt: '2026-08-23T00:00:00.000Z',
+    isDue: true,
+    repetitions: 1,
+    lapses: 1,
+  },
+}
+
 describe('vocabulary filters', () => {
   it('searches only the lemma and translation', () => {
     expect(matchesVocabularySearch(item, 'opisk')).toBe(true)
@@ -48,5 +71,13 @@ describe('vocabulary filters', () => {
     expect(matchesVocabularyFilter(item, 'learning')).toBe(true)
     expect(matchesVocabularyFilter(item, 'due')).toBe(true)
     expect(matchesVocabularyFilter(item, 'review')).toBe(false)
+  })
+
+  it('searches grammar by its name, description, and lesson', () => {
+    expect(matchesGrammarSearch(grammarItem, 'настоящее')).toBe(true)
+    expect(matchesGrammarSearch(grammarItem, 'согласование')).toBe(true)
+    expect(matchesGrammarSearch(grammarItem, 'первого типа')).toBe(true)
+    expect(matchesGrammarSearch(grammarItem, 'партитив')).toBe(false)
+    expect(matchesVocabularyFilter(grammarItem, 'learning')).toBe(true)
   })
 })

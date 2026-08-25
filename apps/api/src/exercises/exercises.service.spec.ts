@@ -2,6 +2,7 @@ import {
   AttemptOutcome,
   EvidenceResult,
   ExerciseItemRole,
+  KnowledgeItemKind,
 } from '@language/database'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -65,10 +66,12 @@ describe('ExercisesService morphology diagnostics', () => {
         {
           itemId: 'grammar.fi.olla',
           role: ExerciseItemRole.PRIMARY,
+          item: { kind: KnowledgeItemKind.GRAMMAR },
         },
         {
           itemId: 'word.fi.opiskelija',
           role: ExerciseItemRole.SECONDARY,
+          item: { kind: KnowledgeItemKind.LEXICAL_SENSE },
         },
       ],
     })
@@ -159,10 +162,162 @@ describe('ExercisesService morphology diagnostics', () => {
     expect(transaction.userAttempt.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          checkerVersion: 'structured-v4-all-diagnostics-voikko',
+          checkerVersion: 'structured-v5-split-lexical-grammar-evidence-voikko',
         }),
       }),
     )
+  })
+
+  it('keeps the word successful when only its grammatical form is wrong', async () => {
+    prisma.exercise.findFirst.mockResolvedValue({
+      id: 'exercise.1',
+      lessonId: 'lesson.1',
+      answerSpec: {
+        acceptedVariants: ['Puhun'],
+        slots: [
+          {
+            role: 'verb',
+            accepted: ['puhun'],
+            itemIds: ['grammar.fi.present.common', 'word.fi.puhua'],
+          },
+        ],
+      },
+      items: [
+        {
+          itemId: 'grammar.fi.present.common',
+          role: ExerciseItemRole.PRIMARY,
+          item: { kind: KnowledgeItemKind.GRAMMAR },
+        },
+        {
+          itemId: 'word.fi.puhua',
+          role: ExerciseItemRole.SECONDARY,
+          item: { kind: KnowledgeItemKind.LEXICAL_SENSE },
+        },
+      ],
+    })
+    morphology.compareForms.mockResolvedValue({
+      relation: 'sameLemma',
+      actual: 'puhut',
+      expected: 'puhun',
+      actualAnalysis: {
+        lemma: 'puhua',
+        partOfSpeech: 'verb',
+        features: { person: 'second', number: 'singular' },
+        raw: {},
+      },
+      expectedAnalysis: {
+        lemma: 'puhua',
+        partOfSpeech: 'verb',
+        features: { person: 'first', number: 'singular' },
+        raw: {},
+      },
+      differences: [{ feature: 'person', actual: 'second', expected: 'first' }],
+      suggestions: [],
+    })
+
+    const result = await service.submitAttempt('user.1', 'exercise.1', {
+      answer: 'Puhut',
+      idempotencyKey: '00000000-0000-4000-8000-000000000005',
+      routeVersionId: 'route.1',
+    })
+
+    expect(result.evidence).toEqual([
+      {
+        itemId: 'grammar.fi.present.common',
+        role: ExerciseItemRole.PRIMARY,
+        result: EvidenceResult.FAILURE,
+      },
+      {
+        itemId: 'word.fi.puhua',
+        role: ExerciseItemRole.SECONDARY,
+        result: EvidenceResult.SUCCESS,
+      },
+    ])
+    expect(transaction.userMemory.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          userId_itemId: {
+            userId: 'user.1',
+            itemId: 'grammar.fi.present.common',
+          },
+        },
+      }),
+    )
+  })
+
+  it('credits grammar when a different word demonstrates the requested form', async () => {
+    prisma.exercise.findFirst.mockResolvedValue({
+      id: 'exercise.1',
+      lessonId: 'lesson.1',
+      answerSpec: {
+        acceptedVariants: ['Puhun'],
+        slots: [
+          {
+            role: 'verb',
+            accepted: ['puhun'],
+            itemIds: ['grammar.fi.present.common', 'word.fi.puhua'],
+          },
+        ],
+      },
+      items: [
+        {
+          itemId: 'grammar.fi.present.common',
+          role: ExerciseItemRole.PRIMARY,
+          item: { kind: KnowledgeItemKind.GRAMMAR },
+        },
+        {
+          itemId: 'word.fi.puhua',
+          role: ExerciseItemRole.SECONDARY,
+          item: { kind: KnowledgeItemKind.LEXICAL_SENSE },
+        },
+      ],
+    })
+    morphology.compareForms.mockResolvedValue({
+      relation: 'differentLemma',
+      actual: 'sanon',
+      expected: 'puhun',
+      actualAnalysis: {
+        lemma: 'sanoa',
+        partOfSpeech: 'verb',
+        features: {
+          person: 'first',
+          number: 'singular',
+          tense: 'present',
+        },
+        raw: {},
+      },
+      expectedAnalysis: {
+        lemma: 'puhua',
+        partOfSpeech: 'verb',
+        features: {
+          person: 'first',
+          number: 'singular',
+          tense: 'present',
+        },
+        raw: {},
+      },
+      differences: [],
+      suggestions: [],
+    })
+
+    const result = await service.submitAttempt('user.1', 'exercise.1', {
+      answer: 'Sanon',
+      idempotencyKey: '00000000-0000-4000-8000-000000000006',
+      routeVersionId: 'route.1',
+    })
+
+    expect(result.evidence).toEqual([
+      {
+        itemId: 'grammar.fi.present.common',
+        role: ExerciseItemRole.PRIMARY,
+        result: EvidenceResult.SUCCESS,
+      },
+      {
+        itemId: 'word.fi.puhua',
+        role: ExerciseItemRole.SECONDARY,
+        result: EvidenceResult.FAILURE,
+      },
+    ])
   })
 
   it('keeps the curated mixed exercise order ahead of attempt history', async () => {
@@ -202,7 +357,7 @@ describe('ExercisesService morphology diagnostics', () => {
         acceptedVariants: ['Ensimmäinen vastaus.'],
         slots: [],
       },
-      checkerVersion: 'structured-v4-all-diagnostics-voikko',
+      checkerVersion: 'structured-v5-split-lexical-grammar-evidence-voikko',
     })
   })
 
