@@ -53,6 +53,25 @@ write_value() {
   mv "$temporary" "$ENV_FILE"
 }
 
+prune_old_release_images() {
+  image_repo=$(read_value IMAGE_REPO)
+  for component in api web; do
+    docker image ls --format '{{.Repository}} {{.Tag}}' "$image_repo/$component" |
+      while read -r repository tag; do
+        case "$tag" in
+          "" | *[!0-9a-f]*) continue ;;
+        esac
+        [ "${#tag}" -eq 40 ] || continue
+        [ "$tag" = "$NEW_TAG" ] && continue
+        [ "$tag" = "$PREVIOUS_TAG" ] && continue
+
+        printf 'Removing old release image %s:%s.\n' "$repository" "$tag"
+        docker image rm "$repository:$tag" > /dev/null || true
+      done
+  done
+  docker image prune --force > /dev/null
+}
+
 compose() {
   IMAGE_TAG=$ACTIVE_TAG docker compose \
     --env-file "$ENV_FILE" \
@@ -144,6 +163,6 @@ docker exec framed-caddy-1 wget --quiet --tries=1 --spider \
 
 write_value IMAGE_TAG "$NEW_TAG"
 trap - EXIT HUP INT TERM
-docker image prune --force > /dev/null
+prune_old_release_images
 
 printf 'Morpho Learning deployed at image tag %s.\n' "$NEW_TAG"
