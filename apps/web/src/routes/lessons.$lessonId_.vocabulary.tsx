@@ -202,7 +202,7 @@ function LessonVocabularyPage() {
         <header className="flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-              Flashcards
+              Карточки
             </p>
             <h2 className="mt-1 font-serif text-2xl font-semibold">
               Карточка {cardIndex + 1} из {items.length}

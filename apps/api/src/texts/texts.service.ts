@@ -127,11 +127,13 @@ export class TextsService {
       }),
     ])
     const values = texts as TextWithTokens[]
-    const summaries = values.map((text) => this.toSummary(text))
     const unlockedItemIds = new Set(
       completedLessons.flatMap((progress) =>
         progress.lesson.knowledgeItems.map((item) => item.itemId),
       ),
+    )
+    const summaries = values.map((text) =>
+      this.toSummary(text, isTextGrammarReady(text, unlockedItemIds)),
     )
 
     return {
@@ -151,20 +153,37 @@ export class TextsService {
     textId: string,
   ): Promise<PreparedTextDetailResponse> {
     const route = await this.getRoute(routeVersionId)
-    const text = await this.prisma.text.findFirst({
-      where: {
-        id: textId,
-        courseId: route.courseId,
-        status: ContentStatus.CURATED,
-      },
-      include: textInclude(userId),
-    })
+    const [text, completedLessons] = await Promise.all([
+      this.prisma.text.findFirst({
+        where: {
+          id: textId,
+          courseId: route.courseId,
+          status: ContentStatus.CURATED,
+        },
+        include: textInclude(userId),
+      }),
+      this.prisma.userLessonProgress.findMany({
+        where: { userId, routeVersionId, completedAt: { not: null } },
+        include: {
+          lesson: {
+            include: {
+              knowledgeItems: { select: { itemId: true } },
+            },
+          },
+        },
+      }),
+    ])
 
     if (!text) {
       throw new NotFoundException(`Text ${textId} was not found`)
     }
 
     const value = text as TextWithTokens
+    const unlockedItemIds = new Set(
+      completedLessons.flatMap((progress) =>
+        progress.lesson.knowledgeItems.map((item) => item.itemId),
+      ),
+    )
     const morphology = await this.morphology.analyzeText(value.body)
     const analysesByRange = new Map(
       morphology.tokens.map((token) => [
@@ -173,7 +192,7 @@ export class TextsService {
       ]),
     )
     return {
-      ...this.toSummary(value),
+      ...this.toSummary(value, isTextGrammarReady(value, unlockedItemIds)),
       body: value.body,
       tokens: value.tokens.map((token) =>
         this.toToken(
@@ -199,7 +218,10 @@ export class TextsService {
     return route
   }
 
-  private toSummary(text: TextWithTokens): PreparedTextSummaryResponse {
+  private toSummary(
+    text: TextWithTokens,
+    isGrammarReady: boolean,
+  ): PreparedTextSummaryResponse {
     const linkedTokens = text.tokens.filter((token) => token.lexicalSense)
     const knownWordCount = linkedTokens.filter(
       (token) =>
@@ -224,6 +246,7 @@ export class TextsService {
         text.tokens.length === 0
           ? 0
           : Math.round((knownWordCount / text.tokens.length) * 100),
+      isGrammarReady,
       audioUrl: this.media.resolve(text.audioAsset?.storageKey),
     }
   }
@@ -400,24 +423,34 @@ function selectRecommendedText(
   summaries: PreparedTextSummaryResponse[],
   unlockedItemIds: Set<string>,
 ): string | null {
-  const ranked = texts.map((text, index) => {
+  const ranked = texts.flatMap((text, index) => {
     const summary = summaries[index]!
-    const itemCount = text.knowledgeItems.length
-    const unlockedCount = text.knowledgeItems.filter((item) =>
-      unlockedItemIds.has(item.itemId),
-    ).length
-    const unlockedPercent =
-      itemCount === 0 ? 100 : (unlockedCount / itemCount) * 100
-    return {
-      id: text.id,
-      score: unlockedPercent * 0.7 + summary.knownPercent * 0.3,
-      index,
-    }
+    if (!isTextGrammarReady(text, unlockedItemIds)) return []
+    return [
+      {
+        id: text.id,
+        score: summary.knownPercent,
+        index,
+      },
+    ]
   })
 
   return (
     ranked.sort(
       (left, right) => right.score - left.score || left.index - right.index,
     )[0]?.id ?? null
+  )
+}
+
+function isTextGrammarReady(
+  text: TextWithTokens,
+  unlockedItemIds: Set<string>,
+): boolean {
+  const grammarItemIds = text.knowledgeItems
+    .filter((item) => item.item.skill)
+    .map((item) => item.itemId)
+  return (
+    grammarItemIds.length === 0 ||
+    grammarItemIds.every((itemId) => unlockedItemIds.has(itemId))
   )
 }

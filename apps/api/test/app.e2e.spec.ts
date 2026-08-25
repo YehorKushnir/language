@@ -125,4 +125,16 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect({ word: 'opiskelija', hyphenated: 'o-pis-ke-li-ja' })
   })
+
+  it('accepts bounded client error reports', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/telemetry/client-errors')
+      .set('x-request-id', 'client-error-test')
+      .send({
+        type: 'window_error',
+        message: 'Render failed',
+        path: '/texts',
+      })
+      .expect(204)
+  })
 })

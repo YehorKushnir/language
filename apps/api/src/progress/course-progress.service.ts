@@ -23,6 +23,7 @@ import {
 
 import { PrismaService } from '../database/prisma.service'
 import { assertLessonAvailable } from '../common/lesson-access'
+import { createRouteMemoryScope } from '../common/route-memory-scope'
 
 const PRACTICE_EXERCISE_COUNT = 60
 const PRACTICE_PASS_RATE = 0.85
@@ -54,18 +55,7 @@ export class CourseProgressService {
       )
     }
 
-    const memoryScope = {
-      userId,
-      item: {
-        lessonItems: {
-          some: {
-            lesson: {
-              routeEntries: { some: { routeVersionId } },
-            },
-          },
-        },
-      },
-    }
+    const memoryScope = createRouteMemoryScope(userId, routeVersionId)
     const [courseProgress, lessonProgress, dueReviews, nextReview] =
       await Promise.all([
         this.prisma.userCourseProgress.findUnique({

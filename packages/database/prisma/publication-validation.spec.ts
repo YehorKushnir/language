@@ -204,6 +204,7 @@ describe('validatePublishedCourse', () => {
       preparedExerciseCount: 60,
       templateCount: 1,
       generatedCandidateCount: 3,
+      flashcardFallbackCount: 0,
       warnings: ['Published course has no prepared audio assets yet'],
     })
   })

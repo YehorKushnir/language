@@ -3,8 +3,11 @@ import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
+import { installClientErrorReporting } from './lib/client-telemetry'
 import { routeTree } from './routeTree.gen'
 import './styles.css'
+
+installClientErrorReporting()
 
 const queryClient = new QueryClient({
   defaultOptions: {

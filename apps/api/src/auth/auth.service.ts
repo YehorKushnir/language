@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config'
 import { betterAuth } from 'better-auth'
 
 import { PrismaService } from '../database/prisma.service'
+import { PasswordResetMailer } from './password-reset-mailer.service'
 
 const DEVELOPMENT_AUTH_SECRET = 'development-only-change-me-32-characters'
 
@@ -15,6 +16,7 @@ export class AuthService {
   constructor(
     @Inject(PrismaService) prisma: PrismaService,
     @Inject(ConfigService) config: ConfigService,
+    @Inject(PasswordResetMailer) resetMailer: PasswordResetMailer,
   ) {
     const configuredSecret = config.get<string>('BETTER_AUTH_SECRET')
 
@@ -31,6 +33,11 @@ export class AuthService {
       }),
       emailAndPassword: {
         enabled: true,
+        resetPasswordTokenExpiresIn: 60 * 60,
+        revokeSessionsOnPasswordReset: true,
+        sendResetPassword: async ({ user, url }) => {
+          await resetMailer.send(user.email, url)
+        },
       },
       rateLimit: {
         enabled: config.get('NODE_ENV') === 'production',

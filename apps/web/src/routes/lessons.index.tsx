@@ -29,16 +29,18 @@ function LessonsPage() {
 
   if (course.isPending) return <PageState loading />
   if (course.isError) return <PageState message={course.error.message} />
+  const totalLessons = course.data.route?.lessons.length ?? 0
 
   return (
     <PageShell>
       <LearningPageHeader
-        eyebrow="Курс русского → финского"
-        title="5 разделов · 80 уроков"
+        eyebrow="Русский → финский"
+        title={`Первый модуль · ${totalLessons} уроков`}
         description="Нажми на доступный урок, чтобы открыть объяснение, слова и практику."
         aside={
           <CourseOutlineSummary
             completedLessons={progress.data?.completedLessons ?? 0}
+            totalLessons={totalLessons}
           />
         }
       />

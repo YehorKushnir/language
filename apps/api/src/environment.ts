@@ -14,6 +14,18 @@ export function validateEnvironment(
   }
   const port = parsePort(environment.API_PORT)
   result.API_PORT = port
+  result.SMTP_PORT = parseInteger(
+    'SMTP_PORT',
+    environment.SMTP_PORT,
+    1,
+    65_535,
+    587,
+  )
+  result.SMTP_SECURE = parseBoolean(
+    'SMTP_SECURE',
+    environment.SMTP_SECURE,
+    false,
+  )
   result.TRUST_PROXY_HOPS = parseInteger(
     'TRUST_PROXY_HOPS',
     environment.TRUST_PROXY_HOPS,
@@ -22,6 +34,12 @@ export function validateEnvironment(
     0,
   )
 
+  const hasSmtpUser = hasText(environment.SMTP_USER)
+  const hasSmtpPassword = hasText(environment.SMTP_PASSWORD)
+  if (hasSmtpUser !== hasSmtpPassword) {
+    throw new Error('SMTP_USER and SMTP_PASSWORD must be provided together')
+  }
+
   if (environment.NODE_ENV !== 'production') return result
 
   const required = [
@@ -29,6 +47,8 @@ export function validateEnvironment(
     'WEB_ORIGIN',
     'BETTER_AUTH_URL',
     'BETTER_AUTH_SECRET',
+    'SMTP_HOST',
+    'MAIL_FROM',
   ] as const
   const missing = required.filter(
     (key) => typeof environment[key] !== 'string' || !environment[key]?.trim(),
@@ -112,4 +132,15 @@ function parseUrl(key: string, value: string): URL {
   } catch {
     throw new Error(`${key} must be an absolute URL`)
   }
+}
+
+function parseBoolean(key: string, value: unknown, fallback: boolean): boolean {
+  if (value === undefined || value === '') return fallback
+  if (value === true || value === 'true') return true
+  if (value === false || value === 'false') return false
+  throw new Error(`${key} must be true or false`)
+}
+
+function hasText(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length > 0
 }

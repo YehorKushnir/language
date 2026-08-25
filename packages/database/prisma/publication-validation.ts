@@ -27,6 +27,7 @@ export interface PublicationValidationReport {
   templateCount: number
   generatedCandidateCount: number
   textCount: number
+  flashcardFallbackCount: number
   skillDependencyCount: number
   linkedAudioCount: number
   warnings: string[]
@@ -381,6 +382,7 @@ export async function validatePublishedCourse(
     },
   })
   const routeItemIds = new Set(introducedAt.keys())
+  const flashcardFallbackItemIds = new Set<string>()
   for (const text of texts) {
     for (const textItem of text.knowledgeItems) {
       if (routeItemIds.has(textItem.itemId)) continue
@@ -393,6 +395,8 @@ export async function validatePublishedCourse(
         lexicalSense.lexicalEntry.status !== ContentStatus.CURATED
       ) {
         issues.push(`${text.id} uses knowledge outside the published route`)
+      } else {
+        flashcardFallbackItemIds.add(textItem.itemId)
       }
     }
     text.tokens.forEach((token, index) => {
@@ -447,6 +451,7 @@ export async function validatePublishedCourse(
     ).length,
     generatedCandidateCount,
     textCount: texts.length,
+    flashcardFallbackCount: flashcardFallbackItemIds.size,
     skillDependencyCount: skillDependencies.length,
     linkedAudioCount,
     warnings,

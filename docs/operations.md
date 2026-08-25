@@ -11,6 +11,7 @@
 - `WEB_ORIGIN` — HTTPS-origin frontend без пути;
 - `BETTER_AUTH_URL` — HTTPS-origin API без пути;
 - `BETTER_AUTH_SECRET` — отдельный случайный секрет длиной не менее 32 символов;
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` и `MAIL_FROM` — SMTP-доставка писем восстановления пароля; `SMTP_USER` и `SMTP_PASSWORD` указываются вместе, если relay требует авторизацию;
 - `API_PORT` и `API_HOST`;
 - `TRUST_PROXY_HOPS` — число доверенных reverse-proxy между клиентом и API, обычно `1`; оставлять `0`, если API доступен напрямую;
 - `MEDIA_BASE_URL` — необязательный HTTPS-адрес CDN/S3.
@@ -53,7 +54,7 @@ API и web preview на изолированных портах, создаёт 
 - Процесс обрабатывает `SIGTERM`, перестаёт принимать новые запросы и закрывает Prisma-соединения через Nest shutdown hooks.
 - Swagger в production не публикуется.
 
-Каждый ответ получает `x-request-id`. Этот же ID, путь, статус и длительность присутствуют в JSON HTTP-логе, включая ошибки guards и `401`.
+Каждый ответ получает `x-request-id`. Этот же ID, путь, статус и длительность присутствуют в JSON HTTP-логе, включая ошибки guards и `401`. Ошибки браузера без query-параметров и пользовательских ответов отправляются на `POST /api/v1/telemetry/client-errors` и также записываются структурированным JSON. Поэтому stdout/stderr можно направить в любой совместимый сборщик логов без SDK конкретной hosting-платформы. Для production задайте хранение не менее 14 дней и алерты на `event=client_error`, рост `5xx` и неуспешную readiness.
 
 ## Резервное копирование и восстановление
 
@@ -70,4 +71,4 @@ pg_restore --clean --if-exists --no-owner --dbname="$RESTORE_DATABASE_URL" langu
 
 При ошибке выпуска сначала возвращается предыдущий образ приложения. Prisma-миграции не откатываются автоматически; поэтому они должны быть обратно совместимыми. Для диагностики используются `x-request-id`, HTTP-лог и коды `DATABASE_UNAVAILABLE`, `DATABASE_NOT_READY` и `MORPHOLOGY_UNAVAILABLE`.
 
-Внешний сбор ошибок и метрик подключается на уровне hosting-платформы. Минимальные алерты: неуспешная readiness, рост `5xx`, p95 latency, исчерпание соединений PostgreSQL и свободное место базы.
+Сбор логов и метрик подключается на уровне hosting-платформы или независимым OpenTelemetry/лог-агентом. Минимальные алерты: неуспешная readiness, `event=client_error`, рост `5xx`, p95 latency, исчерпание соединений PostgreSQL и свободное место базы.

@@ -334,7 +334,14 @@ function RecommendedTextCard({
         <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary text-primary">
           <ScrollTextIcon className="size-4" />
         </span>
-        <span className="text-sm font-medium">Открыть библиотеку текстов</span>
+        <span className="min-w-0">
+          <span className="block text-sm font-medium">
+            Подходящий текст появится после контрольного урока
+          </span>
+          <span className="mt-0.5 block text-xs text-muted-foreground">
+            Все тексты можно посмотреть уже сейчас.
+          </span>
+        </span>
         <ArrowRightIcon className="ml-auto size-4 text-muted-foreground" />
       </Link>
     )
@@ -390,7 +397,7 @@ function GuestHome({ course }: { course: CourseOverviewResponse }) {
         }
       />
 
-      <section className="mt-5 grid gap-3 sm:grid-cols-3">
+      <section className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
         <CourseFact value={lessonCount} label="уроков в первом модуле" />
         <CourseFact value="≈400" label="слов для изучения" />
         <CourseFact value={5} label="подготовленных текстов" />
@@ -408,7 +415,7 @@ function GuestHome({ course }: { course: CourseOverviewResponse }) {
             {localizedText(firstLesson.summary)}
           </p>
           <Button asChild className="mt-5" size="sm" variant="outline">
-            <Link to="/lessons">Посмотреть программу</Link>
+            <Link to="/sign-up">Создать аккаунт и начать</Link>
           </Button>
         </section>
       ) : null}
@@ -424,9 +431,13 @@ function CourseFact({
   label: string
 }) {
   return (
-    <div className="rounded-xl border bg-card px-4 py-4 shadow-xs">
-      <p className="font-serif text-2xl font-semibold text-primary">{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{label}</p>
+    <div className="rounded-xl border bg-card px-2.5 py-3 text-center shadow-xs sm:px-4 sm:py-4 sm:text-left">
+      <p className="font-serif text-xl font-semibold text-primary sm:text-2xl">
+        {value}
+      </p>
+      <p className="mt-1 text-[11px] leading-4 text-muted-foreground sm:text-xs">
+        {label}
+      </p>
     </div>
   )
 }

@@ -39,6 +39,9 @@ test('mobile layout keeps navigation reachable without horizontal overflow', asy
   ).toBeHidden()
   await expect(
     page.getByRole('navigation', { name: 'Мобильная навигация' }),
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole('link', { name: 'Создать аккаунт и начать' }),
   ).toBeVisible()
   expect(
     await page.evaluate(
@@ -48,8 +51,11 @@ test('mobile layout keeps navigation reachable without horizontal overflow', asy
     ),
   ).toBe(true)
 
-  await page.getByRole('link', { name: 'Уроки' }).click()
+  await page.goto('/lessons')
   await expect(page.getByText('Войдите в аккаунт')).toBeVisible()
+  await expect(
+    page.getByRole('navigation', { name: 'Мобильная навигация' }),
+  ).toHaveCount(0)
   expect(await page.evaluate(() => scrollY)).toBe(0)
   await expectAccessible(page)
 })
@@ -84,12 +90,12 @@ test('learner can move through the first lesson with keyboard controls', async (
     .fill(
       `e2e-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`,
     )
-  await page.getByLabel('Пароль').fill('e2e-password-2026')
+  await page.getByLabel('Пароль', { exact: true }).fill('e2e-password-2026')
   await page.getByRole('button', { name: 'Создать аккаунт' }).click()
 
   await expect(page).toHaveURL(/\/lessons\/?$/u)
   await expect(
-    page.getByRole('heading', { level: 1, name: '5 разделов · 80 уроков' }),
+    page.getByRole('heading', { level: 1, name: 'Первый модуль · 16 уроков' }),
   ).toBeVisible()
   await expect(page.locator('main')).toHaveCount(1)
   await expectAccessible(page)
@@ -98,8 +104,10 @@ test('learner can move through the first lesson with keyboard controls', async (
     name: /Личные местоимения и olla/u,
   })
   const outlineUrl = page.url()
+  await expect(firstLesson).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByRole('link', { name: 'Объяснение' })).toBeVisible()
+  await firstLesson.click()
   await expect(firstLesson).toHaveAttribute('aria-expanded', 'false')
-  await expect(page.getByRole('link', { name: 'Объяснение' })).toHaveCount(0)
   await firstLesson.click()
   await expect(firstLesson).toHaveAttribute('aria-expanded', 'true')
   expect(page.url()).toBe(outlineUrl)
@@ -183,7 +191,13 @@ test('learner can move through the first lesson with keyboard controls', async (
 
   await page.getByRole('link', { name: 'Практика', exact: true }).click()
   await expect(page).toHaveURL(/\/lessons\/fi\.olla\.basics\/practice$/u)
-  await expect(page.getByText('Задание 1 из 60')).toBeVisible()
+  await expect(page.getByText('Блок 1 из 6 · Задание 1 из 10')).toBeVisible()
+  await expect(
+    page.getByText('Проверенные ответы сохраняются автоматически.'),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('link', { name: 'Сохранить и выйти' }),
+  ).toBeVisible()
   await expect(
     page.getByText('Переведи на финский:', { exact: false }),
   ).toHaveCount(0)
@@ -197,12 +211,12 @@ test('learner can move through the first lesson with keyboard controls', async (
   await expectAccessible(page)
 
   await answer.press('Enter')
-  await expect(page.getByText('Задание 2 из 60')).toBeVisible()
+  await expect(page.getByText('Блок 1 из 6 · Задание 2 из 10')).toBeVisible()
   await expect(answer).toBeFocused()
   await expect(page.locator('main')).toHaveCount(1)
 
   await page.reload()
-  await expect(page.getByText('Задание 2 из 60')).toBeVisible()
+  await expect(page.getByText('Блок 1 из 6 · Задание 2 из 10')).toBeVisible()
   await expect(page.getByLabel('Ответ на финском')).toBeFocused()
 
   const textsNavigationStartedAt = Date.now()
@@ -211,7 +225,10 @@ test('learner can move through the first lesson with keyboard controls', async (
   await expect(
     page.getByRole('heading', { level: 1, name: 'Тексты' }),
   ).toBeVisible()
-  await expect(page.getByRole('combobox')).toHaveCount(0)
+  await expect(page.getByRole('combobox')).toHaveCount(2)
+  await expect(
+    page.getByRole('button', { name: 'Все тексты' }),
+  ).toHaveAttribute('aria-pressed', 'true')
   await expect(
     page.getByRole('heading', { level: 2, name: /A1 · Начальный уровень/u }),
   ).toBeVisible()
@@ -220,12 +237,15 @@ test('learner can move through the first lesson with keyboard controls', async (
   ).toBeVisible()
   await expect(
     page.getByRole('heading', { level: 2, name: /B1 · Средний уровень/u }),
-  ).toBeVisible()
+  ).toHaveCount(0)
   await expect(
     page.getByRole('heading', { level: 2, name: /B2 · Выше среднего/u }),
-  ).toBeVisible()
+  ).toHaveCount(0)
   await expect(page.getByText(/Aamulla luen kirjaa/u)).toHaveCount(0)
-  await expect(page.getByText(/% знакомых/u).first()).toBeVisible()
+  await expect(page.getByText(/% знакомых/u).last()).toBeVisible()
+  await page.getByRole('button', { name: 'Подходят сейчас' }).click()
+  await expect(page.getByText('Подходящих текстов пока нет')).toBeVisible()
+  await page.getByRole('button', { name: 'Все тексты' }).click()
   expect(Date.now() - textsNavigationStartedAt).toBeLessThan(1_000)
   await expect(page.locator('main')).toHaveCount(1)
   await expectAccessible(page)
@@ -324,6 +344,13 @@ test('learner can move through the first lesson with keyboard controls', async (
     .getByRole('button', { name: 'Добавить в изучаемое' })
     .click()
   expect((await addResponse).ok()).toBe(true)
+  await verb.hover()
+  await expect(
+    page
+      .locator('[data-slot="hover-card-content"]')
+      .filter({ hasText: 'Инфинитив: olla' })
+      .getByRole('button', { name: 'Уже изучается' }),
+  ).toBeVisible()
   await expectAccessible(page)
 
   expect(
@@ -335,6 +362,102 @@ test('learner can move through the first lesson with keyboard controls', async (
   ).toBe(0)
   expect(browserErrors).toEqual([])
 })
+
+test('text-only vocabulary enters review as a flashcard', async ({ page }) => {
+  await signUpLearner(page, 'Text word learner')
+  await page.goto('/texts')
+  await page.getByRole('link', { name: 'Открыть Учебный день' }).click()
+
+  const textWord = page.getByLabel('Aamulla: утром')
+  await textWord.click()
+  const wordCard = page.locator('[data-slot="hover-card-content"]')
+  await expect(wordCard.getByText('Начальная форма: aamu')).toBeVisible()
+  await wordCard.getByRole('button', { name: 'Добавить в изучаемое' }).click()
+
+  await page.goto('/vocabulary')
+  await expect(
+    page.getByText(/1 слово в словаре · 1 пора повторить/u),
+  ).toBeVisible()
+  await page.getByRole('link', { name: 'Повторить' }).click()
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Вспомни слово' }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'aamu' }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Показать перевод' }).click()
+  await expect(page.getByText('утро', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Знаю' }).click()
+  await page.getByRole('button', { name: 'Продолжить' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Повторение завершено' }),
+  ).toBeVisible()
+})
+
+test('password recovery keeps account existence private', async ({ page }) => {
+  await page.goto('/sign-in')
+  await page.getByRole('link', { name: 'Забыли пароль?' }).click()
+  await page.getByLabel('Email').fill(`missing-${Date.now()}@example.test`)
+  await page.getByRole('button', { name: 'Получить ссылку' }).click()
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Проверьте почту' }),
+  ).toBeVisible()
+  await expect(
+    page.getByText(/Если аккаунт с таким email существует/u),
+  ).toBeVisible()
+  await expectAccessible(page)
+})
+
+test('new learner is not sent into an empty review session', async ({
+  page,
+}) => {
+  await signUpLearner(page, 'New vocabulary learner')
+  await page.goto('/vocabulary')
+
+  await expect(
+    page.getByRole('button', { name: 'Повторений пока нет' }),
+  ).toBeDisabled()
+})
+
+test('text catalog has no horizontal overflow on a phone', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await signUpLearner(page, 'Mobile reader')
+  await page.goto('/texts')
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Тексты' }),
+  ).toBeVisible()
+  await page.getByLabel('Уровень').selectOption('A1')
+  await expect(page).toHaveURL(/level=A1/u)
+  await page
+    .getByRole('link', { name: /Открыть/u })
+    .first()
+    .click()
+  await page.goBack()
+  await expect(page.getByLabel('Уровень')).toHaveValue('A1')
+  expect(
+    await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
+    ),
+  ).toBe(true)
+  await expectAccessible(page)
+})
+
+async function signUpLearner(page: Page, name: string) {
+  await page.goto('/sign-up')
+  await page.getByLabel('Имя').fill(name)
+  await page
+    .getByLabel('Email')
+    .fill(
+      `e2e-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`,
+    )
+  await page.getByLabel('Пароль', { exact: true }).fill('e2e-password-2026')
+  await page.getByRole('button', { name: 'Создать аккаунт' }).click()
+  await expect(page).toHaveURL(/\/lessons\/?$/u)
+}
 
 async function expectAccessible(page: Page) {
   const results = await new AxeBuilder({ page })

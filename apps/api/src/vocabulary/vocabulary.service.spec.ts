@@ -12,7 +12,12 @@ describe('VocabularyService', () => {
       findUnique: vi.fn(),
     },
     knowledgeItem: { findFirst: vi.fn(), findMany: vi.fn() },
-    userMemory: { findMany: vi.fn(), upsert: vi.fn() },
+    userMemory: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      upsert: vi.fn(),
+    },
   }
   const media = { resolve: vi.fn(() => null) }
   const service = new VocabularyService(
@@ -203,5 +208,43 @@ describe('VocabularyService', () => {
         }),
       }),
     )
+  })
+
+  it('schedules a reviewed text word from a flashcard fallback', async () => {
+    prisma.knowledgeItem.findFirst.mockResolvedValue({
+      id: 'word.fi.reader.aamu',
+    })
+    prisma.userMemory.findUnique.mockResolvedValue({
+      userId: 'user.1',
+      itemId: 'word.fi.reader.aamu',
+      difficulty: 0,
+      stability: 0,
+      state: MemoryState.NEW,
+      dueAt: new Date('2026-08-23T00:00:00.000Z'),
+      lastReviewAt: null,
+      elapsedDays: 0,
+      scheduledDays: 0,
+      learningSteps: 0,
+      repetitions: 0,
+      lapses: 0,
+    })
+    prisma.userMemory.update.mockImplementation(({ data }) =>
+      Promise.resolve({ itemId: 'word.fi.reader.aamu', ...data }),
+    )
+
+    const result = await service.reviewItem(
+      'user.1',
+      'route.1',
+      'word.fi.reader.aamu',
+      'SUCCESS',
+    )
+
+    expect(result).toMatchObject({
+      itemId: 'word.fi.reader.aamu',
+      state: MemoryState.REVIEW,
+      repetitions: 1,
+      lapses: 0,
+    })
+    expect(prisma.userMemory.update).toHaveBeenCalledOnce()
   })
 })

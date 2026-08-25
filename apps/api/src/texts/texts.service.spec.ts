@@ -131,6 +131,13 @@ describe('TextsService', () => {
 
   it('returns compact catalog entries with known-word coverage', async () => {
     prisma.text.findMany.mockResolvedValue([preparedText])
+    prisma.userLessonProgress.findMany.mockResolvedValue([
+      {
+        lesson: {
+          knowledgeItems: [{ itemId: 'grammar.fi.olla.affirmative' }],
+        },
+      },
+    ])
 
     await expect(service.getCatalog('user.1', 'route.1')).resolves.toEqual({
       routeVersionId: 'route.1',
@@ -152,9 +159,21 @@ describe('TextsService', () => {
           linkedWordCount: 1,
           knownWordCount: 1,
           knownPercent: 50,
+          isGrammarReady: true,
           audioUrl: null,
         },
       ],
+    })
+  })
+
+  it('does not recommend grammar that the learner has not completed', async () => {
+    prisma.text.findMany.mockResolvedValue([preparedText])
+
+    await expect(
+      service.getCatalog('user.1', 'route.1'),
+    ).resolves.toMatchObject({
+      recommendedTextId: null,
+      items: [{ id: 'text.fi.test', isGrammarReady: false }],
     })
   })
 

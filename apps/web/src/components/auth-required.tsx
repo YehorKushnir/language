@@ -13,13 +13,13 @@ import {
 
 export function AuthRequired() {
   return (
-    <PageShell className="grid min-h-[calc(100vh-4rem)] place-items-center py-16">
+    <PageShell className="grid min-h-[calc(100dvh-3.5rem)] place-items-center py-8 sm:py-12">
       <Card className="w-full max-w-lg text-center shadow-sm shadow-primary/5">
         <CardHeader>
           <span className="mx-auto mb-3 grid size-11 place-items-center rounded-full bg-primary/10 text-primary">
             <LockKeyholeIcon className="size-5" />
           </span>
-          <CardTitle className="font-serif text-3xl">
+          <CardTitle as="h1" className="font-serif text-3xl">
             Войдите в аккаунт
           </CardTitle>
           <CardDescription className="text-base">

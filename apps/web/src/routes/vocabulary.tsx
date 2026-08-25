@@ -37,6 +37,13 @@ import {
 } from '@/lib/vocabulary-morphology'
 
 export const Route = createFileRoute('/vocabulary')({
+  validateSearch: (search: Record<string, unknown>): VocabularySearch => ({
+    q:
+      typeof search.q === 'string' && search.q.trim()
+        ? search.q.slice(0, 100)
+        : undefined,
+    filter: isVocabularyFilter(search.filter) ? search.filter : undefined,
+  }),
   loader: ({ context }) =>
     preloadCourseRoute(context.queryClient, (routeVersionId, queryClient) =>
       queryClient.ensureQueryData(userVocabularyQuery(routeVersionId)),
@@ -51,6 +58,11 @@ const filters: Array<{ id: VocabularyFilter; label: string }> = [
   { id: 'learning', label: 'Изучаются' },
   { id: 'review', label: 'Выучены' },
 ]
+
+interface VocabularySearch {
+  q?: string
+  filter?: VocabularyFilter
+}
 
 const stateLabels: Record<ReviewMemoryState, string> = {
   NEW: 'Новое',
@@ -70,8 +82,10 @@ const stateClasses: Record<ReviewMemoryState, string> = {
 }
 
 function VocabularyPage() {
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<VocabularyFilter>('all')
+  const searchParams = Route.useSearch()
+  const navigate = Route.useNavigate()
+  const search = searchParams.q ?? ''
+  const filter = searchParams.filter ?? 'all'
   const course = useQuery(courseQuery)
   const routeVersionId = course.data?.route?.id ?? ''
   const vocabulary = useQuery({
@@ -103,11 +117,17 @@ function VocabularyPage() {
         title="Мои слова"
         description={`${formatWordCount(vocabulary.data.counts.all)} в словаре · ${formatDueCount(vocabulary.data.counts.due)}`}
         aside={
-          <Button asChild className="w-full" size="sm">
-            <Link to="/reviews/session">
-              <BrainIcon /> Повторить
-            </Link>
-          </Button>
+          vocabulary.data.counts.due > 0 ? (
+            <Button asChild className="w-full" size="sm">
+              <Link to="/reviews/session">
+                <BrainIcon /> Повторить
+              </Link>
+            </Button>
+          ) : (
+            <Button className="w-full" disabled size="sm">
+              <BrainIcon /> Повторений пока нет
+            </Button>
+          )
         }
       />
 
@@ -119,7 +139,16 @@ function VocabularyPage() {
             className="pl-9"
             placeholder="Слово или перевод"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              const q = event.target.value
+              void navigate({
+                replace: true,
+                search: (current) => ({
+                  ...current,
+                  q: q || undefined,
+                }),
+              })
+            }}
           />
         </div>
 
@@ -130,7 +159,15 @@ function VocabularyPage() {
               size="sm"
               variant={filter === item.id ? 'secondary' : 'ghost'}
               aria-pressed={filter === item.id}
-              onClick={() => setFilter(item.id)}
+              onClick={() => {
+                void navigate({
+                  replace: true,
+                  search: (current) => ({
+                    ...current,
+                    filter: item.id === 'all' ? undefined : item.id,
+                  }),
+                })
+              }}
             >
               {item.label}
               <span className="tabular-nums text-muted-foreground">
@@ -172,6 +209,10 @@ function VocabularyPage() {
       )}
     </PageShell>
   )
+}
+
+function isVocabularyFilter(value: unknown): value is VocabularyFilter {
+  return filters.some((filter) => filter.id === value)
 }
 
 function VocabularyList({ items }: { items: UserVocabularyItemResponse[] }) {

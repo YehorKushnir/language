@@ -3,6 +3,7 @@ import type {
   VocabularyStudyResponse,
 } from '@language/contracts'
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -19,6 +20,7 @@ import {
 
 import { CurrentUserId } from '../identity/current-user.decorator'
 import { SessionIdentityGuard } from '../identity/session-identity.guard'
+import { VocabularyStudyDto } from '../progress/vocabulary-study.dto'
 import { VocabularyService } from './vocabulary.service'
 
 @ApiTags('vocabulary')
@@ -48,5 +50,23 @@ export class VocabularyController {
     @Param('itemId') itemId: string,
   ): Promise<VocabularyStudyResponse> {
     return this.vocabulary.addToLearning(userId, routeVersionId, itemId)
+  }
+
+  @Put(':routeVersionId/:itemId/review')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Оценить карточку слова при повторении' })
+  @ApiOkResponse({ description: 'Обновлённое состояние памяти слова' })
+  reviewItem(
+    @CurrentUserId() userId: string,
+    @Param('routeVersionId') routeVersionId: string,
+    @Param('itemId') itemId: string,
+    @Body() study: VocabularyStudyDto,
+  ): Promise<VocabularyStudyResponse> {
+    return this.vocabulary.reviewItem(
+      userId,
+      routeVersionId,
+      itemId,
+      study.result,
+    )
   }
 }

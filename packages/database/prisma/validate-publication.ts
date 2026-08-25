@@ -17,6 +17,7 @@ try {
       `${report.templateCount} templates`,
       `${report.generatedCandidateCount} generated candidates`,
       `${report.textCount} texts`,
+      `${report.flashcardFallbackCount} flashcard fallbacks`,
       `${report.skillDependencyCount} skill dependencies`,
       `${report.linkedAudioCount} linked audio assets`,
     ].join(' '),

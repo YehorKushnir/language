@@ -1,3 +1,4 @@
+import type { PreparedReviewFlashcardResponse } from '@language/contracts'
 import type { FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -13,7 +14,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-import { submitExerciseAttempt } from '@/api/language-api'
+import { reviewVocabularyItem, submitExerciseAttempt } from '@/api/language-api'
 import {
   courseProgressQuery,
   courseQuery,
@@ -46,6 +47,8 @@ function ReviewSessionPage() {
   const routeVersionId = course.data?.route?.id ?? ''
   const [answer, setAnswer] = useState('')
   const [completedExerciseIds, setCompletedExerciseIds] = useState<string[]>([])
+  const [completedItemCount, setCompletedItemCount] = useState(0)
+  const [flashcardRevealed, setFlashcardRevealed] = useState(false)
   const answerInput = useRef<HTMLInputElement>(null)
   const initialDueCount = useRef<number | null>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
@@ -81,6 +84,23 @@ function ReviewSessionPage() {
       ])
     },
   })
+  const flashcardReview = useMutation({
+    mutationFn: (result: 'SUCCESS' | 'FAILURE') => {
+      const flashcard = review.data?.flashcard
+      if (!flashcard) throw new Error('Карточка для повторения не загружена')
+      return reviewVocabularyItem(routeVersionId, flashcard.itemId, { result })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: courseProgressQuery(routeVersionId).queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: userVocabularyQuery(routeVersionId).queryKey,
+        }),
+      ])
+    },
+  })
 
   useEffect(() => {
     if (!attempt.data && !review.isFetching) answerInput.current?.focus()
@@ -99,10 +119,14 @@ function ReviewSessionPage() {
   }
 
   const exercise = review.data.exercise
+  const flashcard = review.data.flashcard
   const result = attempt.data
   const exerciseCompleted = Boolean(result?.isCorrect)
   const total = initialDueCount.current
-  const completed = completedExerciseIds.length + (exerciseCompleted ? 1 : 0)
+  const completed =
+    completedItemCount +
+    (exerciseCompleted ? (exercise?.reviewItemIds.length ?? 1) : 0) +
+    (flashcardReview.data ? 1 : 0)
   const progress = total > 0 ? Math.min(100, (completed / total) * 100) : 100
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -126,10 +150,37 @@ function ReviewSessionPage() {
   function nextExercise() {
     if (!exercise) return
     setCompletedExerciseIds((ids) => [...ids, exercise.id])
+    setCompletedItemCount(
+      (count) => count + Math.max(1, exercise.reviewItemIds.length),
+    )
     setAnswer('')
     attempt.reset()
     idempotencyKey.current = crypto.randomUUID()
     openedAt.current = Date.now()
+  }
+
+  async function nextFlashcard() {
+    setCompletedItemCount((count) => count + 1)
+    setFlashcardRevealed(false)
+    flashcardReview.reset()
+    await review.refetch()
+  }
+
+  if (flashcard) {
+    return (
+      <ReviewFlashcard
+        completed={completed}
+        error={flashcardReview.error?.message}
+        flashcard={flashcard}
+        pending={flashcardReview.isPending}
+        result={flashcardReview.data ? flashcardReview.variables : undefined}
+        revealed={flashcardRevealed}
+        total={total}
+        onContinue={() => void nextFlashcard()}
+        onRate={(rating) => flashcardReview.mutate(rating)}
+        onReveal={() => setFlashcardRevealed(true)}
+      />
+    )
   }
 
   if (!exercise) {
@@ -151,7 +202,7 @@ function ReviewSessionPage() {
             <h1 className="mt-5 font-serif text-3xl">
               {hasUnavailableItems
                 ? 'Не хватает подготовленного задания'
-                : completedExerciseIds.length > 0
+                : completedExerciseIds.length > 0 || completedItemCount > 0
                   ? 'Повторение завершено'
                   : 'На сегодня всё'}
             </h1>
@@ -179,8 +230,8 @@ function ReviewSessionPage() {
       <header className="border-b pb-5">
         <div className="flex items-center justify-between gap-4">
           <Badge variant="secondary">
-            <BrainIcon /> Повторение · {completedExerciseIds.length + 1} из{' '}
-            {Math.max(total, 1)}
+            <BrainIcon /> Повторение · {Math.min(total, completedItemCount + 1)}{' '}
+            из {Math.max(total, 1)}
           </Badge>
           <span className="text-xs tabular-nums text-muted-foreground">
             {Math.round(progress)}%
@@ -284,6 +335,121 @@ function ReviewSessionPage() {
               Продолжить <ArrowRightIcon />
             </Button>
           ) : null}
+        </div>
+      ) : null}
+    </PageShell>
+  )
+}
+
+function ReviewFlashcard({
+  completed,
+  error,
+  flashcard,
+  pending,
+  result,
+  revealed,
+  total,
+  onContinue,
+  onRate,
+  onReveal,
+}: {
+  completed: number
+  error?: string
+  flashcard: PreparedReviewFlashcardResponse
+  pending: boolean
+  result?: 'SUCCESS' | 'FAILURE'
+  revealed: boolean
+  total: number
+  onContinue: () => void
+  onRate: (result: 'SUCCESS' | 'FAILURE') => void
+  onReveal: () => void
+}) {
+  const progress = total > 0 ? Math.min(100, (completed / total) * 100) : 100
+
+  return (
+    <PageShell>
+      <Button asChild variant="ghost" size="sm" className="-ml-3 mb-5">
+        <Link to="/vocabulary">
+          <ArrowLeftIcon /> Завершить сессию
+        </Link>
+      </Button>
+      <header className="border-b pb-5">
+        <div className="flex items-center justify-between gap-4">
+          <Badge variant="secondary">
+            <BrainIcon /> Повторение · {Math.min(total, completed + 1)} из{' '}
+            {Math.max(total, 1)}
+          </Badge>
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {Math.round(progress)}%
+          </span>
+        </div>
+        <h1 className="mt-3 font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
+          Вспомни слово
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          Сначала вспомни значение, затем оцени ответ.
+        </p>
+        <Progress
+          className="mt-4 h-1.5"
+          value={progress}
+          aria-label="Прогресс повторения"
+        />
+      </header>
+
+      <section className="mt-7 rounded-xl border bg-card p-6 text-center shadow-xs sm:p-8">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Финский
+        </p>
+        <h2 className="mt-3 font-serif text-4xl font-semibold tracking-tight">
+          {flashcard.lemma}
+        </h2>
+        {revealed ? (
+          <div className="motion-feedback mt-6 border-t pt-6">
+            <p className="font-serif text-2xl font-semibold">
+              {localizedText(flashcard.gloss)}
+            </p>
+            {flashcard.example ? (
+              <div className="mx-auto mt-4 max-w-lg text-sm leading-6">
+                <p className="font-medium">{flashcard.example.target}</p>
+                <p className="text-muted-foreground">
+                  {localizedText(flashcard.example.source)}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <Button className="mt-8" onClick={onReveal}>
+            Показать перевод
+          </Button>
+        )}
+      </section>
+
+      {error ? (
+        <div className="mt-4">
+          <QueryError message={error} />
+        </div>
+      ) : null}
+
+      {revealed ? (
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          {result ? (
+            <Button className="col-span-2" onClick={onContinue}>
+              Продолжить <ArrowRightIcon />
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                disabled={pending}
+                onClick={() => onRate('FAILURE')}
+              >
+                Ещё раз
+              </Button>
+              <Button disabled={pending} onClick={() => onRate('SUCCESS')}>
+                Знаю
+              </Button>
+            </>
+          )}
         </div>
       ) : null}
     </PageShell>

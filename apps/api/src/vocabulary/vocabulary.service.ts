@@ -7,6 +7,7 @@ import {
   KnowledgeItemKind,
   MemoryState,
 } from '@language/database'
+import { scheduleReview } from '@language/domain'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 
 import {
@@ -189,7 +190,88 @@ export class VocabularyService {
     routeVersionId: string,
     itemId: string,
   ): Promise<VocabularyStudyResponse> {
-    const item = await this.prisma.knowledgeItem.findFirst({
+    const item = await this.findRouteVocabularyItem(routeVersionId, itemId)
+    if (!item) {
+      throw new NotFoundException(
+        `Vocabulary item ${itemId} is not part of route ${routeVersionId}`,
+      )
+    }
+
+    const memory = await this.prisma.userMemory.upsert({
+      where: { userId_itemId: { userId, itemId } },
+      update: {},
+      create: {
+        userId,
+        itemId,
+        difficulty: 0,
+        stability: 0,
+        state: MemoryState.NEW,
+        dueAt: new Date(),
+      },
+    })
+
+    return toStudyResponse(memory)
+  }
+
+  async reviewItem(
+    userId: string,
+    routeVersionId: string,
+    itemId: string,
+    result: 'SUCCESS' | 'FAILURE',
+  ): Promise<VocabularyStudyResponse> {
+    const item = await this.findRouteVocabularyItem(routeVersionId, itemId)
+    if (!item) {
+      throw new NotFoundException(
+        `Vocabulary item ${itemId} is not part of route ${routeVersionId}`,
+      )
+    }
+
+    const existing = await this.prisma.userMemory.findUnique({
+      where: { userId_itemId: { userId, itemId } },
+    })
+    if (!existing) {
+      throw new NotFoundException(
+        `Vocabulary item ${itemId} has not been added to learning`,
+      )
+    }
+
+    const schedule = scheduleReview(
+      {
+        difficulty: existing.difficulty,
+        stability: existing.stability,
+        state: existing.state,
+        dueAt: existing.dueAt,
+        lastReviewAt: existing.lastReviewAt,
+        elapsedDays: existing.elapsedDays,
+        scheduledDays: existing.scheduledDays,
+        learningSteps: existing.learningSteps,
+        repetitions: existing.repetitions,
+        lapses: existing.lapses,
+      },
+      result,
+      new Date(),
+    )
+    const memory = await this.prisma.userMemory.update({
+      where: { userId_itemId: { userId, itemId } },
+      data: {
+        difficulty: schedule.difficulty,
+        stability: schedule.stability,
+        state: MemoryState[schedule.state],
+        dueAt: schedule.dueAt,
+        lastReviewAt: schedule.lastReviewAt,
+        elapsedDays: schedule.elapsedDays,
+        scheduledDays: schedule.scheduledDays,
+        learningSteps: schedule.learningSteps,
+        repetitions: schedule.repetitions,
+        lapses: schedule.lapses,
+      },
+    })
+
+    return toStudyResponse(memory)
+  }
+
+  private findRouteVocabularyItem(routeVersionId: string, itemId: string) {
+    return this.prisma.knowledgeItem.findFirst({
       where: {
         id: itemId,
         kind: KnowledgeItemKind.LEXICAL_SENSE,
@@ -230,32 +312,22 @@ export class VocabularyService {
       },
       select: { id: true },
     })
-    if (!item) {
-      throw new NotFoundException(
-        `Vocabulary item ${itemId} is not part of route ${routeVersionId}`,
-      )
-    }
+  }
+}
 
-    const memory = await this.prisma.userMemory.upsert({
-      where: { userId_itemId: { userId, itemId } },
-      update: {},
-      create: {
-        userId,
-        itemId,
-        difficulty: 0,
-        stability: 0,
-        state: MemoryState.NEW,
-        dueAt: new Date(),
-      },
-    })
-
-    return {
-      itemId,
-      state: memory.state,
-      dueAt: memory.dueAt.toISOString(),
-      repetitions: memory.repetitions,
-      lapses: memory.lapses,
-    }
+function toStudyResponse(memory: {
+  itemId: string
+  state: MemoryState
+  dueAt: Date
+  repetitions: number
+  lapses: number
+}): VocabularyStudyResponse {
+  return {
+    itemId: memory.itemId,
+    state: memory.state,
+    dueAt: memory.dueAt.toISOString(),
+    repetitions: memory.repetitions,
+    lapses: memory.lapses,
   }
 }
 

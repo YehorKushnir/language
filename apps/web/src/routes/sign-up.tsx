@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { authClient } from '@/lib/auth-client'
 import { authErrorMessage } from '@/lib/auth-error'
 
@@ -32,26 +33,35 @@ function SignUpPage() {
     setError(undefined)
     setIsSubmitting(true)
 
-    const data = new FormData(event.currentTarget)
-    const result = await authClient.signUp.email({
-      email: String(data.get('email') ?? '').trim(),
-      name: String(data.get('name') ?? '').trim(),
-      password: String(data.get('password') ?? ''),
-    })
+    try {
+      const data = new FormData(event.currentTarget)
+      const result = await authClient.signUp.email({
+        email: String(data.get('email') ?? '').trim(),
+        name: String(data.get('name') ?? '').trim(),
+        password: String(data.get('password') ?? ''),
+      })
 
-    setIsSubmitting(false)
+      if (result.error) {
+        setError(
+          authErrorMessage(
+            result.error,
+            'Не удалось создать аккаунт. Попробуйте снова.',
+          ),
+        )
+        return
+      }
 
-    if (result.error) {
+      await router.navigate({ to: '/lessons' })
+    } catch {
       setError(
         authErrorMessage(
-          result.error,
+          { code: 'NETWORK_ERROR' },
           'Не удалось создать аккаунт. Попробуйте снова.',
         ),
       )
-      return
+    } finally {
+      setIsSubmitting(false)
     }
-
-    await router.navigate({ to: '/lessons' })
   }
 
   if (session.data) {
@@ -59,7 +69,9 @@ function SignUpPage() {
       <AuthPageLayout>
         <Card className="w-full max-w-md text-center">
           <CardHeader>
-            <CardTitle className="font-serif text-3xl">Аккаунт готов</CardTitle>
+            <CardTitle as="h1" className="font-serif text-3xl">
+              Аккаунт готов
+            </CardTitle>
             <CardDescription>{session.data.user.email}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -79,7 +91,9 @@ function SignUpPage() {
           <span className="mb-2 grid size-10 place-items-center rounded-full bg-primary/10 text-primary">
             <UserPlusIcon className="size-4.5" />
           </span>
-          <CardTitle className="font-serif text-3xl">Создать аккаунт</CardTitle>
+          <CardTitle as="h1" className="font-serif text-3xl">
+            Создать аккаунт
+          </CardTitle>
           <CardDescription>
             Прогресс и интервальные повторения будут доступны на любом
             устройстве.
@@ -123,14 +137,13 @@ function SignUpPage() {
               <label className="text-sm font-medium" htmlFor="password">
                 Пароль
               </label>
-              <Input
+              <PasswordInput
                 aria-describedby="password-hint"
                 autoComplete="new-password"
                 id="password"
                 minLength={8}
                 name="password"
                 required
-                type="password"
               />
               <p className="text-xs text-muted-foreground" id="password-hint">
                 Минимум 8 символов.
@@ -160,7 +173,7 @@ function SignUpPage() {
 
 function AuthPageLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PageShell className="grid min-h-[calc(100vh-4rem)] place-items-center py-12">
+    <PageShell className="grid min-h-[calc(100dvh-3.5rem)] place-items-center py-8 sm:py-12">
       {children}
     </PageShell>
   )

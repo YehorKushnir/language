@@ -36,16 +36,18 @@ function LessonPage() {
   if (course.isError || lesson.isError) {
     return <PageState message={(course.error ?? lesson.error)?.message} />
   }
+  const totalLessons = course.data.route?.lessons.length ?? 0
 
   return (
     <PageShell>
       <LearningPageHeader
-        eyebrow="Курс русского → финского"
-        title="5 разделов · 80 уроков"
+        eyebrow="Русский → финский"
+        title={`Первый модуль · ${totalLessons} уроков`}
         description="Выбери часть урока — она откроется в том же учебном пространстве."
         aside={
           <CourseOutlineSummary
             completedLessons={progress.data?.completedLessons ?? 0}
+            totalLessons={totalLessons}
           />
         }
       />

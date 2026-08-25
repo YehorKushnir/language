@@ -128,6 +128,21 @@ export function addVocabularyItem(routeVersionId: string, itemId: string) {
   )
 }
 
+export function reviewVocabularyItem(
+  routeVersionId: string,
+  itemId: string,
+  study: VocabularyStudyRequest,
+) {
+  return request<VocabularyStudyResponse>(
+    `/me/vocabulary/${routeVersionId}/${itemId}/review`,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(study),
+    },
+  )
+}
+
 export function getPreparedTexts(routeVersionId: string) {
   return request<PreparedTextCatalogResponse>(`/me/texts/${routeVersionId}`)
 }

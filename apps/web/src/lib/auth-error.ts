@@ -8,6 +8,8 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   FAILED_TO_CREATE_USER: 'Не удалось создать пользователя.',
   INVALID_EMAIL: 'Проверьте формат email.',
   INVALID_EMAIL_OR_PASSWORD: 'Неверный email или пароль.',
+  INVALID_TOKEN: 'Ссылка устарела или уже была использована.',
+  NETWORK_ERROR: 'Нет соединения с сервером. Проверьте интернет и повторите.',
   PASSWORD_TOO_LONG: 'Пароль слишком длинный.',
   PASSWORD_TOO_SHORT: 'Пароль должен содержать не менее 8 символов.',
   USER_ALREADY_EXISTS: 'Пользователь с таким email уже существует.',

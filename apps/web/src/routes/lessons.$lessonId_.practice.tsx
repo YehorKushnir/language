@@ -36,6 +36,7 @@ export const Route = createFileRoute('/lessons/$lessonId_/practice')({
 })
 
 const SESSION_SIZE = 60
+const PRACTICE_BLOCK_SIZE = 10
 
 function LessonPracticePage() {
   const { lessonId } = Route.useParams()
@@ -46,6 +47,7 @@ function LessonPracticePage() {
   const [attemptIds, setAttemptIds] = useState<string[]>([])
   const [correctAnswers, setCorrectAnswers] = useState(0)
   const [showSummary, setShowSummary] = useState(false)
+  const [showBreak, setShowBreak] = useState(false)
   const [hydratedSessionStartedAt, setHydratedSessionStartedAt] = useState<
     string | null
   >(null)
@@ -242,7 +244,8 @@ function LessonPracticePage() {
           setShowSummary(true)
         }
       } else {
-        nextExercise()
+        if (round % PRACTICE_BLOCK_SIZE === 0) setShowBreak(true)
+        else nextExercise()
       }
       return
     }
@@ -290,6 +293,49 @@ function LessonPracticePage() {
     )
   }
 
+  if (showBreak) {
+    const completedBlocks = Math.floor(round / PRACTICE_BLOCK_SIZE)
+    return (
+      <PageShell>
+        <LessonWorkspaceHeader
+          lessonId={lessonId}
+          lessonTitle={localizedText(lesson.data.title)}
+          lessonSummary={localizedText(lesson.data.summary)}
+          activePart="practice"
+        />
+        <section className="mt-8 rounded-xl border bg-card p-6 text-center shadow-xs sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+            Блок {completedBlocks} из {SESSION_SIZE / PRACTICE_BLOCK_SIZE}
+          </p>
+          <h2 className="mt-3 font-serif text-2xl font-semibold sm:text-3xl">
+            Можно сделать паузу
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+            Выполнено {round} из {SESSION_SIZE} заданий, верных —{' '}
+            {correctAnswers}. Прогресс сохранён: можно выйти и вернуться позже.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <Button asChild size="sm" variant="outline">
+              <Link to="/">Продолжить позже</Link>
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setShowBreak(false)
+                nextExercise()
+              }}
+            >
+              Следующий блок
+            </Button>
+          </div>
+        </section>
+      </PageShell>
+    )
+  }
+
+  const blockNumber = Math.ceil(round / PRACTICE_BLOCK_SIZE)
+  const questionInBlock = ((round - 1) % PRACTICE_BLOCK_SIZE) + 1
+
   return (
     <PageShell>
       <LessonWorkspaceHeader
@@ -302,7 +348,8 @@ function LessonPracticePage() {
       <section className="mt-8">
         <div className="flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-wider">
           <p className="text-primary">
-            Задание {round} из {SESSION_SIZE}
+            Блок {blockNumber} из {SESSION_SIZE / PRACTICE_BLOCK_SIZE} · Задание{' '}
+            {questionInBlock} из {PRACTICE_BLOCK_SIZE}
           </p>
           <p className="text-muted-foreground">
             Верных: {correctAnswers} из {result ? round : round - 1}
@@ -313,6 +360,14 @@ function LessonPracticePage() {
           value={((round - (result ? 0 : 1)) / SESSION_SIZE) * 100}
           aria-label="Прогресс практики"
         />
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            Проверенные ответы сохраняются автоматически.
+          </p>
+          <Button asChild size="sm" variant="ghost">
+            <Link to="/lessons">Сохранить и выйти</Link>
+          </Button>
+        </div>
         <h2
           key={activeExerciseId}
           className={`motion-feedback mt-2 font-serif text-2xl font-semibold leading-snug transition-opacity sm:text-3xl ${
@@ -357,7 +412,9 @@ function LessonPracticePage() {
                     : completion.isError
                       ? 'Повторить'
                       : 'Результаты'
-                  : 'Следующий'
+                  : round % PRACTICE_BLOCK_SIZE === 0
+                    ? 'Завершить блок'
+                    : 'Следующий'
                 : attempt.isPending
                   ? 'Проверяем…'
                   : 'Проверить'}
@@ -456,6 +513,18 @@ function PracticeSummary({
           {!completion.passed ? (
             <Button size="sm" onClick={onRestart}>
               Пройти ещё раз
+            </Button>
+          ) : null}
+          {completion.passed &&
+          completion.progress.currentLessonId &&
+          completion.progress.currentLessonId !== lessonId ? (
+            <Button asChild size="sm">
+              <Link
+                to="/lessons/$lessonId/explanation"
+                params={{ lessonId: completion.progress.currentLessonId }}
+              >
+                Следующий урок
+              </Link>
             </Button>
           ) : null}
           <Button asChild size="sm" variant="outline">

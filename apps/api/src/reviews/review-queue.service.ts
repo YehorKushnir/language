@@ -9,7 +9,8 @@ import {
 } from '@language/database'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 
-import { toLocalizedText } from '../common/content-mapper'
+import { toLocalizedText, toVocabularyExample } from '../common/content-mapper'
+import { createRouteMemoryScope } from '../common/route-memory-scope'
 import { PrismaService } from '../database/prisma.service'
 import { ExerciseGenerationService } from '../generation/exercise-generation.service'
 
@@ -35,33 +36,7 @@ export class ReviewQueueService {
       )
     }
 
-    const where = {
-      userId,
-      item: {
-        OR: [
-          {
-            lessonItems: {
-              some: {
-                lesson: {
-                  routeEntries: { some: { routeVersionId } },
-                },
-              },
-            },
-          },
-          {
-            textItems: {
-              some: {
-                text: {
-                  course: {
-                    routeVersions: { some: { id: routeVersionId } },
-                  },
-                },
-              },
-            },
-          },
-        ],
-      },
-    }
+    const where = createRouteMemoryScope(userId, routeVersionId)
     const now = new Date()
     const [memories, totalCount, dueCount, nextMemory] = await Promise.all([
       this.prisma.userMemory.findMany({
@@ -125,7 +100,7 @@ export class ReviewQueueService {
     const now = new Date()
     const dueMemories = await this.prisma.userMemory.findMany({
       where: {
-        ...createMemoryScope(userId, routeVersionId),
+        ...createRouteMemoryScope(userId, routeVersionId),
         dueAt: { lte: now },
       },
       orderBy: { dueAt: 'asc' },
@@ -133,7 +108,7 @@ export class ReviewQueueService {
     })
     const dueItemIds = dueMemories.map((memory) => memory.itemId)
     if (dueItemIds.length === 0) {
-      return { dueCount: 0, exercise: null }
+      return { dueCount: 0, exercise: null, flashcard: null }
     }
 
     const generatedExercise = await this.generation.getOrCreateReviewExercise(
@@ -144,9 +119,14 @@ export class ReviewQueueService {
       excludedExerciseIds,
     )
     if (generatedExercise) {
-      return { dueCount: dueItemIds.length, exercise: generatedExercise }
+      return {
+        dueCount: dueItemIds.length,
+        exercise: generatedExercise,
+        flashcard: null,
+      }
     }
 
+    const primaryDueItemId = dueItemIds[0]!
     const candidates = await this.prisma.exercise.findMany({
       where: {
         kind: ExerciseKind.PREPARED,
@@ -155,7 +135,7 @@ export class ReviewQueueService {
         prompts: { some: { sourceLanguage } },
         items: {
           some: {
-            itemId: { in: dueItemIds },
+            itemId: primaryDueItemId,
             role: {
               in: [ExerciseItemRole.PRIMARY, ExerciseItemRole.SECONDARY],
             },
@@ -196,7 +176,8 @@ export class ReviewQueueService {
     const prompt = exercise?.prompts[0]
 
     if (!exercise || !prompt || !exercise.lessonId) {
-      return { dueCount: dueItemIds.length, exercise: null }
+      const flashcard = await this.getFlashcard(primaryDueItemId)
+      return { dueCount: dueItemIds.length, exercise: null, flashcard }
     }
 
     return {
@@ -209,34 +190,37 @@ export class ReviewQueueService {
         prompt: prompt.text,
         reviewItemIds: exercise.items.map((item) => item.itemId),
       },
+      flashcard: null,
     }
   }
-}
 
-function createMemoryScope(userId: string, routeVersionId: string) {
-  return {
-    userId,
-    item: {
-      OR: [
-        {
-          lessonItems: {
-            some: {
-              lesson: {
-                routeEntries: { some: { routeVersionId } },
-              },
-            },
+  private async getFlashcard(itemId: string) {
+    const item = await this.prisma.knowledgeItem.findFirst({
+      where: {
+        id: itemId,
+        lexicalSense: {
+          status: ContentStatus.CURATED,
+          lexicalEntry: { status: ContentStatus.CURATED },
+        },
+      },
+      select: {
+        lexicalSense: {
+          select: {
+            gloss: true,
+            metadata: true,
+            lexicalEntry: { select: { lemma: true } },
           },
         },
-        {
-          textItems: {
-            some: {
-              text: {
-                course: { routeVersions: { some: { id: routeVersionId } } },
-              },
-            },
-          },
-        },
-      ],
-    },
+      },
+    })
+    const sense = item?.lexicalSense
+    if (!sense) return null
+
+    return {
+      itemId,
+      lemma: sense.lexicalEntry.lemma,
+      gloss: toLocalizedText(sense.gloss),
+      example: toVocabularyExample(sense.metadata),
+    }
   }
 }

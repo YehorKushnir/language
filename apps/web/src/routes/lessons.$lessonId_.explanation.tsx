@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { CheckIcon, LoaderCircleIcon } from 'lucide-react'
 
 import { completeLessonPart } from '@/api/language-api'
@@ -79,19 +79,26 @@ function LessonExplanationPage() {
             ? 'Объяснение отмечено как прочитанное.'
             : 'Можно вернуться к этому тексту в любой момент.'}
         </p>
-        <Button
-          size="sm"
-          variant={completed ? 'secondary' : 'default'}
-          disabled={!routeVersionId || completion.isPending || completed}
-          onClick={() => completion.mutate()}
-        >
-          {completion.isPending ? (
-            <LoaderCircleIcon className="animate-spin" />
-          ) : (
-            <CheckIcon />
-          )}
-          {completed ? 'Прочитано' : 'Отметить прочитанным'}
-        </Button>
+        {completed ? (
+          <Button asChild size="sm">
+            <Link to="/lessons/$lessonId/vocabulary" params={{ lessonId }}>
+              Перейти к словам
+            </Link>
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            disabled={!routeVersionId || completion.isPending}
+            onClick={() => completion.mutate()}
+          >
+            {completion.isPending ? (
+              <LoaderCircleIcon className="animate-spin" />
+            ) : (
+              <CheckIcon />
+            )}
+            Отметить прочитанным
+          </Button>
+        )}
       </footer>
     </PageShell>
   )

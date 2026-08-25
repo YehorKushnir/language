@@ -14,6 +14,7 @@ describe('ReviewQueueService', () => {
       count: vi.fn(),
       findFirst: vi.fn(),
     },
+    knowledgeItem: { findFirst: vi.fn() },
     exercise: { findMany: vi.fn() },
   }
   const generation = { getOrCreateReviewExercise: vi.fn() }
@@ -33,7 +34,7 @@ describe('ReviewQueueService', () => {
 
     await expect(
       service.getNext('user.1', 'route.1', 'ru', []),
-    ).resolves.toEqual({ dueCount: 0, exercise: null })
+    ).resolves.toEqual({ dueCount: 0, exercise: null, flashcard: null })
     expect(prisma.exercise.findMany).not.toHaveBeenCalled()
   })
 
@@ -55,7 +56,10 @@ describe('ReviewQueueService', () => {
         lessonId: 'lesson.1',
         targetLanguage: 'fi',
         prompts: [{ text: 'Приоритетное задание' }],
-        items: [{ itemId: 'grammar.early', role: ExerciseItemRole.PRIMARY }],
+        items: [
+          { itemId: 'grammar.early', role: ExerciseItemRole.PRIMARY },
+          { itemId: 'word.later', role: ExerciseItemRole.SECONDARY },
+        ],
       },
     ])
 
@@ -69,8 +73,9 @@ describe('ReviewQueueService', () => {
         sourceLanguage: 'ru',
         targetLanguage: 'fi',
         prompt: 'Приоритетное задание',
-        reviewItemIds: ['grammar.early'],
+        reviewItemIds: ['grammar.early', 'word.later'],
       },
+      flashcard: null,
     })
     expect(prisma.exercise.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -98,8 +103,44 @@ describe('ReviewQueueService', () => {
     ).resolves.toEqual({
       dueCount: 1,
       exercise: expect.objectContaining({ id: 'generated.1' }),
+      flashcard: null,
     })
     expect(prisma.exercise.findMany).not.toHaveBeenCalled()
+  })
+
+  it('falls back to a lexical flashcard for a text-only word', async () => {
+    prisma.userMemory.findMany.mockResolvedValue([
+      { itemId: 'word.fi.reader.aamu' },
+    ])
+    prisma.exercise.findMany.mockResolvedValue([])
+    prisma.knowledgeItem.findFirst.mockResolvedValue({
+      lexicalSense: {
+        gloss: { ru: 'утро' },
+        metadata: {
+          example: {
+            target: 'Aamulla luen kirjaa.',
+            source: { ru: 'Утром я читаю книгу.' },
+          },
+        },
+        lexicalEntry: { lemma: 'aamu' },
+      },
+    })
+
+    await expect(
+      service.getNext('user.1', 'route.1', 'ru', []),
+    ).resolves.toEqual({
+      dueCount: 1,
+      exercise: null,
+      flashcard: {
+        itemId: 'word.fi.reader.aamu',
+        lemma: 'aamu',
+        gloss: { ru: 'утро' },
+        example: {
+          target: 'Aamulla luen kirjaa.',
+          source: { ru: 'Утром я читаю книгу.' },
+        },
+      },
+    })
   })
 
   it('does not expose a draft or unknown route', async () => {

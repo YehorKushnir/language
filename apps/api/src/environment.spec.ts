@@ -9,6 +9,9 @@ const productionEnvironment = {
   WEB_ORIGIN: 'https://learn.example.com',
   BETTER_AUTH_URL: 'https://api.example.com',
   BETTER_AUTH_SECRET: 'a-unique-secret-with-more-than-32-characters',
+  SMTP_HOST: 'smtp.example.com',
+  SMTP_PORT: '587',
+  MAIL_FROM: 'Language Learning <hello@example.com>',
 }
 
 describe('validateEnvironment', () => {
@@ -59,6 +62,21 @@ describe('validateEnvironment', () => {
     expect(validateEnvironment({ TRUST_PROXY_HOPS: '1' })).toMatchObject({
       TRUST_PROXY_HOPS: 1,
     })
+  })
+
+  it('validates SMTP settings without requiring provider credentials', () => {
+    expect(() =>
+      validateEnvironment({
+        SMTP_USER: 'mailer',
+        SMTP_PASSWORD: undefined,
+      }),
+    ).toThrow(/provided together/u)
+    expect(() => validateEnvironment({ SMTP_SECURE: 'sometimes' })).toThrow(
+      /SMTP_SECURE/u,
+    )
+    expect(
+      validateEnvironment({ SMTP_PORT: '465', SMTP_SECURE: 'true' }),
+    ).toMatchObject({ SMTP_PORT: 465, SMTP_SECURE: true })
   })
 
   it('accepts a complete production environment', () => {

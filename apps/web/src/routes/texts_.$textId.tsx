@@ -126,13 +126,14 @@ function PreparedTextPage() {
 
       <article className="mt-6 w-full rounded-xl border bg-card px-5 py-6 shadow-xs sm:px-8 sm:py-8">
         <p className="mb-5 text-xs text-muted-foreground">
-          Наведи на слово, чтобы увидеть перевод.
+          Нажми на слово, чтобы увидеть перевод и разбор.
         </p>
         <p className="whitespace-pre-wrap font-serif text-xl leading-[2.05] sm:text-[1.65rem]">
           <InteractiveText
             body={textData.body}
             tokens={textData.tokens}
             addingItemId={addWord.isPending ? addWord.variables : undefined}
+            addErrorItemId={addWord.isError ? addWord.variables : undefined}
             onAdd={(itemId) => addWord.mutate(itemId)}
           />
         </p>
@@ -145,11 +146,13 @@ function InteractiveText({
   body,
   tokens,
   addingItemId,
+  addErrorItemId,
   onAdd,
 }: {
   body: string
   tokens: PreparedTextTokenResponse[]
   addingItemId?: string
+  addErrorItemId?: string
   onAdd: (itemId: string) => void
 }) {
   let cursor = 0
@@ -166,13 +169,13 @@ function InteractiveText({
             {before}
             <HoverCard closeDelay={100} openDelay={140}>
               <HoverCardTrigger asChild>
-                <span
-                  tabIndex={0}
+                <button
+                  type="button"
                   aria-label={`${token.surface}: ${translation}`}
-                  className="-mx-0.5 cursor-help rounded px-0.5 underline decoration-primary/25 decoration-1 underline-offset-4 transition-[color,background-color,text-decoration-color] duration-150 hover:bg-accent hover:decoration-primary focus-visible:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                  className="-mx-0.5 inline cursor-help rounded border-0 bg-transparent px-0.5 font-inherit text-inherit underline decoration-primary/25 decoration-1 underline-offset-4 transition-[color,background-color,text-decoration-color] duration-150 hover:bg-accent hover:decoration-primary focus-visible:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
                 >
                   {token.surface}
-                </span>
+                </button>
               </HoverCardTrigger>
               <HoverCardContent
                 align="start"
@@ -182,6 +185,7 @@ function InteractiveText({
                 <WordTooltip
                   token={token}
                   adding={addingItemId === token.lexical?.itemId}
+                  addError={addErrorItemId === token.lexical?.itemId}
                   onAdd={onAdd}
                 />
               </HoverCardContent>
@@ -197,10 +201,12 @@ function InteractiveText({
 function WordTooltip({
   token,
   adding,
+  addError,
   onAdd,
 }: {
   token: PreparedTextTokenResponse
   adding: boolean
+  addError: boolean
   onAdd: (itemId: string) => void
 }) {
   const inLearning = Boolean(token.lexical?.memory.dueAt)
@@ -222,8 +228,26 @@ function WordTooltip({
         size="sm"
         variant="outline"
       >
-        Добавить в изучаемое
+        {!token.lexical
+          ? 'Слово недоступно'
+          : inLearning
+            ? 'Уже изучается'
+            : adding
+              ? 'Добавляем…'
+              : 'Добавить в изучаемое'}
       </Button>
+      {addError || inLearning ? (
+        <p
+          aria-live="polite"
+          className={`mt-2 text-xs ${
+            addError ? 'text-destructive' : 'text-muted-foreground'
+          }`}
+        >
+          {addError
+            ? 'Не удалось добавить слово. Попробуйте ещё раз.'
+            : 'Слово сохранено в вашем словаре.'}
+        </p>
+      ) : null}
     </div>
   )
 }

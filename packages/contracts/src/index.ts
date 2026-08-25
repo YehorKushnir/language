@@ -324,6 +324,7 @@ export interface PreparedTextSummaryResponse {
   linkedWordCount: number
   knownWordCount: number
   knownPercent: number
+  isGrammarReady: boolean
   audioUrl: string | null
 }
 
@@ -477,9 +478,17 @@ export interface PreparedReviewExerciseResponse extends PreparedExerciseResponse
   reviewItemIds: string[]
 }
 
+export interface PreparedReviewFlashcardResponse {
+  itemId: string
+  lemma: string
+  gloss: LocalizedText
+  example: VocabularyExampleResponse | null
+}
+
 export interface NextReviewResponse {
   dueCount: number
   exercise: PreparedReviewExerciseResponse | null
+  flashcard: PreparedReviewFlashcardResponse | null
 }
 
 export interface ExerciseAttemptRequest {

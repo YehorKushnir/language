@@ -17,6 +17,7 @@ import { ExercisesModule } from './exercises/exercises.module'
 import { ProgressModule } from './progress/progress.module'
 import { ReviewsModule } from './reviews/reviews.module'
 import { TextsModule } from './texts/texts.module'
+import { TelemetryModule } from './telemetry/telemetry.module'
 import { VocabularyModule } from './vocabulary/vocabulary.module'
 import { validateEnvironment } from './environment'
 
@@ -45,6 +46,7 @@ import { validateEnvironment } from './environment'
     ReviewsModule,
     VocabularyModule,
     TextsModule,
+    TelemetryModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
