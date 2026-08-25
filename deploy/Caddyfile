@@ -9,7 +9,7 @@
 
 	@api path /api/*
 	handle @api {
-		reverse_proxy api:3000
+		reverse_proxy morpho-api:3000
 	}
 
 	handle {

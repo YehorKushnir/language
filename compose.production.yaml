@@ -82,8 +82,10 @@ services:
       migrate:
         condition: service_completed_successfully
     networks:
-      - proxy
-      - database
+      proxy:
+        aliases:
+          - morpho-api
+      database:
     read_only: true
     tmpfs:
       - /tmp:size=64m,mode=1777

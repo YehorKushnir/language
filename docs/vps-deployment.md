@@ -12,8 +12,9 @@ Framed, поэтому Morpho не публикует собственные `80
 - Одноразовый `migrate` применяет Prisma-миграции, выполняет production seed и
   `publication:validate` до переключения API.
 - `api` и `postgres` не публикуют портов на хосте.
-- Контейнер `web` раздаёт SPA и проксирует `/api` во внутренний API. В общей
-  сети `framed_default` он имеет уникальный alias `morpho-web`.
+- Контейнер `web` раздаёт SPA и проксирует `/api` на уникальный alias
+  `morpho-api`. В общей сети `framed_default` сам web имеет alias `morpho-web`;
+  уникальные имена исключают DNS-конфликты с другими Compose-проектами.
 - Центральный `framed-caddy-1` импортирует
   `/home/deploy/caddy-sites/*.caddy` и проксирует домен на `morpho-web:80`.
 - PostgreSQL хранится в именованном volume
