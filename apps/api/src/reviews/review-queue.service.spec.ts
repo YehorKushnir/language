@@ -48,6 +48,10 @@ describe('ReviewQueueService', () => {
         id: 'exercise.later',
         lessonId: 'lesson.1',
         targetLanguage: 'fi',
+        answerSpec: {
+          acceptedVariants: ['Myöhempi vastaus.'],
+          slots: [],
+        },
         prompts: [{ text: 'Позднее задание' }],
         items: [{ itemId: 'word.later', role: ExerciseItemRole.SECONDARY }],
       },
@@ -55,6 +59,10 @@ describe('ReviewQueueService', () => {
         id: 'exercise.early',
         lessonId: 'lesson.1',
         targetLanguage: 'fi',
+        answerSpec: {
+          acceptedVariants: ['Ensisijainen vastaus.'],
+          slots: [],
+        },
         prompts: [{ text: 'Приоритетное задание' }],
         items: [
           { itemId: 'grammar.early', role: ExerciseItemRole.PRIMARY },
@@ -73,6 +81,11 @@ describe('ReviewQueueService', () => {
         sourceLanguage: 'ru',
         targetLanguage: 'fi',
         prompt: 'Приоритетное задание',
+        answerSpec: {
+          acceptedVariants: ['Ensisijainen vastaus.'],
+          slots: [],
+        },
+        checkerVersion: 'structured-v4-all-diagnostics-voikko',
         reviewItemIds: ['grammar.early', 'word.later'],
       },
       flashcard: null,
@@ -95,6 +108,8 @@ describe('ReviewQueueService', () => {
       sourceLanguage: 'ru',
       targetLanguage: 'fi',
       prompt: 'Сгенерированное задание',
+      answerSpec: { acceptedVariants: ['Vastaus.'], slots: [] },
+      checkerVersion: 'structured-v4-all-diagnostics-voikko',
       reviewItemIds: ['grammar.early'],
     })
 

@@ -517,12 +517,26 @@ export interface VocabularyStudyResponse {
   lapses: number
 }
 
+export interface PreparedAnswerSlot {
+  role: string
+  accepted: string[]
+  itemIds?: string[]
+  optional?: boolean
+}
+
+export interface PreparedAnswerSpec {
+  acceptedVariants: string[]
+  slots: PreparedAnswerSlot[]
+}
+
 export interface PreparedExerciseResponse {
   id: string
   lessonId: string
   sourceLanguage: string
   targetLanguage: string
   prompt: string
+  answerSpec: PreparedAnswerSpec
+  checkerVersion: string
 }
 
 export interface PreparedReviewExerciseResponse extends PreparedExerciseResponse {

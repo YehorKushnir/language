@@ -123,6 +123,9 @@ importers:
       '@language/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@language/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@tanstack/react-query':
         specifier: ^5.85.5
         version: 5.101.4(react@19.2.8)

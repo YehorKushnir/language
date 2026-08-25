@@ -2,6 +2,7 @@ import type {
   LessonVocabularyAnswerResponse,
   LessonVocabularyItemResponse,
 } from '@language/contracts'
+import { normalizeExactAnswer } from '@language/domain'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
@@ -9,7 +10,6 @@ import {
   CheckCircle2Icon,
   CheckIcon,
   CircleXIcon,
-  RotateCcwIcon,
 } from 'lucide-react'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 
@@ -22,6 +22,7 @@ import {
   userVocabularyQuery,
   vocabularyStudySessionQuery,
 } from '@/api/queries'
+import { preloadCourseRoute } from '@/api/route-preload'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
@@ -29,12 +30,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
-import { getNextVocabularyItemId } from '@/lib/vocabulary-study-session'
+import {
+  appendVocabularyAnswer,
+  getNextVocabularyItemId,
+} from '@/lib/vocabulary-study-session'
 
 export const Route = createFileRoute('/lessons/$lessonId_/vocabulary')({
   loader: ({ context, params }) =>
     Promise.all([
-      context.queryClient.ensureQueryData(courseQuery),
+      preloadCourseRoute(context.queryClient, (routeVersionId, queryClient) =>
+        queryClient.ensureQueryData(
+          vocabularyStudySessionQuery(params.lessonId, routeVersionId),
+        ),
+      ),
       context.queryClient.ensureQueryData(lessonQuery(params.lessonId)),
       context.queryClient.ensureQueryData(
         lessonVocabularyQuery(params.lessonId),
@@ -48,8 +56,11 @@ function LessonVocabularyPage() {
   const queryClient = useQueryClient()
   const answerInput = useRef<HTMLInputElement>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
+  const continueAfterSave = useRef(false)
   const [activeItemId, setActiveItemId] = useState<string | null>(null)
   const [answer, setAnswer] = useState('')
+  const [localFeedback, setLocalFeedback] =
+    useState<LessonVocabularyAnswerResponse | null>(null)
   const [showSummary, setShowSummary] = useState(false)
   const lesson = useQuery(lessonQuery(lessonId))
   const vocabulary = useQuery(lessonVocabularyQuery(lessonId))
@@ -74,6 +85,7 @@ function LessonVocabularyPage() {
         idempotencyKey: requestId,
       }),
     onSuccess: (result) => {
+      setLocalFeedback(result)
       queryClient.setQueryData(
         vocabularyStudySessionQuery(lessonId, routeVersionId).queryKey,
         result.session,
@@ -86,12 +98,19 @@ function LessonVocabularyPage() {
           queryKey: userVocabularyQuery(routeVersionId).queryKey,
         }),
       ])
+      if (continueAfterSave.current) {
+        continueAfterSave.current = false
+        continueStudy(result)
+      }
+    },
+    onError: () => {
+      continueAfterSave.current = false
     },
   })
 
   useEffect(() => {
     if (!session.data || !vocabulary.data) return
-    if (study.data) return
+    if (localFeedback) return
     const activeProgress = session.data.items.find(
       (item) => item.itemId === activeItemId,
     )
@@ -108,11 +127,11 @@ function LessonVocabularyPage() {
         session.data,
       ),
     )
-  }, [activeItemId, session.data, study.data, vocabulary.data])
+  }, [activeItemId, localFeedback, session.data, vocabulary.data])
 
   useEffect(() => {
-    if (!study.isPending) answerInput.current?.focus()
-  }, [activeItemId, study.data, study.isPending])
+    if (!localFeedback) answerInput.current?.focus()
+  }, [activeItemId, localFeedback])
 
   if (
     lesson.isPending ||
@@ -142,10 +161,14 @@ function LessonVocabularyPage() {
   if (items.length === 0) {
     return <PartPageState message="В этом уроке пока нет слов." />
   }
+  const feedback =
+    localFeedback?.itemId === activeItemId ? localFeedback : undefined
+  const currentSession = session.data
+  const displaySession = feedback?.session ?? currentSession
   const sessionCompleted =
-    session.data.totalItems > 0 &&
-    session.data.completedItems === session.data.totalItems
-  const shouldShowSummary = sessionCompleted && (!study.data || showSummary)
+    displaySession.totalItems > 0 &&
+    displaySession.completedItems === displaySession.totalItems
+  const shouldShowSummary = sessionCompleted && (!feedback || showSummary)
 
   if (shouldShowSummary) {
     return (
@@ -159,7 +182,7 @@ function LessonVocabularyPage() {
 
   const item =
     items.find((candidate) => candidate.itemId === activeItemId) ?? items[0]!
-  const itemProgress = session.data.items.find(
+  const itemProgress = displaySession.items.find(
     (progress) => progress.itemId === item.itemId,
   ) ?? {
     itemId: item.itemId,
@@ -167,20 +190,46 @@ function LessonVocabularyPage() {
     attempts: 0,
     completedAt: null,
   }
-  const feedback = study.data?.itemId === item.itemId ? study.data : undefined
   const totalRequired =
-    session.data.totalItems * session.data.requiredCorrectAnswers
+    displaySession.totalItems * displaySession.requiredCorrectAnswers
   const progress = totalRequired
-    ? (session.data.totalCorrectAnswers / totalRequired) * 100
+    ? (displaySession.totalCorrectAnswers / totalRequired) * 100
     : 0
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (feedback) {
-      continueStudy(feedback)
+      if (study.isPending) {
+        continueAfterSave.current = true
+        return
+      }
+      if (study.isError) {
+        continueAfterSave.current = true
+        study.mutate({
+          itemId: item.itemId,
+          value: answer,
+          requestId: idempotencyKey.current,
+        })
+      } else {
+        continueStudy(feedback)
+      }
       return
     }
     if (!answer.trim() || study.isPending || !routeVersionId) return
+    const isCorrect =
+      normalizeExactAnswer(answer) === normalizeExactAnswer(item.lemma)
+    const optimistic = appendVocabularyAnswer(
+      currentSession,
+      item.itemId,
+      isCorrect,
+      new Date().toISOString(),
+    )
+    setLocalFeedback({
+      itemId: item.itemId,
+      isCorrect,
+      expectedAnswer: item.lemma,
+      ...optimistic,
+    })
     study.mutate({
       itemId: item.itemId,
       value: answer,
@@ -203,6 +252,8 @@ function LessonVocabularyPage() {
     )
     setActiveItemId(nextItemId)
     setAnswer('')
+    setLocalFeedback(null)
+    continueAfterSave.current = false
     study.reset()
     idempotencyKey.current = crypto.randomUUID()
   }
@@ -218,7 +269,8 @@ function LessonVocabularyPage() {
       <section className="mt-4 sm:mt-7">
         <header className="flex items-end justify-between gap-4">
           <h2 className="font-serif text-xl font-semibold sm:text-2xl">
-            Изучено {session.data.completedItems} из {session.data.totalItems}
+            Изучено {displaySession.completedItems} из{' '}
+            {displaySession.totalItems}
           </h2>
           <span className="text-xs tabular-nums text-muted-foreground">
             {Math.round(progress)}%
@@ -247,7 +299,7 @@ function LessonVocabularyPage() {
             </div>
             <AnswerMarkers
               correctAnswers={itemProgress.correctAnswers}
-              required={session.data.requiredCorrectAnswers}
+              required={displaySession.requiredCorrectAnswers}
             />
           </div>
 
@@ -272,9 +324,21 @@ function LessonVocabularyPage() {
                 }}
               />
               {feedback ? (
-                <Button className="h-11" type="submit">
-                  {sessionCompleted ? 'Завершить' : 'Продолжить'}
-                  <ArrowRightIcon />
+                <Button
+                  className="h-11"
+                  disabled={study.isPending}
+                  type="submit"
+                >
+                  {study.isPending
+                    ? 'Сохраняем…'
+                    : study.isError
+                      ? 'Повторить'
+                      : sessionCompleted
+                        ? 'Завершить'
+                        : 'Продолжить'}
+                  {!study.isPending && !study.isError ? (
+                    <ArrowRightIcon />
+                  ) : null}
                 </Button>
               ) : (
                 <Button
@@ -282,7 +346,7 @@ function LessonVocabularyPage() {
                   disabled={!answer.trim() || study.isPending}
                   type="submit"
                 >
-                  {study.isPending ? 'Проверяем…' : 'Проверить'}
+                  Проверить
                 </Button>
               )}
             </div>
@@ -290,25 +354,14 @@ function LessonVocabularyPage() {
 
           <div className="pt-3" aria-live="polite">
             {feedback ? (
-              <VocabularyFeedback item={item} result={feedback} />
-            ) : study.isError ? (
-              <div>
-                <QueryError message={study.error.message} />
-                <Button
-                  className="mt-3"
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    study.mutate({
-                      itemId: item.itemId,
-                      value: answer,
-                      requestId: idempotencyKey.current,
-                    })
-                  }
-                >
-                  <RotateCcwIcon /> Повторить отправку
-                </Button>
-              </div>
+              <>
+                <VocabularyFeedback item={item} result={feedback} />
+                {study.isError ? (
+                  <div className="mt-2">
+                    <QueryError message={study.error.message} />
+                  </div>
+                ) : null}
+              </>
             ) : null}
           </div>
         </article>

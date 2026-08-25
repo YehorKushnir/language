@@ -58,6 +58,7 @@ interface SlotAlignment {
   cost: number
   exactMatches: number
   structuralEdits: number
+  substitutionDistance: number
   operations: AlignmentOperation[]
 }
 
@@ -138,48 +139,44 @@ export function checkStructuredAnswer(
   const selectedSlots = selectBestSlotSequence(expectedSlots, actualTokens)
   const alignment = alignSlots(selectedSlots, actualTokens)
 
-  const firstIssue = alignment.operations.find(
-    (operation) => operation.type !== 'match',
-  )
-  if (!firstIssue) {
+  const diagnostics = alignment.operations.flatMap((operation) => {
+    const diagnostic = diagnoseAlignmentOperation(operation)
+    return diagnostic ? [diagnostic] : []
+  })
+  if (diagnostics.length === 0) {
     return {
       ...exact,
       diagnostics: [{ code: 'ANSWER_MISMATCH' }],
     }
   }
 
-  if (firstIssue.type === 'missing') {
-    return {
-      ...exact,
-      diagnostics: [
-        {
-          code: 'MISSING_TOKEN',
-          slot: firstIssue.slot.role,
-          expected: firstIssue.slot.accepted,
-        },
-      ],
-    }
-  }
-
-  if (firstIssue.type === 'extra') {
-    return {
-      ...exact,
-      diagnostics: [{ code: 'EXTRA_TOKEN', actual: firstIssue.token }],
-    }
-  }
-
-  const likelyTypo = findLikelyTypo(firstIssue.token, firstIssue.slot.accepted)
-
   return {
     ...exact,
-    diagnostics: [
-      {
-        code: likelyTypo ? 'TYPO' : 'WRONG_FORM',
-        slot: firstIssue.slot.role,
-        actual: firstIssue.token,
-        expected: likelyTypo ? [likelyTypo] : firstIssue.slot.accepted,
-      },
-    ],
+    diagnostics,
+  }
+}
+
+function diagnoseAlignmentOperation(
+  operation: AlignmentOperation,
+): StructuredAnswerDiagnostic | null {
+  if (operation.type === 'match') return null
+  if (operation.type === 'missing') {
+    return {
+      code: 'MISSING_TOKEN',
+      slot: operation.slot.role,
+      expected: operation.slot.accepted,
+    }
+  }
+  if (operation.type === 'extra') {
+    return { code: 'EXTRA_TOKEN', actual: operation.token }
+  }
+
+  const likelyTypo = findLikelyTypo(operation.token, operation.slot.accepted)
+  return {
+    code: likelyTypo ? 'TYPO' : 'WRONG_FORM',
+    slot: operation.slot.role,
+    actual: operation.token,
+    expected: likelyTypo ? [likelyTypo] : operation.slot.accepted,
   }
 }
 
@@ -187,10 +184,17 @@ function findLikelyTypo(actual: string, accepted: string[]): string | null {
   return (
     accepted.find((expected) => {
       if (Math.abs(expected.length - actual.length) > 1) return false
-      const maximumDistance = expected.length >= 5 ? 1 : 0
+      const differsOnlyByDiacritics =
+        stripDiacritics(expected) === stripDiacritics(actual)
+      const maximumDistance =
+        expected.length >= 5 || differsOnlyByDiacritics ? 1 : 0
       return damerauLevenshteinDistance(actual, expected) <= maximumDistance
     }) ?? null
   )
+}
+
+function stripDiacritics(value: string): string {
+  return value.normalize('NFD').replace(/\p{M}/gu, '')
 }
 
 function damerauLevenshteinDistance(left: string, right: string): number {
@@ -313,6 +317,7 @@ function alignSlots(
     cost: 0,
     exactMatches: 0,
     structuralEdits: 0,
+    substitutionDistance: 0,
     operations: [],
   }
 
@@ -333,6 +338,9 @@ function alignSlots(
           cost: current.cost + (matches ? 0 : 1),
           exactMatches: current.exactMatches + (matches ? 1 : 0),
           structuralEdits: current.structuralEdits,
+          substitutionDistance:
+            current.substitutionDistance +
+            (matches ? 0 : distanceToSlot(token, slot)),
           operations: [
             ...current.operations,
             matches
@@ -346,6 +354,7 @@ function alignSlots(
           cost: current.cost + 1,
           exactMatches: current.exactMatches,
           structuralEdits: current.structuralEdits + 1,
+          substitutionDistance: current.substitutionDistance,
           operations: [...current.operations, { type: 'missing', slot }],
         })
       }
@@ -354,6 +363,7 @@ function alignSlots(
           cost: current.cost + 1,
           exactMatches: current.exactMatches,
           structuralEdits: current.structuralEdits + 1,
+          substitutionDistance: current.substitutionDistance,
           operations: [...current.operations, { type: 'extra', token }],
         })
       }
@@ -386,7 +396,18 @@ function isBetterAlignment(
   if (candidate.structuralEdits !== current.structuralEdits) {
     return candidate.structuralEdits < current.structuralEdits
   }
+  if (candidate.substitutionDistance !== current.substitutionDistance) {
+    return candidate.substitutionDistance < current.substitutionDistance
+  }
   return false
+}
+
+function distanceToSlot(token: string, slot: NormalizedAnswerSlot): number {
+  return Math.min(
+    ...slot.accepted.map((expected) =>
+      damerauLevenshteinDistance(token, expected),
+    ),
+  )
 }
 
 function tokensMatchWithoutOrder(

@@ -36,6 +36,10 @@ import {
 
 import { PrismaService } from '../database/prisma.service'
 import { assertLessonAvailable } from '../common/lesson-access'
+import {
+  EXERCISE_CHECKER_VERSION,
+  toPreparedAnswerSpec,
+} from '../common/answer-spec'
 import { FinnishMorphologyService } from '../morphology/finnish-morphology.service'
 
 interface StoredAnswerSpec {
@@ -105,6 +109,8 @@ export class ExercisesService {
       sourceLanguage,
       targetLanguage: exercise.targetLanguage,
       prompt: prompt.text,
+      answerSpec: toPreparedAnswerSpec(exercise.answerSpec),
+      checkerVersion: EXERCISE_CHECKER_VERSION,
     }
   }
 
@@ -144,6 +150,8 @@ export class ExercisesService {
       sourceLanguage,
       targetLanguage: exercise.targetLanguage,
       prompt: prompt.text,
+      answerSpec: toPreparedAnswerSpec(exercise.answerSpec),
+      checkerVersion: EXERCISE_CHECKER_VERSION,
     }
   }
 
@@ -260,7 +268,7 @@ export class ExercisesService {
             normalizedAnswerText: check.normalizedAnswer,
             outcome,
             diagnostics: diagnostics as unknown as Prisma.InputJsonValue,
-            checkerVersion: 'structured-v3-optional-slots-voikko',
+            checkerVersion: EXERCISE_CHECKER_VERSION,
             generatorVersion: exercise.generated?.generatorVersion,
             durationMs: request.durationMs,
             answeredAt: now,
@@ -426,50 +434,7 @@ export class ExercisesService {
 }
 
 function toStoredAnswerSpec(value: unknown): StoredAnswerSpec {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return { acceptedVariants: [], slots: [] }
-  }
-
-  const candidate = value as Record<string, unknown>
-  const acceptedVariants = candidate.acceptedVariants
-  return {
-    acceptedVariants: Array.isArray(acceptedVariants)
-      ? acceptedVariants.filter(
-          (variant): variant is string => typeof variant === 'string',
-        )
-      : [],
-    slots: Array.isArray(candidate.slots)
-      ? candidate.slots.flatMap((slot) => {
-          if (!slot || typeof slot !== 'object' || Array.isArray(slot)) {
-            return []
-          }
-
-          const slotCandidate = slot as Record<string, unknown>
-          const accepted = Array.isArray(slotCandidate.accepted)
-            ? slotCandidate.accepted.filter(
-                (variant): variant is string => typeof variant === 'string',
-              )
-            : []
-          const itemIds = Array.isArray(slotCandidate.itemIds)
-            ? slotCandidate.itemIds.filter(
-                (itemId): itemId is string => typeof itemId === 'string',
-              )
-            : []
-          return typeof slotCandidate.role === 'string' && accepted.length > 0
-            ? [
-                {
-                  role: slotCandidate.role,
-                  accepted,
-                  itemIds,
-                  ...(slotCandidate.optional === true
-                    ? { optional: true }
-                    : {}),
-                },
-              ]
-            : []
-        })
-      : [],
-  }
+  return toPreparedAnswerSpec(value)
 }
 
 function toAttemptDiagnostic(

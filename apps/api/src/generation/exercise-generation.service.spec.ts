@@ -59,6 +59,10 @@ describe('ExerciseGenerationService', () => {
         id: 'generated.cached',
         lessonId: 'fi.olla.basics',
         targetLanguage: 'fi',
+        answerSpec: {
+          acceptedVariants: ['Minä olen opiskelija.'],
+          slots: [],
+        },
         prompts: [{ text: 'Я студент.' }],
         items: [
           {
@@ -83,6 +87,11 @@ describe('ExerciseGenerationService', () => {
       sourceLanguage: 'ru',
       targetLanguage: 'fi',
       prompt: 'Я студент.',
+      answerSpec: {
+        acceptedVariants: ['Minä olen opiskelija.'],
+        slots: [],
+      },
+      checkerVersion: 'structured-v4-all-diagnostics-voikko',
       reviewItemIds: ['grammar.affirmative'],
     })
     expect(prisma.exerciseTemplate.findMany).not.toHaveBeenCalled()

@@ -210,6 +210,62 @@ describe('structured answer checker', () => {
     })
   })
 
+  it('reports every error found in the aligned sentence', () => {
+    expect(
+      checkStructuredAnswer('Hän en olet opiskleija.', negativeAnswerSpec),
+    ).toMatchObject({
+      isCorrect: false,
+      diagnostics: [
+        {
+          code: 'WRONG_FORM',
+          slot: 'negativeVerb',
+          actual: 'en',
+          expected: ['ei'],
+        },
+        {
+          code: 'WRONG_FORM',
+          slot: 'mainVerb',
+          actual: 'olet',
+          expected: ['ole'],
+        },
+        {
+          code: 'TYPO',
+          slot: 'complement',
+          actual: 'opiskleija',
+          expected: ['opiskelija'],
+        },
+      ],
+    })
+  })
+
+  it('reports all three errors in a fully mismatched sentence', () => {
+    expect(
+      checkStructuredAnswer('mina ei lääkäy', optionalFirstPersonAnswerSpec),
+    ).toMatchObject({
+      isCorrect: false,
+      diagnostics: [
+        {
+          code: 'TYPO',
+          slot: 'subject',
+          actual: 'mina',
+          expected: ['minä'],
+        },
+        {
+          code: 'WRONG_FORM',
+          slot: 'mainVerb',
+          actual: 'ei',
+          expected: ['olen'],
+        },
+        {
+          code: 'WRONG_FORM',
+          slot: 'complement',
+          actual: 'lääkäy',
+          expected: ['lääkäri'],
+        },
+      ],
+    })
+  })
+
   describe('optional Finnish subject', () => {
     it.each(['Minä olen lääkäri.', 'Olen lääkäri.'])(
       'accepts the valid answer %s',

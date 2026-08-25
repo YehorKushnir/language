@@ -159,7 +159,7 @@ describe('ExercisesService morphology diagnostics', () => {
     expect(transaction.userAttempt.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          checkerVersion: 'structured-v3-optional-slots-voikko',
+          checkerVersion: 'structured-v4-all-diagnostics-voikko',
         }),
       }),
     )
@@ -170,14 +170,22 @@ describe('ExercisesService morphology diagnostics', () => {
       {
         id: 'exercise.second',
         targetLanguage: 'fi',
-        answerSpec: { selectionOrder: 2 },
+        answerSpec: {
+          selectionOrder: 2,
+          acceptedVariants: ['Toinen vastaus.'],
+          slots: [],
+        },
         prompts: [{ text: 'Второе задание' }],
         userHistory: [],
       },
       {
         id: 'exercise.first',
         targetLanguage: 'fi',
-        answerSpec: { selectionOrder: 1 },
+        answerSpec: {
+          selectionOrder: 1,
+          acceptedVariants: ['Ensimmäinen vastaus.'],
+          slots: [],
+        },
         prompts: [{ text: 'Первое задание' }],
         userHistory: [
           { timesSeen: 8, lastSeenAt: new Date('2026-08-24T00:00:00.000Z') },
@@ -190,6 +198,11 @@ describe('ExercisesService morphology diagnostics', () => {
     ).resolves.toMatchObject({
       id: 'exercise.first',
       prompt: 'Первое задание',
+      answerSpec: {
+        acceptedVariants: ['Ensimmäinen vastaus.'],
+        slots: [],
+      },
+      checkerVersion: 'structured-v4-all-diagnostics-voikko',
     })
   })
 
@@ -275,6 +288,26 @@ describe('ExercisesService morphology diagnostics', () => {
         },
       ],
     })
+  })
+
+  it('keeps every structured diagnostic in the server response', async () => {
+    morphology.compareForms.mockResolvedValue(undefined)
+    const result = await service.submitAttempt('user.1', 'exercise.1', {
+      answer: 'Minä olet opiskleija',
+      idempotencyKey: '00000000-0000-4000-8000-000000000004',
+      routeVersionId: 'route.1',
+    })
+
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: 'WRONG_FORM' }),
+      expect.objectContaining({ code: 'TYPO' }),
+    ])
+    expect(
+      result.diagnostics.map((diagnostic) => diagnostic.message.ru),
+    ).toEqual([
+      expect.stringContaining('olet'),
+      expect.stringContaining('opiskleija'),
+    ])
   })
 
   it('creates an idempotent quality report only for the user attempt', async () => {

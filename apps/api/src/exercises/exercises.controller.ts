@@ -36,7 +36,7 @@ export class ExercisesController {
 
   @Get('lessons/:lessonId/exercises/next')
   @ApiOperation({ summary: 'Получить следующее упражнение урока' })
-  @ApiOkResponse({ description: 'Задание без эталонного ответа' })
+  @ApiOkResponse({ description: 'Задание со спецификацией локальной проверки' })
   @ApiNotFoundResponse({ description: 'Подходящее упражнение не найдено' })
   getNextExercise(
     @CurrentUserId() userId: string,
@@ -62,7 +62,7 @@ export class ExercisesController {
 
   @Get('lessons/:lessonId/exercises/:exerciseId')
   @ApiOperation({ summary: 'Получить конкретное упражнение урока' })
-  @ApiOkResponse({ description: 'Задание без эталонного ответа' })
+  @ApiOkResponse({ description: 'Задание со спецификацией локальной проверки' })
   @ApiNotFoundResponse({ description: 'Упражнение не найдено' })
   getExercise(
     @CurrentUserId() userId: string,

@@ -2,6 +2,10 @@ import type {
   PracticeCompletionResponse,
   PracticeSessionResponse,
 } from '@language/contracts'
+import {
+  checkStructuredAnswer,
+  type StructuredAnswerCheckResult,
+} from '@language/domain'
 import type { FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -17,6 +21,7 @@ import {
   practiceExerciseQuery,
   practiceSessionQuery,
 } from '@/api/queries'
+import { preloadCourseRoute } from '@/api/route-preload'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
 import { ExerciseReport } from '@/components/exercise-report'
 import { PageShell } from '@/components/page-shell'
@@ -26,6 +31,10 @@ import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
 import {
+  combineAnswerIssues,
+  localAnswerFeedback,
+} from '@/lib/local-answer-feedback'
+import {
   appendPracticeAttempt,
   getNextPracticeCorrection,
   practiceIsReadyToComplete,
@@ -34,7 +43,34 @@ import {
 export const Route = createFileRoute('/lessons/$lessonId_/practice')({
   loader: ({ context, params }) =>
     Promise.all([
-      context.queryClient.ensureQueryData(courseQuery),
+      preloadCourseRoute(
+        context.queryClient,
+        async (routeVersionId, queryClient) => {
+          const session = await queryClient.ensureQueryData(
+            practiceSessionQuery(params.lessonId, routeVersionId),
+          )
+          if (practiceIsReadyToComplete(session)) return
+
+          const correctionExerciseId = getNextPracticeCorrection(session)
+          if (correctionExerciseId) {
+            await queryClient.ensureQueryData(
+              practiceExerciseQuery(
+                params.lessonId,
+                correctionExerciseId,
+                routeVersionId,
+              ),
+            )
+            return
+          }
+          await queryClient.ensureQueryData(
+            nextExerciseQuery(
+              params.lessonId,
+              routeVersionId,
+              session.completedExerciseIds,
+            ),
+          )
+        },
+      ),
       context.queryClient.ensureQueryData(lessonQuery(params.lessonId)),
     ]),
   component: LessonPracticePage,
@@ -46,6 +82,8 @@ function LessonPracticePage() {
   const { lessonId } = Route.useParams()
   const queryClient = useQueryClient()
   const [answer, setAnswer] = useState('')
+  const [localResult, setLocalResult] =
+    useState<StructuredAnswerCheckResult | null>(null)
   const [round, setRound] = useState(1)
   const [completedExerciseIds, setCompletedExerciseIds] = useState<string[]>([])
   const [attemptIds, setAttemptIds] = useState<string[]>([])
@@ -61,6 +99,7 @@ function LessonPracticePage() {
   >(null)
   const answerInput = useRef<HTMLInputElement>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
+  const continueAfterSave = useRef(false)
   const openedAt = useRef(Date.now())
   const recoveredSessionCompletionStartedAt = useRef<string | null>(null)
   const pendingSessionUpdate = useRef<PracticeSessionResponse | null>(null)
@@ -74,26 +113,38 @@ function LessonPracticePage() {
   const sessionIsHydrated =
     Boolean(practiceSession.data) &&
     hydratedSessionStartedAt === practiceSession.data?.startedAt
+  const effectiveCompletedExerciseIds = sessionIsHydrated
+    ? completedExerciseIds
+    : (practiceSession.data?.completedExerciseIds ?? completedExerciseIds)
+  const effectiveCorrectionExerciseId = sessionIsHydrated
+    ? currentCorrectionExerciseId
+    : practiceSession.data
+      ? getNextPracticeCorrection(practiceSession.data)
+      : currentCorrectionExerciseId
   const primaryExercise = useQuery({
-    ...nextExerciseQuery(lessonId, routeVersionId, completedExerciseIds),
+    ...nextExerciseQuery(
+      lessonId,
+      routeVersionId,
+      effectiveCompletedExerciseIds,
+    ),
     enabled: Boolean(
       routeVersionId &&
-      sessionIsHydrated &&
-      !currentCorrectionExerciseId &&
-      completedExerciseIds.length < SESSION_SIZE,
+      practiceSession.data &&
+      !effectiveCorrectionExerciseId &&
+      effectiveCompletedExerciseIds.length < SESSION_SIZE,
     ),
   })
   const correctionExercise = useQuery({
     ...practiceExerciseQuery(
       lessonId,
-      currentCorrectionExerciseId ?? '',
+      effectiveCorrectionExerciseId ?? '',
       routeVersionId,
     ),
     enabled: Boolean(
-      routeVersionId && sessionIsHydrated && currentCorrectionExerciseId,
+      routeVersionId && practiceSession.data && effectiveCorrectionExerciseId,
     ),
   })
-  const exercise = currentCorrectionExerciseId
+  const exercise = effectiveCorrectionExerciseId
     ? correctionExercise
     : primaryExercise
   const completion = useMutation({
@@ -139,9 +190,20 @@ function LessonPracticePage() {
         updatedSession,
       )
       if (practiceIsReadyToComplete(updatedSession)) {
-        completion.mutate()
+        completion.mutate(undefined, {
+          onSuccess: () => {
+            if (continueAfterSave.current) setShowSummary(true)
+            continueAfterSave.current = false
+          },
+        })
+      } else if (continueAfterSave.current) {
+        continueAfterSave.current = false
+        nextExercise()
       }
       idempotencyKey.current = crypto.randomUUID()
+    },
+    onError: () => {
+      continueAfterSave.current = false
     },
   })
 
@@ -150,6 +212,7 @@ function LessonPracticePage() {
     if (!session || session.startedAt === hydratedSessionStartedAt) return
 
     setAnswer('')
+    setLocalResult(null)
     const nextCorrection = getNextPracticeCorrection(session)
     setRound(
       nextCorrection
@@ -187,8 +250,8 @@ function LessonPracticePage() {
   }, [completion, exercise.data, practiceSession.data])
 
   useEffect(() => {
-    if (!exercise.isFetching && !attempt.data) answerInput.current?.focus()
-  }, [attempt.data, exercise.data?.id, exercise.isFetching])
+    if (!exercise.isFetching && !localResult) answerInput.current?.focus()
+  }, [exercise.data?.id, exercise.isFetching, localResult])
 
   const recoveredCompletedSession = Boolean(
     practiceSession.data &&
@@ -248,25 +311,35 @@ function LessonPracticePage() {
 
   if (!exercise.data) return <PartPageState loading />
 
+  const activeExercise = exercise.data
   const result = attempt.data
-  const activeExerciseId = exercise.data.id
+  const activeExerciseId = activeExercise.id
   const updatedSession = pendingSessionUpdate.current
   const willComplete = Boolean(
-    result && updatedSession && practiceIsReadyToComplete(updatedSession),
+    localResult && updatedSession && practiceIsReadyToComplete(updatedSession),
   )
   const canSubmit = Boolean(
     routeVersionId &&
-    !attempt.isPending &&
     !completion.isPending &&
     !exercise.isFetching &&
-    (result || answer.trim()),
+    (localResult ? !attempt.isPending : answer.trim()),
   )
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (localResult && attempt.isPending) {
+      continueAfterSave.current = true
+      return
+    }
     if (!canSubmit) return
 
-    if (result) {
+    if (localResult) {
+      if (attempt.isError) {
+        continueAfterSave.current = true
+        attempt.mutate()
+        return
+      }
+      if (!result) return
       if (willComplete) {
         if (completion.isError) {
           completion.mutate()
@@ -279,7 +352,44 @@ function LessonPracticePage() {
       return
     }
 
+    if (!practiceSession.data) return
+    const check = checkStructuredAnswer(answer, activeExercise.answerSpec)
+    const optimisticSession = appendPracticeAttempt(
+      {
+        ...practiceSession.data,
+        answeredExercises: completedExerciseIds.length,
+        correctAnswers,
+        attemptIds,
+        completedExerciseIds,
+        pendingCorrections,
+      },
+      activeExercise.id,
+      `pending:${idempotencyKey.current}`,
+      check.isCorrect,
+    )
+    setLocalResult(check)
+    pendingSessionUpdate.current = optimisticSession
+    void prefetchFollowup(optimisticSession)
     attempt.mutate()
+  }
+
+  function prefetchFollowup(nextSession: PracticeSessionResponse) {
+    const nextCorrection = getNextPracticeCorrection(nextSession)
+    if (nextCorrection) {
+      return queryClient.prefetchQuery(
+        practiceExerciseQuery(lessonId, nextCorrection, routeVersionId),
+      )
+    }
+    if (nextSession.completedExerciseIds.length < SESSION_SIZE) {
+      return queryClient.prefetchQuery(
+        nextExerciseQuery(
+          lessonId,
+          routeVersionId,
+          nextSession.completedExerciseIds,
+        ),
+      )
+    }
+    return Promise.resolve()
   }
 
   function nextExercise() {
@@ -298,6 +408,8 @@ function LessonPracticePage() {
         : Math.min(nextSession.answeredExercises + 1, SESSION_SIZE),
     )
     setAnswer('')
+    setLocalResult(null)
+    continueAfterSave.current = false
     attempt.reset()
     pendingSessionUpdate.current = null
     idempotencyKey.current = crypto.randomUUID()
@@ -307,11 +419,15 @@ function LessonPracticePage() {
   const feedback = result
     ? result.isCorrect
       ? 'Верно.'
-      : result.diagnostics
-          .map((diagnostic) => localizedText(diagnostic.message))
-          .join(' ')
-    : null
-  const prompt = exercise.data.prompt.replace(/^Переведи на финский:\s*/u, '')
+      : combineAnswerIssues(
+          result.diagnostics.map((diagnostic) =>
+            localizedText(diagnostic.message),
+          ),
+        )
+    : localResult
+      ? localAnswerFeedback(localResult)
+      : null
+  const prompt = activeExercise.prompt.replace(/^Переведи на финский:\s*/u, '')
 
   if (showSummary && completion.data) {
     return (
@@ -323,7 +439,7 @@ function LessonPracticePage() {
     )
   }
 
-  const displaySession = result && updatedSession ? updatedSession : null
+  const displaySession = localResult && updatedSession ? updatedSession : null
   const displayedAnsweredExercises =
     displaySession?.answeredExercises ?? completedExerciseIds.length
   const displayedPendingCorrections =
@@ -389,9 +505,9 @@ function LessonPracticePage() {
                 className="h-11 text-base"
                 placeholder="Ответ на финском"
                 value={answer}
-                readOnly={attempt.isPending || Boolean(result)}
+                readOnly={Boolean(localResult)}
                 disabled={exercise.isFetching}
-                aria-invalid={result ? !result.isCorrect : undefined}
+                aria-invalid={localResult ? !localResult.isCorrect : undefined}
                 onChange={(event) => setAnswer(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key !== 'Enter') return
@@ -405,31 +521,33 @@ function LessonPracticePage() {
                 disabled={!canSubmit}
                 aria-busy={attempt.isPending || completion.isPending}
               >
-                {result
-                  ? willComplete
-                    ? completion.isPending
-                      ? 'Сохраняем…'
-                      : completion.isError
-                        ? 'Повторить'
-                        : 'Результаты'
-                    : 'Следующий'
-                  : attempt.isPending
-                    ? 'Проверяем…'
-                    : 'Проверить'}
+                {localResult
+                  ? attempt.isPending
+                    ? 'Сохраняем…'
+                    : attempt.isError
+                      ? 'Повторить'
+                      : willComplete
+                        ? completion.isPending
+                          ? 'Сохраняем…'
+                          : completion.isError
+                            ? 'Повторить'
+                            : 'Результаты'
+                        : 'Следующий'
+                  : 'Проверить'}
               </Button>
             </div>
           </form>
 
           <div className="pt-3" aria-live="polite">
-            {feedback && result ? (
+            {feedback && localResult ? (
               <div
                 className={`motion-feedback flex items-start gap-2.5 rounded-lg border px-3 py-2.5 text-sm leading-6 ${
-                  result.isCorrect
+                  localResult.isCorrect
                     ? 'border-primary/25 bg-primary/5 text-primary'
                     : 'border-destructive/25 bg-destructive/5 text-destructive'
                 }`}
               >
-                {result.isCorrect ? (
+                {localResult.isCorrect ? (
                   <CheckCircle2Icon className="mt-1 size-4 shrink-0" />
                 ) : (
                   <CircleXIcon className="mt-1 size-4 shrink-0" />
@@ -437,17 +555,23 @@ function LessonPracticePage() {
                 <p>
                   {feedback}{' '}
                   <span className="text-muted-foreground">
-                    {willComplete && completion.isPending
-                      ? 'Сохраняем результат практики.'
-                      : `Нажми Enter, чтобы ${
-                          willComplete ? 'увидеть результат' : 'продолжить'
-                        }.`}
+                    {attempt.isPending
+                      ? 'Сохраняем прогресс.'
+                      : attempt.isError
+                        ? 'Не удалось сохранить. Нажми Enter, чтобы повторить.'
+                        : willComplete && completion.isPending
+                          ? 'Сохраняем результат практики.'
+                          : `Нажми Enter, чтобы ${
+                              willComplete ? 'увидеть результат' : 'продолжить'
+                            }.`}
                   </span>
                 </p>
               </div>
             ) : null}
             {attempt.isError ? (
-              <QueryError message={attempt.error.message} />
+              <div className="mt-2">
+                <QueryError message={attempt.error.message} />
+              </div>
             ) : null}
             {completion.isError ? (
               <QueryError message={completion.error.message} />
