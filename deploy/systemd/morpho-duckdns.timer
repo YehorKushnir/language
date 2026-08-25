@@ -1,0 +1,11 @@
+[Unit]
+Description=Keep the Morpho Learning DuckDNS record current
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=5m
+Persistent=true
+Unit=morpho-duckdns.service
+
+[Install]
+WantedBy=timers.target

@@ -6,7 +6,9 @@ test-results/
 .turbo/
 .tanstack/
 .env
+.env.production
 .env.*.local
+backups/
 *.log
 .DS_Store
 apps/web/src/routeTree.gen.ts

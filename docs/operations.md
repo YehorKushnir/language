@@ -1,6 +1,6 @@
 # Эксплуатация backend
 
-Этот runbook описывает минимальный production-процесс для NestJS API и PostgreSQL. Приложение запускается как один stateless-процесс; состояние хранится в PostgreSQL, а морфологический движок и финский словарь поставляются вместе с backend.
+Этот runbook описывает production-процесс для NestJS API и PostgreSQL. Приложение запускается как один stateless-процесс; состояние хранится в PostgreSQL, а морфологический движок и финский словарь поставляются вместе с backend. Готовая конфигурация общего VPS, интеграция с центральным Caddy, GitHub Actions, systemd-бэкапы и перенос между серверами описаны в [инструкции по VPS-деплою](vps-deployment.md).
 
 ## Обязательная конфигурация
 
@@ -58,14 +58,14 @@ API и web preview на изолированных портах, создаёт 
 
 ## Резервное копирование и восстановление
 
-Для managed PostgreSQL нужно включить ежедневные snapshots и point-in-time recovery. Дополнительно перед миграциями рекомендуется логическая копия:
+Для managed PostgreSQL нужно включить ежедневные snapshots и point-in-time recovery. В VPS-конфигурации логическую копию создаёт скрипт с checksum и metadata:
 
 ```bash
-pg_dump --format=custom --no-owner --file=language.dump "$DATABASE_URL"
-pg_restore --clean --if-exists --no-owner --dbname="$RESTORE_DATABASE_URL" language.dump
+./scripts/deploy/backup.sh
+./scripts/deploy/restore.sh /secure/path/language.dump --confirm-replace-database
 ```
 
-Восстановление сначала проверяется в отдельной базе командами `pnpm db:migrate:deploy`, `pnpm publication:validate` и production smoke-test. Никогда не проверяйте restore поверх рабочей production-базы.
+Ежедневный timer хранит локальные копии 14 дней, но минимум одна зашифрованная копия должна автоматически уходить за пределы VPS. Восстановление сначала проверяется на отдельном сервере: restore-скрипт сам применяет миграции, seed и `publication:validate`. Никогда не проверяйте restore поверх рабочей production-базы.
 
 ## Откат и диагностика
 

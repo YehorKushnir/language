@@ -1,0 +1,16 @@
+[Unit]
+Description=Morpho Learning PostgreSQL backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+WorkingDirectory=/home/deploy/morpho-learning
+Environment=ENV_FILE=/home/deploy/morpho-learning/.env.production
+Environment=BACKUP_DIR=/var/backups/morpho-learning
+Environment=BACKUP_RETENTION_DAYS=14
+ExecStart=/home/deploy/morpho-learning/scripts/deploy/backup.sh
+UMask=0077
+Nice=10

@@ -1,0 +1,15 @@
+[Unit]
+Description=Update the Morpho Learning DuckDNS record
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/morpho-learning/duckdns.env
+ExecStart=/home/deploy/morpho-learning/scripts/deploy/update-duckdns.sh
+DynamicUser=true
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_INET AF_INET6

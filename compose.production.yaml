@@ -1,0 +1,133 @@
+name: morpho-learning
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '5'
+
+x-api-image: &api-image
+  image: ${IMAGE_REPO:-ghcr.io/yehorkushnir/language}/api:${IMAGE_TAG:-local}
+  build:
+    context: .
+    target: api
+
+x-api-environment: &api-environment
+  NODE_ENV: production
+  API_HOST: 0.0.0.0
+  API_PORT: '3000'
+  TRUST_PROXY_HOPS: '1'
+  DATABASE_URL: postgresql://language:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/language
+  WEB_ORIGIN: https://${APP_DOMAIN:?APP_DOMAIN is required}
+  BETTER_AUTH_URL: https://${APP_DOMAIN:?APP_DOMAIN is required}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
+  SMTP_HOST: ${SMTP_HOST:?SMTP_HOST is required}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_SECURE: ${SMTP_SECURE:-false}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
+  MEDIA_BASE_URL: ${MEDIA_BASE_URL:-}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: language
+      POSTGRES_USER: language
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_INITDB_ARGS: --data-checksums --encoding=UTF8
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U language -d language]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - database
+    shm_size: 256m
+    stop_grace_period: 60s
+    pids_limit: 256
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  migrate:
+    <<: *api-image
+    command: [sh, /app/scripts/deploy/release.sh]
+    restart: 'no'
+    environment: *api-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - database
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    pids_limit: 256
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  api:
+    <<: *api-image
+    restart: unless-stopped
+    environment: *api-environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - proxy
+      - database
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    init: true
+    stop_grace_period: 30s
+    pids_limit: 256
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  web:
+    image: ${IMAGE_REPO:-ghcr.io/yehorkushnir/language}/web:${IMAGE_TAG:-local}
+    build:
+      context: .
+      target: web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      proxy:
+        aliases:
+          - morpho-web
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    pids_limit: 128
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+volumes:
+  postgres-data:
+    name: morpho-learning-postgres-data
+
+networks:
+  proxy:
+    external: true
+    name: ${EDGE_NETWORK:-framed_default}
+  database:
+    internal: true
