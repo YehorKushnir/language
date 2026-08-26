@@ -586,6 +586,12 @@ export interface VocabularyStudyRequest {
   result: VocabularyStudyResult
 }
 
+export type WordMemoryStatus = 'NEW' | 'LEARNING' | 'KNOWN'
+
+export interface ChangeWordMemoryStatusRequest {
+  status: WordMemoryStatus
+}
+
 export interface VocabularyStudyResponse {
   itemId: string
   state: ReviewMemoryState

@@ -2,8 +2,9 @@ import type {
   ReviewMemoryState,
   UserGrammarItemResponse,
   UserVocabularyItemResponse,
+  WordMemoryStatus,
 } from '@language/contracts'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   BookOpenIcon,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { changeVocabularyMemoryStatus } from '@/api/language-api'
 import { courseQuery, userVocabularyQuery } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { LearningPageHeader } from '@/components/learning-page-header'
@@ -86,6 +88,7 @@ const stateClasses: Record<ReviewMemoryState, string> = {
 }
 
 function VocabularyPage() {
+  const queryClient = useQueryClient()
   const searchParams = Route.useSearch()
   const navigate = Route.useNavigate()
   const search = searchParams.q ?? ''
@@ -96,6 +99,19 @@ function VocabularyPage() {
   const vocabulary = useQuery({
     ...userVocabularyQuery(routeVersionId),
     enabled: Boolean(routeVersionId),
+  })
+  const statusChange = useMutation({
+    mutationFn: ({
+      itemId,
+      status,
+    }: {
+      itemId: string
+      status: WordMemoryStatus
+    }) => changeVocabularyMemoryStatus(routeVersionId, itemId, status),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: userVocabularyQuery(routeVersionId).queryKey,
+      }),
   })
   const visibleItems = useMemo(
     () =>
@@ -277,7 +293,18 @@ function VocabularyPage() {
           </p>
         </section>
       ) : section === 'words' ? (
-        <VocabularyList items={visibleItems} />
+        <VocabularyList
+          items={visibleItems}
+          changingItemId={
+            statusChange.isPending ? statusChange.variables?.itemId : undefined
+          }
+          statusErrorItemId={
+            statusChange.isError ? statusChange.variables?.itemId : undefined
+          }
+          onStatusChange={(itemId, status) =>
+            statusChange.mutate({ itemId, status })
+          }
+        />
       ) : (
         <GrammarList items={visibleGrammarItems} />
       )}
@@ -293,7 +320,17 @@ function isVocabularySection(value: unknown): value is VocabularySection {
   return value === 'words' || value === 'grammar'
 }
 
-function VocabularyList({ items }: { items: UserVocabularyItemResponse[] }) {
+function VocabularyList({
+  items,
+  changingItemId,
+  statusErrorItemId,
+  onStatusChange,
+}: {
+  items: UserVocabularyItemResponse[]
+  changingItemId?: string
+  statusErrorItemId?: string
+  onStatusChange: (itemId: string, status: WordMemoryStatus) => void
+}) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   function toggleItem(itemId: string) {
@@ -350,7 +387,15 @@ function VocabularyList({ items }: { items: UserVocabularyItemResponse[] }) {
               </button>
 
               {expanded ? (
-                <VocabularyDetails id={detailsId} item={item} />
+                <VocabularyDetails
+                  id={detailsId}
+                  item={item}
+                  changingStatus={changingItemId === item.itemId}
+                  statusError={statusErrorItemId === item.itemId}
+                  onStatusChange={(status) =>
+                    onStatusChange(item.itemId, status)
+                  }
+                />
               ) : null}
             </li>
           )
@@ -412,9 +457,15 @@ function GrammarList({ items }: { items: UserGrammarItemResponse[] }) {
 function VocabularyDetails({
   id,
   item,
+  changingStatus,
+  statusError,
+  onStatusChange,
 }: {
   id: string
   item: UserVocabularyItemResponse
+  changingStatus: boolean
+  statusError: boolean
+  onStatusChange: (status: WordMemoryStatus) => void
 }) {
   const [showAllForms, setShowAllForms] = useState(false)
   const [selections, setSelections] = useState<VocabularyFormSelections>({})
@@ -445,6 +496,34 @@ function VocabularyDetails({
             <span className="font-medium">{morphology.typeLabel}</span>
           </>
         ) : null}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <label className="grid gap-1">
+          <span className="text-xs font-medium text-muted-foreground">
+            Статус памяти
+          </span>
+          <select
+            aria-label={`Статус слова ${item.lemma}`}
+            className="h-9 min-w-40 rounded-md border bg-background px-2.5 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            disabled={changingStatus}
+            value={toWordMemoryStatus(item.memory.state)}
+            onChange={(event) =>
+              onStatusChange(event.target.value as WordMemoryStatus)
+            }
+          >
+            <option value="NEW">Не знаю</option>
+            <option value="LEARNING">Изучаю</option>
+            <option value="KNOWN">Знаю</option>
+          </select>
+        </label>
+        <p className="pb-2 text-xs text-muted-foreground">
+          {changingStatus
+            ? 'Сохраняем…'
+            : statusError
+              ? 'Не удалось изменить статус. Попробуй ещё раз.'
+              : 'Статус меняет расписание следующих повторений.'}
+        </p>
       </div>
 
       {morphology.stems.length > 0 || morphology.gradation ? (
@@ -589,6 +668,12 @@ function VocabularyDetails({
       ) : null}
     </div>
   )
+}
+
+function toWordMemoryStatus(state: ReviewMemoryState): WordMemoryStatus {
+  if (state === 'NEW') return 'NEW'
+  if (state === 'REVIEW') return 'KNOWN'
+  return 'LEARNING'
 }
 
 function formatWordCount(count: number) {

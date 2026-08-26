@@ -4,7 +4,7 @@ import {
   MemoryState,
 } from '@language/database'
 import { NotFoundException } from '@nestjs/common'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PrismaService } from '../database/prisma.service'
 import { MediaUrlService } from '../media/media-url.service'
@@ -33,6 +33,10 @@ describe('VocabularyService', () => {
     vi.clearAllMocks()
     prisma.knowledgeItem.findMany.mockResolvedValue([])
     prisma.userMemory.findMany.mockResolvedValue([])
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it('returns only words already added to the user vocabulary', async () => {
@@ -286,6 +290,40 @@ describe('VocabularyService', () => {
     )
   })
 
+  it('adds a text word through the same initialized memory flow', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-26T12:00:00.000Z'))
+    prisma.knowledgeItem.findFirst.mockResolvedValue({
+      id: 'word.fi.reader.aamu',
+    })
+    prisma.userMemory.upsert.mockImplementation(({ create }) =>
+      Promise.resolve(create),
+    )
+
+    await expect(
+      service.addToLearning('user.1', 'route.1', 'word.fi.reader.aamu'),
+    ).resolves.toEqual({
+      itemId: 'word.fi.reader.aamu',
+      state: MemoryState.NEW,
+      dueAt: '2026-08-26T12:20:00.000Z',
+      repetitions: 0,
+      lapses: 0,
+    })
+    expect(prisma.userMemory.upsert).toHaveBeenCalledWith({
+      where: {
+        userId_itemId: {
+          userId: 'user.1',
+          itemId: 'word.fi.reader.aamu',
+        },
+      },
+      update: {},
+      create: expect.objectContaining({
+        dueAt: new Date('2026-08-26T12:20:00.000Z'),
+        repetitions: 0,
+      }),
+    })
+  })
+
   it('schedules a reviewed text word from a flashcard fallback', async () => {
     prisma.knowledgeItem.findFirst.mockResolvedValue({
       id: 'word.fi.reader.aamu',
@@ -322,5 +360,133 @@ describe('VocabularyService', () => {
       lapses: 0,
     })
     expect(prisma.userMemory.update).toHaveBeenCalledOnce()
+  })
+
+  it('does not schedule an early flashcard answer', async () => {
+    prisma.knowledgeItem.findFirst.mockResolvedValue({
+      id: 'word.fi.reader.aamu',
+    })
+    prisma.userMemory.findUnique.mockResolvedValue({
+      userId: 'user.1',
+      itemId: 'word.fi.reader.aamu',
+      difficulty: 5,
+      stability: 8,
+      state: MemoryState.REVIEW,
+      dueAt: new Date('2099-01-01T00:00:00.000Z'),
+      lastReviewAt: new Date('2026-08-01T00:00:00.000Z'),
+      elapsedDays: 0,
+      scheduledDays: 8,
+      learningSteps: 0,
+      repetitions: 4,
+      lapses: 0,
+    })
+
+    await expect(
+      service.reviewItem('user.1', 'route.1', 'word.fi.reader.aamu', 'SUCCESS'),
+    ).resolves.toMatchObject({
+      state: MemoryState.REVIEW,
+      dueAt: '2099-01-01T00:00:00.000Z',
+      repetitions: 4,
+    })
+    expect(prisma.userMemory.update).not.toHaveBeenCalled()
+  })
+
+  it('manually returns a mature word to new and due practice', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-26T12:00:00.000Z'))
+    prisma.knowledgeItem.findFirst.mockResolvedValue({
+      id: 'word.fi.opiskelija',
+    })
+    prisma.userMemory.findUnique.mockResolvedValue({
+      userId: 'user.1',
+      itemId: 'word.fi.opiskelija',
+      difficulty: 5,
+      stability: 90,
+      state: MemoryState.REVIEW,
+      dueAt: new Date('2026-11-01T00:00:00.000Z'),
+      lastReviewAt: new Date('2026-08-01T00:00:00.000Z'),
+      elapsedDays: 0,
+      scheduledDays: 90,
+      learningSteps: 0,
+      repetitions: 9,
+      lapses: 1,
+    })
+    prisma.userMemory.upsert.mockImplementation(({ update }) =>
+      Promise.resolve({ itemId: 'word.fi.opiskelija', ...update }),
+    )
+
+    await expect(
+      service.changeMemoryStatus(
+        'user.1',
+        'route.1',
+        'word.fi.opiskelija',
+        'NEW',
+      ),
+    ).resolves.toEqual({
+      itemId: 'word.fi.opiskelija',
+      state: MemoryState.NEW,
+      dueAt: '2026-08-26T12:00:00.000Z',
+      repetitions: 0,
+      lapses: 0,
+    })
+    expect(prisma.userMemory.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({
+          state: MemoryState.NEW,
+          dueAt: new Date('2026-08-26T12:00:00.000Z'),
+          repetitions: 0,
+        }),
+      }),
+    )
+  })
+
+  it('persists known as a long interval that still remains scheduled', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-26T12:00:00.000Z'))
+    prisma.knowledgeItem.findFirst.mockResolvedValue({
+      id: 'word.fi.opiskelija',
+    })
+    const initial = {
+      userId: 'user.1',
+      itemId: 'word.fi.opiskelija',
+      difficulty: 0,
+      stability: 0,
+      state: MemoryState.NEW,
+      dueAt: new Date('2026-08-26T12:20:00.000Z'),
+      lastReviewAt: null,
+      elapsedDays: 0,
+      scheduledDays: 0,
+      learningSteps: 0,
+      repetitions: 0,
+      lapses: 0,
+    }
+    let persisted = initial
+    prisma.userMemory.findUnique.mockImplementation(() =>
+      Promise.resolve(persisted),
+    )
+    prisma.userMemory.upsert.mockImplementation(({ update }) => {
+      persisted = { ...persisted, ...update }
+      return Promise.resolve(persisted)
+    })
+
+    const changed = await service.changeMemoryStatus(
+      'user.1',
+      'route.1',
+      'word.fi.opiskelija',
+      'KNOWN',
+    )
+    expect(changed).toEqual({
+      itemId: 'word.fi.opiskelija',
+      state: MemoryState.REVIEW,
+      dueAt: '2026-10-25T12:00:00.000Z',
+      repetitions: 1,
+      lapses: 0,
+    })
+
+    prisma.userMemory.update.mockClear()
+    await expect(
+      service.reviewItem('user.1', 'route.1', 'word.fi.opiskelija', 'SUCCESS'),
+    ).resolves.toEqual(changed)
+    expect(prisma.userMemory.update).not.toHaveBeenCalled()
   })
 })

@@ -21,6 +21,7 @@ import {
 import { CurrentUserId } from '../identity/current-user.decorator'
 import { SessionIdentityGuard } from '../identity/session-identity.guard'
 import { VocabularyStudyDto } from '../progress/vocabulary-study.dto'
+import { ChangeWordMemoryStatusDto } from './change-word-memory-status.dto'
 import { VocabularyService } from './vocabulary.service'
 
 @ApiTags('vocabulary')
@@ -67,6 +68,24 @@ export class VocabularyController {
       routeVersionId,
       itemId,
       study.result,
+    )
+  }
+
+  @Put(':routeVersionId/:itemId/status')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Изменить состояние памяти слова' })
+  @ApiOkResponse({ description: 'Перепланированное состояние памяти слова' })
+  changeMemoryStatus(
+    @CurrentUserId() userId: string,
+    @Param('routeVersionId') routeVersionId: string,
+    @Param('itemId') itemId: string,
+    @Body() body: ChangeWordMemoryStatusDto,
+  ): Promise<VocabularyStudyResponse> {
+    return this.vocabulary.changeMemoryStatus(
+      userId,
+      routeVersionId,
+      itemId,
+      body.status,
     )
   }
 }

@@ -29,6 +29,7 @@ describe('CourseProgressService vocabulary study', () => {
     },
     userLessonVocabularyAttempt: { findUnique: vi.fn() },
     userCourseProgress: { upsert: vi.fn() },
+    userMemory: { upsert: vi.fn() },
     $transaction: vi.fn(
       (callback: (client: typeof transaction) => Promise<unknown>) =>
         callback(transaction),
@@ -52,6 +53,7 @@ describe('CourseProgressService vocabulary study', () => {
     prisma.userLessonVocabularyProgress.findMany.mockResolvedValue([])
     prisma.userLessonVocabularyAttempt.findUnique.mockResolvedValue(null)
     prisma.userCourseProgress.upsert.mockResolvedValue({})
+    prisma.userMemory.upsert.mockResolvedValue({})
     transaction.userLessonVocabularyProgress.upsert.mockResolvedValue({})
     transaction.userLessonVocabularyProgress.updateMany.mockResolvedValue({
       count: 1,
@@ -82,6 +84,20 @@ describe('CourseProgressService vocabulary study', () => {
         { itemId: 'word.2', correctAnswers: 0 },
       ],
     })
+    expect(prisma.userMemory.upsert).toHaveBeenCalledTimes(2)
+    expect(prisma.userMemory.upsert).toHaveBeenCalledWith({
+      where: {
+        userId_itemId: { userId: 'user.1', itemId: 'word.1' },
+      },
+      update: {},
+      create: expect.objectContaining({
+        userId: 'user.1',
+        itemId: 'word.1',
+        state: 'NEW',
+        repetitions: 0,
+        dueAt: expect.any(Date),
+      }),
+    })
   })
 
   it('checks the typed answer on the server and stores one success', async () => {
@@ -111,10 +127,13 @@ describe('CourseProgressService vocabulary study', () => {
         data: { correctAnswers: { increment: 1 } },
       }),
     )
-    expect(transaction.userMemory.upsert).not.toHaveBeenCalled()
+    expect(transaction.userMemory.upsert).toHaveBeenCalledOnce()
+    expect(transaction.userMemory.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ update: {} }),
+    )
   })
 
-  it('adds the word to spaced review after the third success', async () => {
+  it('completes the lesson word after the third success without crediting a review', async () => {
     const completed = vocabularyProgress(3, new Date())
     transaction.userLessonVocabularyProgress.findUniqueOrThrow.mockResolvedValue(
       vocabularyProgress(3),
@@ -146,6 +165,16 @@ describe('CourseProgressService vocabulary study', () => {
     expect(result.itemProgress.correctAnswers).toBe(3)
     expect(result.session.completedItems).toBe(1)
     expect(transaction.userMemory.upsert).toHaveBeenCalledOnce()
+    expect(transaction.userMemory.upsert).toHaveBeenCalledWith({
+      where: {
+        userId_itemId: { userId: 'user.1', itemId: 'word.1' },
+      },
+      update: {},
+      create: expect.objectContaining({
+        state: 'NEW',
+        repetitions: 0,
+      }),
+    })
     expect(completePart).toHaveBeenCalledWith(
       'user.1',
       'route.1',

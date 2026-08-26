@@ -3,6 +3,7 @@ import {
   EvidenceResult,
   ExerciseItemRole,
   KnowledgeItemKind,
+  MemoryState,
 } from '@language/database'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -21,6 +22,7 @@ describe('ExercisesService morphology diagnostics', () => {
     userLessonProgress: { count: vi.fn() },
     userAttempt: { findUnique: vi.fn(), findFirst: vi.fn() },
     exercise: { findFirst: vi.fn(), findMany: vi.fn() },
+    userMemory: { findMany: vi.fn(), upsert: vi.fn() },
     exerciseReport: { upsert: vi.fn() },
     courseRouteEntry: { findFirst: vi.fn() },
     $transaction: vi.fn(
@@ -38,6 +40,8 @@ describe('ExercisesService morphology diagnostics', () => {
     vi.clearAllMocks()
     prisma.courseRouteDependency.findMany.mockResolvedValue([])
     prisma.userAttempt.findUnique.mockResolvedValue(null)
+    prisma.userMemory.findMany.mockResolvedValue([])
+    prisma.userMemory.upsert.mockResolvedValue({})
     prisma.exercise.findFirst.mockResolvedValue({
       id: 'exercise.1',
       lessonId: 'lesson.1',
@@ -332,6 +336,12 @@ describe('ExercisesService morphology diagnostics', () => {
         },
         prompts: [{ text: 'Второе задание' }],
         userHistory: [],
+        items: [
+          {
+            itemId: 'word.fi.second',
+            item: { kind: KnowledgeItemKind.LEXICAL_SENSE },
+          },
+        ],
       },
       {
         id: 'exercise.first',
@@ -344,6 +354,12 @@ describe('ExercisesService morphology diagnostics', () => {
         prompts: [{ text: 'Первое задание' }],
         userHistory: [
           { timesSeen: 8, lastSeenAt: new Date('2026-08-24T00:00:00.000Z') },
+        ],
+        items: [
+          {
+            itemId: 'word.fi.first',
+            item: { kind: KnowledgeItemKind.LEXICAL_SENSE },
+          },
         ],
       },
     ])
@@ -359,6 +375,65 @@ describe('ExercisesService morphology diagnostics', () => {
       },
       checkerVersion: 'structured-v5-split-lexical-grammar-evidence-voikko',
     })
+    expect(prisma.userMemory.upsert).toHaveBeenCalledWith({
+      where: {
+        userId_itemId: { userId: 'user.1', itemId: 'word.fi.first' },
+      },
+      update: {},
+      create: expect.objectContaining({
+        userId: 'user.1',
+        itemId: 'word.fi.first',
+        state: 'NEW',
+        dueAt: expect.any(Date),
+      }),
+    })
+  })
+
+  it('prioritizes an exercise covering the earliest due word', async () => {
+    prisma.exercise.findMany.mockResolvedValue([
+      {
+        id: 'exercise.ordered-first',
+        targetLanguage: 'fi',
+        answerSpec: { selectionOrder: 1, acceptedVariants: [], slots: [] },
+        prompts: [{ text: 'Обычное задание' }],
+        userHistory: [],
+        items: [
+          {
+            itemId: 'word.fi.not-due',
+            item: { kind: KnowledgeItemKind.LEXICAL_SENSE },
+          },
+        ],
+      },
+      {
+        id: 'exercise.due',
+        targetLanguage: 'fi',
+        answerSpec: { selectionOrder: 20, acceptedVariants: [], slots: [] },
+        prompts: [{ text: 'Просроченное слово' }],
+        userHistory: [],
+        items: [
+          {
+            itemId: 'word.fi.due',
+            item: { kind: KnowledgeItemKind.LEXICAL_SENSE },
+          },
+        ],
+      },
+    ])
+    prisma.userMemory.findMany.mockResolvedValue([{ itemId: 'word.fi.due' }])
+
+    await expect(
+      service.getNextExercise('user.1', 'route.1', 'lesson.1', 'ru', []),
+    ).resolves.toMatchObject({
+      id: 'exercise.due',
+      prompt: 'Просроченное слово',
+    })
+    expect(prisma.userMemory.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 'user.1',
+          dueAt: { lte: expect.any(Date) },
+        }),
+      }),
+    )
   })
 
   it('diagnoses olla when a valid optional subject is omitted', async () => {
@@ -443,6 +518,100 @@ describe('ExercisesService morphology diagnostics', () => {
         },
       ],
     })
+    expect(transaction.userMemory.upsert).toHaveBeenCalledWith({
+      where: {
+        userId_itemId: {
+          userId: 'user.1',
+          itemId: 'word.fi.opiskelija',
+        },
+      },
+      update: {},
+      create: expect.objectContaining({
+        state: MemoryState.NEW,
+        repetitions: 0,
+        dueAt: expect.any(Date),
+      }),
+    })
+  })
+
+  it('treats an answer before dueAt as incidental exposure', async () => {
+    transaction.userMemory.findUnique.mockResolvedValue({
+      difficulty: 5,
+      stability: 4,
+      state: MemoryState.REVIEW,
+      dueAt: new Date('2099-01-01T00:00:00.000Z'),
+      lastReviewAt: new Date('2026-08-01T00:00:00.000Z'),
+      elapsedDays: 0,
+      scheduledDays: 4,
+      learningSteps: 0,
+      repetitions: 4,
+      lapses: 0,
+    })
+
+    await service.submitAttempt('user.1', 'exercise.1', {
+      answer: 'Olen opiskelija',
+      idempotencyKey: '00000000-0000-4000-8000-000000000007',
+      routeVersionId: 'route.1',
+    })
+
+    expect(transaction.userMemory.upsert).not.toHaveBeenCalled()
+  })
+
+  it('advances a due word once and ignores the next immediate answer', async () => {
+    prisma.exercise.findFirst.mockResolvedValue({
+      id: 'exercise.1',
+      lessonId: 'lesson.1',
+      answerSpec: {
+        acceptedVariants: ['Opiskelija'],
+        slots: [
+          {
+            role: 'word',
+            accepted: ['opiskelija'],
+            itemIds: ['word.fi.opiskelija'],
+          },
+        ],
+      },
+      items: [
+        {
+          itemId: 'word.fi.opiskelija',
+          role: ExerciseItemRole.PRIMARY,
+          item: { kind: KnowledgeItemKind.LEXICAL_SENSE },
+        },
+      ],
+    })
+    let storedMemory = {
+      difficulty: 0,
+      stability: 0,
+      state: MemoryState.NEW,
+      dueAt: new Date('2020-01-01T00:00:00.000Z'),
+      lastReviewAt: null as Date | null,
+      elapsedDays: 0,
+      scheduledDays: 0,
+      learningSteps: 0,
+      repetitions: 0,
+      lapses: 0,
+    }
+    transaction.userMemory.findUnique.mockImplementation(() =>
+      Promise.resolve(storedMemory),
+    )
+    transaction.userMemory.upsert.mockImplementation(({ update }) => {
+      storedMemory = { ...storedMemory, ...update }
+      return Promise.resolve(storedMemory)
+    })
+
+    await service.submitAttempt('user.1', 'exercise.1', {
+      answer: 'Opiskelija',
+      idempotencyKey: '00000000-0000-4000-8000-000000000008',
+      routeVersionId: 'route.1',
+    })
+    await service.submitAttempt('user.1', 'exercise.1', {
+      answer: 'Opiskelija',
+      idempotencyKey: '00000000-0000-4000-8000-000000000009',
+      routeVersionId: 'route.1',
+    })
+
+    expect(storedMemory.repetitions).toBe(1)
+    expect(transaction.userMemory.upsert).toHaveBeenCalledOnce()
   })
 
   it('keeps every structured diagnostic in the server response', async () => {

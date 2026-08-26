@@ -24,6 +24,7 @@ import type {
   PreparedTextDetailResponse,
   UserVocabularyResponse,
   UpdateExerciseReportStatusRequest,
+  WordMemoryStatus,
   VocabularyStudyRequest,
   VocabularyStudyResponse,
 } from '@language/contracts'
@@ -202,6 +203,21 @@ export function reviewVocabularyItem(
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(study),
+    },
+  )
+}
+
+export function changeVocabularyMemoryStatus(
+  routeVersionId: string,
+  itemId: string,
+  status: WordMemoryStatus,
+) {
+  return request<VocabularyStudyResponse>(
+    `/me/vocabulary/${routeVersionId}/${itemId}/status`,
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status }),
     },
   )
 }

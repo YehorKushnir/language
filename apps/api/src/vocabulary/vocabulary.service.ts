@@ -1,13 +1,18 @@
 import type {
   UserVocabularyResponse,
   VocabularyStudyResponse,
+  WordMemoryStatus,
 } from '@language/contracts'
 import {
   ContentStatus,
   KnowledgeItemKind,
   MemoryState,
 } from '@language/database'
-import { scheduleReview } from '@language/domain'
+import {
+  changeWordMemoryStatus,
+  createInitialMemory,
+  recordReview,
+} from '@language/domain'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 
 import {
@@ -17,6 +22,11 @@ import {
 } from '../common/content-mapper'
 import { PrismaService } from '../database/prisma.service'
 import { MediaUrlService } from '../media/media-url.service'
+import {
+  initialUserMemoryData,
+  toReviewMemorySnapshot,
+  toUserMemoryData,
+} from '../common/user-memory'
 
 @Injectable()
 export class VocabularyService {
@@ -246,10 +256,7 @@ export class VocabularyService {
       create: {
         userId,
         itemId,
-        difficulty: 0,
-        stability: 0,
-        state: MemoryState.NEW,
-        dueAt: new Date(),
+        ...initialUserMemoryData(new Date()),
       },
     })
 
@@ -278,36 +285,48 @@ export class VocabularyService {
       )
     }
 
-    const schedule = scheduleReview(
-      {
-        difficulty: existing.difficulty,
-        stability: existing.stability,
-        state: existing.state,
-        dueAt: existing.dueAt,
-        lastReviewAt: existing.lastReviewAt,
-        elapsedDays: existing.elapsedDays,
-        scheduledDays: existing.scheduledDays,
-        learningSteps: existing.learningSteps,
-        repetitions: existing.repetitions,
-        lapses: existing.lapses,
-      },
+    const review = recordReview(
+      toReviewMemorySnapshot(existing),
       result,
       new Date(),
     )
+    if (!review.wasScheduledReview) return toStudyResponse(existing)
+
     const memory = await this.prisma.userMemory.update({
       where: { userId_itemId: { userId, itemId } },
-      data: {
-        difficulty: schedule.difficulty,
-        stability: schedule.stability,
-        state: MemoryState[schedule.state],
-        dueAt: schedule.dueAt,
-        lastReviewAt: schedule.lastReviewAt,
-        elapsedDays: schedule.elapsedDays,
-        scheduledDays: schedule.scheduledDays,
-        learningSteps: schedule.learningSteps,
-        repetitions: schedule.repetitions,
-        lapses: schedule.lapses,
-      },
+      data: toUserMemoryData(review.memory),
+    })
+
+    return toStudyResponse(memory)
+  }
+
+  async changeMemoryStatus(
+    userId: string,
+    routeVersionId: string,
+    itemId: string,
+    status: WordMemoryStatus,
+  ): Promise<VocabularyStudyResponse> {
+    const item = await this.findRouteVocabularyItem(routeVersionId, itemId)
+    if (!item) {
+      throw new NotFoundException(
+        `Vocabulary item ${itemId} is not part of route ${routeVersionId}`,
+      )
+    }
+
+    const now = new Date()
+    const existing = await this.prisma.userMemory.findUnique({
+      where: { userId_itemId: { userId, itemId } },
+    })
+    const changed = changeWordMemoryStatus(
+      existing ? toReviewMemorySnapshot(existing) : createInitialMemory(now),
+      status,
+      now,
+    )
+    const data = toUserMemoryData(changed)
+    const memory = await this.prisma.userMemory.upsert({
+      where: { userId_itemId: { userId, itemId } },
+      update: data,
+      create: { userId, itemId, ...data },
     })
 
     return toStudyResponse(memory)
