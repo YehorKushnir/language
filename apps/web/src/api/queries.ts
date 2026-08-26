@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 
 import {
+  getAdminReports,
   getCourse,
   getCourseProgress,
   getExercise,
@@ -14,6 +15,14 @@ import {
   startOrResumePractice,
   startOrResumeVocabulary,
 } from './language-api'
+import type { ExerciseReportStatus } from '@language/contracts'
+
+export function adminReportsQuery(status?: ExerciseReportStatus) {
+  return queryOptions({
+    queryKey: ['admin-reports', status ?? 'ALL'],
+    queryFn: () => getAdminReports(status),
+  })
+}
 
 export const courseQuery = queryOptions({
   queryKey: ['course', 'course.ru-fi'],

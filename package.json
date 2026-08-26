@@ -29,6 +29,7 @@
     "db:migrate:deploy": "pnpm --filter @language/database db:migrate:deploy",
     "db:seed": "pnpm --filter @language/database db:seed",
     "db:studio": "pnpm --filter @language/database db:studio",
+    "user:set-role": "pnpm --filter @language/database user:set-role",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

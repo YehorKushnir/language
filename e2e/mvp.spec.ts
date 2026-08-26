@@ -1,6 +1,11 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { execFile } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import { promisify } from 'node:util'
+
+const execFileAsync = promisify(execFile)
 
 test.afterEach(async ({ page }) => {
   const response = await page.request.delete('/api/v1/me', {
@@ -20,6 +25,117 @@ test('protected pages expose an accessible authentication boundary', async ({
     page.getByRole('link', { name: 'Создать аккаунт' }),
   ).toBeVisible()
   await expect(page.locator('main')).toHaveCount(1)
+  await expectAccessible(page)
+})
+
+test('admin can manage and export reports with the active status filter', async ({
+  page,
+}) => {
+  const email = await signUpLearner(page, 'Reports administrator')
+  const forbiddenResponse = await page.request.get('/api/v1/admin/reports')
+  expect(forbiddenResponse.status()).toBe(403)
+
+  const courseResponse = await page.request.get('/api/v1/courses/course.ru-fi')
+  expect(courseResponse.ok()).toBe(true)
+  const course = (await courseResponse.json()) as { route: { id: string } }
+  const routeVersionId = course.route.id
+  const exerciseId = 'exercise.fi.olla.negative.001'
+  const attemptResponse = await page.request.post(
+    `/api/v1/exercises/${exerciseId}/attempts`,
+    {
+      data: {
+        answer: 'xyz',
+        idempotencyKey: randomUUID(),
+        routeVersionId,
+        durationMs: 100,
+      },
+    },
+  )
+  expect(attemptResponse.ok()).toBe(true)
+  const attempt = (await attemptResponse.json()) as { attemptId: string }
+  const reportResponse = await page.request.post(
+    `/api/v1/exercises/${exerciseId}/reports`,
+    {
+      data: {
+        attemptId: attempt.attemptId,
+        reason: 'TECHNICAL_PROBLEM',
+        comment: 'Кнопка проверки не отвечает.',
+      },
+    },
+  )
+  expect(reportResponse.status()).toBe(201)
+  await expect(reportResponse.json()).resolves.toMatchObject({ status: 'NEW' })
+
+  await execFileAsync('pnpm', ['user:set-role', '--', email, 'ADMIN'], {
+    cwd: process.cwd(),
+  })
+
+  const prefetchedReportFilters = new Set<string>()
+  page.on('response', (response) => {
+    const url = new URL(response.url())
+    if (
+      response.request().method() === 'GET' &&
+      url.pathname === '/api/v1/admin/reports'
+    ) {
+      prefetchedReportFilters.add(url.searchParams.get('status') ?? 'ALL')
+    }
+  })
+  await page.goto('/admin/reports')
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Жалобы пользователей' }),
+  ).toBeVisible()
+  await expect
+    .poll(() => [...prefetchedReportFilters].sort())
+    .toEqual(['ALL', 'DISMISSED', 'FIXED', 'IN_PROGRESS', 'NEW'])
+  await expect(page.getByText('Кнопка проверки не отвечает.')).toBeVisible()
+  await expect(page.getByRole('link', { name: email })).toBeVisible()
+  const reportCard = page.getByRole('article').filter({
+    hasText: 'Кнопка проверки не отвечает.',
+  })
+  await expect(
+    reportCard.locator('[data-slot="badge"]').filter({ hasText: /^Новая$/u }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('navigation', { name: 'Основная навигация' }),
+  ).toContainText('Админка')
+
+  await page.getByRole('link', { name: /^Все\s/u }).click()
+  await expect(page).toHaveURL(/status=ALL/u)
+  const reportStatus = page.getByLabel('Статус жалобы от Reports administrator')
+  await reportStatus.selectOption('IN_PROGRESS')
+  await expect(reportStatus).toHaveValue('IN_PROGRESS')
+  await expect(
+    reportCard
+      .locator('[data-slot="badge"]')
+      .filter({ hasText: /^В работе$/u }),
+  ).toBeVisible()
+
+  await reportCard.getByRole('button', { name: 'Исправлено' }).click()
+  await expect(
+    reportCard
+      .locator('[data-slot="badge"]')
+      .filter({ hasText: /^Исправлена$/u }),
+  ).toBeVisible()
+  await page.getByRole('link', { name: /^Исправлена\s/u }).click()
+  await expect(page).toHaveURL(/status=FIXED/u)
+
+  const downloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Экспорт текущего фильтра' }).click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toBe('exercise-reports-fixed.json')
+  const downloadPath = await download.path()
+  expect(downloadPath).not.toBeNull()
+  const exported = JSON.parse(await readFile(downloadPath!, 'utf8')) as {
+    filter: string
+    totalCount: number
+    items: Array<{ status: string; reporter: { email: string } }>
+  }
+  expect(exported.filter).toBe('FIXED')
+  expect(exported.totalCount).toBeGreaterThanOrEqual(1)
+  expect(exported.items.every((item) => item.status === 'FIXED')).toBe(true)
+  expect(exported.items.some((item) => item.reporter.email === email)).toBe(
+    true,
+  )
   await expectAccessible(page)
 })
 
@@ -361,6 +477,39 @@ test('learner can move through the first lesson with keyboard controls', async (
   await answer.press('Enter')
   await expect(page.getByText(/Нажми Enter, чтобы продолжить/u)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Следующий' })).toBeVisible()
+  await page.getByRole('button', { name: 'Сообщить о проблеме' }).click()
+  const reportForm = page.getByRole('form', {
+    name: 'Сообщить о проблеме',
+  })
+  await expect(reportForm).toBeVisible()
+  await expect(
+    reportForm.getByText(
+      'Выбери причину и, если можешь, опиши, что именно не так.',
+    ),
+  ).toBeVisible()
+  const reportReason = reportForm.getByLabel('Причина')
+  const reportComment = reportForm.getByPlaceholder(
+    'Например: правильный вариант тоже должен приниматься',
+  )
+  await reportComment.fill('Тест')
+  await expect(reportForm.getByText('4/500')).toBeVisible()
+  const reportReasonBox = await reportReason.boundingBox()
+  const reportCommentBox = await reportComment.boundingBox()
+  const reportSubmitBox = await reportForm
+    .getByRole('button', { name: 'Отправить жалобу' })
+    .boundingBox()
+  const reportCancel = reportForm.getByRole('button', { name: 'Отмена' })
+  const reportCancelBox = await reportCancel.boundingBox()
+  expect(reportReasonBox).not.toBeNull()
+  expect(reportCommentBox).not.toBeNull()
+  expect(reportSubmitBox).not.toBeNull()
+  expect(reportCancelBox).not.toBeNull()
+  expect(reportCommentBox!.y).toBeGreaterThan(
+    reportReasonBox!.y + reportReasonBox!.height,
+  )
+  expect(Math.abs(reportSubmitBox!.width - reportCancelBox!.width)).toBe(0)
+  await reportCancel.click()
+  await expect(reportForm).toHaveCount(0)
   await expectAccessible(page)
 
   await answer.press('Enter')
@@ -839,16 +988,14 @@ test('text catalog has no horizontal overflow on a phone', async ({ page }) => {
 })
 
 async function signUpLearner(page: Page, name: string) {
+  const email = `e2e-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`
   await page.goto('/sign-up')
   await page.getByLabel('Имя').fill(name)
-  await page
-    .getByLabel('Email')
-    .fill(
-      `e2e-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`,
-    )
+  await page.getByLabel('Email').fill(email)
   await page.getByLabel('Пароль', { exact: true }).fill('e2e-password-2026')
   await page.getByRole('button', { name: 'Создать аккаунт' }).click()
   await expect(page).toHaveURL(/\/lessons\/?$/u)
+  return email
 }
 
 async function expectAccessible(page: Page) {

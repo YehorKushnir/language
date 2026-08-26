@@ -410,7 +410,7 @@ export class ExercisesService {
       update: {
         reason: request.reason,
         comment,
-        status: 'OPEN',
+        status: 'NEW',
       },
       create: {
         userId,

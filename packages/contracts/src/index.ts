@@ -444,6 +444,10 @@ export type ExerciseReportReason =
   | 'TECHNICAL_PROBLEM'
   | 'OTHER'
 
+export type ExerciseReportStatus = 'NEW' | 'IN_PROGRESS' | 'FIXED' | 'DISMISSED'
+
+export type UserRole = 'USER' | 'ADMIN'
+
 export interface ExerciseReportRequest {
   attemptId: string
   reason: ExerciseReportReason
@@ -456,9 +460,47 @@ export interface ExerciseReportResponse {
   attemptId: string
   reason: ExerciseReportReason
   comment: string | null
-  status: 'OPEN' | 'RESOLVED' | 'DISMISSED'
+  status: ExerciseReportStatus
   createdAt: string
   updatedAt: string
+}
+
+export interface AdminExerciseReportResponse extends ExerciseReportResponse {
+  reporter: {
+    id: string
+    name: string
+    email: string
+  }
+  exercise: {
+    id: string
+    lessonId: string | null
+    prompt: string
+    expectedAnswer: string
+  }
+  attempt: {
+    id: string
+    answerText: string
+    outcome: ExerciseAttemptOutcome
+    answeredAt: string
+  }
+}
+
+export interface AdminExerciseReportListResponse {
+  filter: ExerciseReportStatus | 'ALL'
+  totalCount: number
+  counts: Record<ExerciseReportStatus, number>
+  items: AdminExerciseReportResponse[]
+}
+
+export interface AdminExerciseReportExportResponse {
+  exportedAt: string
+  filter: ExerciseReportStatus | 'ALL'
+  totalCount: number
+  items: AdminExerciseReportResponse[]
+}
+
+export interface UpdateExerciseReportStatusRequest {
+  status: ExerciseReportStatus
 }
 
 export interface AccountDataExportResponse {
@@ -468,6 +510,7 @@ export interface AccountDataExportResponse {
     name: string
     email: string
     emailVerified: boolean
+    role: UserRole
     createdAt: string
   }
   courseProgress: Array<{
@@ -527,7 +570,7 @@ export interface AccountDataExportResponse {
     attemptId: string
     reason: ExerciseReportReason
     comment: string | null
-    status: 'OPEN' | 'RESOLVED' | 'DISMISSED'
+    status: ExerciseReportStatus
     createdAt: string
     updatedAt: string
   }>

@@ -473,7 +473,7 @@ describe('ExercisesService morphology diagnostics', () => {
       attemptId: 'attempt.1',
       reason: 'WRONG_ANSWER',
       comment: 'Вариант тоже корректный',
-      status: 'OPEN',
+      status: 'NEW',
       createdAt: new Date('2026-08-23T00:00:00.000Z'),
       updatedAt: new Date('2026-08-23T00:00:00.000Z'),
     })
@@ -492,7 +492,7 @@ describe('ExercisesService morphology diagnostics', () => {
     expect(prisma.exerciseReport.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { attemptId: 'attempt.1' },
-        update: expect.objectContaining({ status: 'OPEN' }),
+        update: expect.objectContaining({ status: 'NEW' }),
       }),
     )
   })

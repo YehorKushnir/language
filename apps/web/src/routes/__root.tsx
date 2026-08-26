@@ -14,6 +14,7 @@ import {
   LogOutIcon,
   ScrollTextIcon,
   SettingsIcon,
+  ShieldCheckIcon,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -25,22 +26,32 @@ import { authClient } from '@/lib/auth-client'
 import { cn } from '@/lib/utils'
 import type { RouterContext } from '@/router-context'
 
-const navigationItems: Array<{
-  to: '/' | '/lessons' | '/vocabulary' | '/texts' | '/settings'
+interface NavigationItem {
+  to:
+    '/' | '/lessons' | '/vocabulary' | '/texts' | '/settings' | '/admin/reports'
   label: string
   icon: LucideIcon
   exact?: boolean
-}> = [
+}
+
+const navigationItems: NavigationItem[] = [
   { to: '/', label: 'Главная', icon: HomeIcon, exact: true },
   { to: '/lessons', label: 'Уроки', icon: BookOpenCheckIcon },
   { to: '/vocabulary', label: 'Словарь', icon: LanguagesIcon },
   { to: '/texts', label: 'Тексты', icon: ScrollTextIcon },
 ]
 
-const mobileNavigationItems = [
-  ...navigationItems,
-  { to: '/settings' as const, label: 'Настройки', icon: SettingsIcon },
-]
+const adminNavigationItem: NavigationItem = {
+  to: '/admin/reports',
+  label: 'Админка',
+  icon: ShieldCheckIcon,
+}
+
+const settingsNavigationItem: NavigationItem = {
+  to: '/settings',
+  label: 'Настройки',
+  icon: SettingsIcon,
+}
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
@@ -69,8 +80,18 @@ function RootLayout() {
     pathname.startsWith('/reviews') ||
     pathname.startsWith('/vocabulary') ||
     pathname.startsWith('/texts') ||
-    pathname.startsWith('/settings')
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/admin')
   const showLearningNavigation = Boolean(session.data)
+  const isAdmin =
+    (session.data?.user as { role?: string } | undefined)?.role === 'ADMIN'
+  const visibleNavigationItems = isAdmin
+    ? [...navigationItems, adminNavigationItem]
+    : navigationItems
+  const mobileNavigationItems = [
+    ...visibleNavigationItems,
+    settingsNavigationItem,
+  ]
   const isSignInPage = pathname === '/sign-in'
   const isSignUpPage = pathname === '/sign-up'
 
@@ -112,7 +133,7 @@ function RootLayout() {
                 className="hidden items-center gap-0.5 lg:flex"
                 aria-label="Основная навигация"
               >
-                {navigationItems.map((item) => {
+                {visibleNavigationItems.map((item) => {
                   const Icon = item.icon
                   return (
                     <Button asChild key={item.to} variant="ghost" size="sm">
@@ -174,7 +195,12 @@ function RootLayout() {
           className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
           aria-label="Мобильная навигация"
         >
-          <div className="mx-auto grid h-16 max-w-lg grid-cols-5 gap-1 px-2 pt-1.5">
+          <div
+            className={cn(
+              'mx-auto grid h-16 max-w-lg gap-1 px-2 pt-1.5',
+              isAdmin ? 'grid-cols-6' : 'grid-cols-5',
+            )}
+          >
             {mobileNavigationItems.map((item) => {
               const Icon = item.icon
               return (
