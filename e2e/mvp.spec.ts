@@ -218,17 +218,24 @@ test('learner can move through the first lesson with keyboard controls', async (
   )
   expect(activeWord).toBeTruthy()
   const vocabularyAnswer = page.getByLabel('Слово по-фински')
+  const vocabularyUnknownButton = page.getByRole('button', {
+    name: 'Не знаю',
+  })
   const vocabularyButton = page.getByRole('button', { name: 'Проверить' })
   const vocabularyAnswerBox = await vocabularyAnswer.boundingBox()
+  const vocabularyUnknownButtonBox = await vocabularyUnknownButton.boundingBox()
   const vocabularyButtonBox = await vocabularyButton.boundingBox()
   expect(vocabularyAnswerBox).not.toBeNull()
+  expect(vocabularyUnknownButtonBox).not.toBeNull()
   expect(vocabularyButtonBox).not.toBeNull()
   expect(vocabularyButtonBox!.y).toBeGreaterThan(
     vocabularyAnswerBox!.y + vocabularyAnswerBox!.height,
   )
   expect(
-    Math.abs(vocabularyButtonBox!.width - vocabularyAnswerBox!.width),
-  ).toBe(0)
+    Math.abs(vocabularyButtonBox!.width - vocabularyUnknownButtonBox!.width),
+  ).toBeLessThanOrEqual(1)
+  expect(vocabularyUnknownButtonBox!.y).toBe(vocabularyButtonBox!.y)
+  expect(vocabularyUnknownButtonBox!.x).toBeLessThan(vocabularyButtonBox!.x)
   await expect(vocabularyAnswer).toBeFocused()
   await vocabularyAnswer.fill(activeWord!.lemma)
   await page.keyboard.press('Enter')
@@ -608,6 +615,55 @@ test('lesson vocabulary requires three server-checked answers per word', async (
     progress.lessons.find((lesson) => lesson.lessonId === 'fi.olla.basics')
       ?.vocabularyCompletedAt,
   ).not.toBeNull()
+  await expectAccessible(page)
+})
+
+test('an unknown lesson word is added to learning immediately', async ({
+  page,
+}) => {
+  await signUpLearner(page, 'Unknown vocabulary learner')
+  const courseResponse = await page.request.get('/api/v1/courses/course.ru-fi')
+  expect(courseResponse.ok()).toBe(true)
+  const course = (await courseResponse.json()) as {
+    route: { id: string }
+  }
+  const vocabularyResponse = await page.request.get(
+    '/api/v1/lessons/fi.olla.basics/vocabulary',
+  )
+  expect(vocabularyResponse.ok()).toBe(true)
+  const vocabulary = (await vocabularyResponse.json()) as {
+    items: Array<{ itemId: string; lemma: string }>
+  }
+
+  await page.goto('/lessons/fi.olla.basics/vocabulary')
+  const activeItemId = await page
+    .locator('article[data-item-id]')
+    .getAttribute('data-item-id')
+  const activeWord = vocabulary.items.find(
+    (item) => item.itemId === activeItemId,
+  )
+  expect(activeWord).toBeTruthy()
+
+  await page.getByRole('button', { name: 'Не знаю' }).click()
+  await expect(
+    page.getByText('Добавлено в изучаемое', { exact: true }),
+  ).toBeVisible()
+  await expect(page.getByText(activeWord!.lemma, { exact: true })).toBeVisible()
+  await expect(page.getByLabel('Правильных ответов: 0 из 3')).toHaveText('0/3')
+
+  const userVocabularyResponse = await page.request.get(
+    `/api/v1/me/vocabulary/${course.route.id}`,
+  )
+  expect(userVocabularyResponse.ok()).toBe(true)
+  const userVocabulary = (await userVocabularyResponse.json()) as {
+    items: Array<{ itemId: string; memory: { state: string } }>
+  }
+  expect(userVocabulary.items).toContainEqual(
+    expect.objectContaining({
+      itemId: activeWord!.itemId,
+      memory: expect.objectContaining({ state: 'NEW' }),
+    }),
+  )
   await expectAccessible(page)
 })
 

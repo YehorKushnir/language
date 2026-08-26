@@ -135,6 +135,7 @@ export class CourseProgressController {
       itemId,
       body.answer,
       body.idempotencyKey,
+      body.gaveUp ?? false,
     )
   }
 }

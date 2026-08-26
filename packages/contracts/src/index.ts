@@ -246,6 +246,7 @@ export interface LessonVocabularyStudySessionResponse {
 export interface LessonVocabularyAnswerRequest {
   answer: string
   idempotencyKey: string
+  gaveUp?: boolean
 }
 
 export interface LessonVocabularyAnswerResponse {

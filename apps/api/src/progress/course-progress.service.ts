@@ -447,7 +447,12 @@ export class CourseProgressService {
     itemId: string,
     answer: string,
     idempotencyKey: string,
+    gaveUp = false,
   ): Promise<LessonVocabularyAnswerResponse> {
+    if (!gaveUp && !answer.trim()) {
+      throw new BadRequestException('Введите ответ или выберите «Не знаю».')
+    }
+
     await assertLessonAvailable(this.prisma, userId, routeVersionId, lessonId)
     const vocabularyItem = await this.prisma.lessonKnowledgeItem.findFirst({
       where: {
@@ -519,6 +524,7 @@ export class CourseProgressService {
     }
 
     const isCorrect =
+      !gaveUp &&
       normalizeExactAnswer(answer) === normalizeExactAnswer(expectedAnswer)
     const now = new Date()
     const itemProgress = await this.prisma.$transaction(async (transaction) => {
@@ -602,6 +608,21 @@ export class CourseProgressService {
             learningSteps: schedule.learningSteps,
             repetitions: schedule.repetitions,
             lapses: schedule.lapses,
+          },
+        })
+      }
+
+      if (gaveUp) {
+        await transaction.userMemory.upsert({
+          where: { userId_itemId: { userId, itemId } },
+          update: {},
+          create: {
+            userId,
+            itemId,
+            difficulty: 0,
+            stability: 0,
+            state: MemoryState.NEW,
+            dueAt: now,
           },
         })
       }

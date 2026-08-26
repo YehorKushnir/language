@@ -61,6 +61,7 @@ function LessonVocabularyPage() {
   const [answer, setAnswer] = useState('')
   const [localFeedback, setLocalFeedback] =
     useState<LessonVocabularyAnswerResponse | null>(null)
+  const [gaveUp, setGaveUp] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
   const lesson = useQuery(lessonQuery(lessonId))
   const vocabulary = useQuery(lessonVocabularyQuery(lessonId))
@@ -75,14 +76,17 @@ function LessonVocabularyPage() {
       itemId,
       value,
       requestId,
+      gaveUp,
     }: {
       itemId: string
       value: string
       requestId: string
+      gaveUp: boolean
     }) =>
       submitVocabularyAnswer(routeVersionId, lessonId, itemId, {
         answer: value,
         idempotencyKey: requestId,
+        gaveUp,
       }),
     onSuccess: (result) => {
       setLocalFeedback(result)
@@ -205,18 +209,26 @@ function LessonVocabularyPage() {
       }
       if (study.isError) {
         continueAfterSave.current = true
-        study.mutate({
-          itemId: item.itemId,
-          value: answer,
-          requestId: idempotencyKey.current,
-        })
+        if (study.variables) study.mutate(study.variables)
       } else {
         continueStudy(feedback)
       }
       return
     }
-    if (!answer.trim() || study.isPending || !routeVersionId) return
+    submitCurrentAnswer(false)
+  }
+
+  function submitCurrentAnswer(nextGaveUp: boolean) {
+    if (
+      (!nextGaveUp && !answer.trim()) ||
+      study.isPending ||
+      !routeVersionId ||
+      feedback
+    ) {
+      return
+    }
     const isCorrect =
+      !nextGaveUp &&
       normalizeExactAnswer(answer) === normalizeExactAnswer(item.lemma)
     const optimistic = appendVocabularyAnswer(
       currentSession,
@@ -230,10 +242,12 @@ function LessonVocabularyPage() {
       expectedAnswer: item.lemma,
       ...optimistic,
     })
+    setGaveUp(nextGaveUp)
     study.mutate({
       itemId: item.itemId,
       value: answer,
       requestId: idempotencyKey.current,
+      gaveUp: nextGaveUp,
     })
   }
 
@@ -253,6 +267,7 @@ function LessonVocabularyPage() {
     setActiveItemId(nextItemId)
     setAnswer('')
     setLocalFeedback(null)
+    setGaveUp(false)
     continueAfterSave.current = false
     study.reset()
     idempotencyKey.current = crypto.randomUUID()
@@ -307,7 +322,7 @@ function LessonVocabularyPage() {
             <label className="sr-only" htmlFor="vocabulary-answer">
               Слово по-фински
             </label>
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_10rem]">
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_20.5rem]">
               <Input
                 ref={answerInput}
                 id="vocabulary-answer"
@@ -323,39 +338,57 @@ function LessonVocabularyPage() {
                   event.currentTarget.form?.requestSubmit()
                 }}
               />
-              {feedback ? (
-                <Button
-                  className="h-11"
-                  disabled={study.isPending}
-                  type="submit"
-                >
-                  {study.isPending
-                    ? 'Сохраняем…'
-                    : study.isError
-                      ? 'Повторить'
-                      : sessionCompleted
-                        ? 'Завершить'
-                        : 'Продолжить'}
-                  {!study.isPending && !study.isError ? (
-                    <ArrowRightIcon />
-                  ) : null}
-                </Button>
-              ) : (
-                <Button
-                  className="h-11"
-                  disabled={!answer.trim() || study.isPending}
-                  type="submit"
-                >
-                  Проверить
-                </Button>
-              )}
+              <div className={feedback ? undefined : 'grid grid-cols-2 gap-2'}>
+                {feedback ? (
+                  <Button
+                    className="h-11 w-full"
+                    disabled={study.isPending}
+                    type="submit"
+                  >
+                    {study.isPending
+                      ? 'Сохраняем…'
+                      : study.isError
+                        ? 'Повторить'
+                        : sessionCompleted
+                          ? 'Завершить'
+                          : 'Продолжить'}
+                    {!study.isPending && !study.isError ? (
+                      <ArrowRightIcon />
+                    ) : null}
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      className="h-11"
+                      disabled={study.isPending}
+                      type="button"
+                      variant="outline"
+                      onClick={() => submitCurrentAnswer(true)}
+                    >
+                      Не знаю
+                    </Button>
+                    <Button
+                      className="h-11"
+                      disabled={!answer.trim() || study.isPending}
+                      type="submit"
+                    >
+                      Проверить
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </form>
 
           <div className="pt-3" aria-live="polite">
             {feedback ? (
               <>
-                <VocabularyFeedback item={item} result={feedback} />
+                <VocabularyFeedback
+                  gaveUp={gaveUp}
+                  isSaving={study.isPending}
+                  item={item}
+                  result={feedback}
+                />
                 {study.isError ? (
                   <div className="mt-2">
                     <QueryError message={study.error.message} />
@@ -393,9 +426,13 @@ function AnswerMarkers({
 }
 
 function VocabularyFeedback({
+  gaveUp,
+  isSaving,
   item,
   result,
 }: {
+  gaveUp: boolean
+  isSaving: boolean
   item: LessonVocabularyItemResponse
   result: LessonVocabularyAnswerResponse
 }) {
@@ -419,7 +456,11 @@ function VocabularyFeedback({
               ? result.itemProgress.completedAt
                 ? 'Слово изучено'
                 : `Верно · ${result.itemProgress.correctAnswers} из ${result.session.requiredCorrectAnswers}`
-              : 'Пока неверно'}
+              : gaveUp
+                ? isSaving
+                  ? 'Добавляем в изучаемое…'
+                  : 'Добавлено в изучаемое'
+                : 'Пока неверно'}
           </p>
           <p className="mt-1 text-foreground">
             Правильный ответ:{' '}
