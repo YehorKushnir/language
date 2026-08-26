@@ -61,6 +61,71 @@ test('mobile layout keeps navigation reachable without horizontal overflow', asy
   await expectAccessible(page)
 })
 
+test('active tabs share the lesson accent and fill mobile content width', async ({
+  page,
+}) => {
+  await signUpLearner(page, 'Mobile tabs learner')
+  await page.setViewportSize({ width: 390, height: 844 })
+
+  await page.goto('/lessons/fi.olla.basics/vocabulary')
+  const lessonTabs = page.getByRole('navigation', { name: 'Части урока' })
+  const lessonActiveTab = lessonTabs.getByRole('link', {
+    name: 'Слова',
+    exact: true,
+  })
+  const lessonTabsBox = await lessonTabs.boundingBox()
+  const lessonCardBox = await page
+    .locator('article[data-item-id]')
+    .boundingBox()
+  expect(lessonTabsBox).not.toBeNull()
+  expect(lessonCardBox).not.toBeNull()
+  expect(
+    Math.abs(lessonTabsBox!.width - lessonCardBox!.width),
+  ).toBeLessThanOrEqual(1)
+  const lessonAccent = await lessonActiveTab.evaluate(
+    (element) => getComputedStyle(element).backgroundColor,
+  )
+
+  await page.goto('/vocabulary')
+  const vocabularyTabs = page.getByRole('navigation', {
+    name: 'Раздел словаря',
+  })
+  const vocabularyTabsBox = await vocabularyTabs.boundingBox()
+  const vocabularySearchBox = await page
+    .getByLabel('Поиск по слову или переводу')
+    .boundingBox()
+  expect(vocabularyTabsBox).not.toBeNull()
+  expect(vocabularySearchBox).not.toBeNull()
+  expect(
+    Math.abs(vocabularyTabsBox!.width - vocabularySearchBox!.width),
+  ).toBeLessThanOrEqual(1)
+  const vocabularyAccent = await vocabularyTabs
+    .getByRole('button', { name: /^Слова/u })
+    .evaluate((element) => getComputedStyle(element).backgroundColor)
+  const vocabularyFilterAccent = await page
+    .getByLabel('Фильтр слов')
+    .getByRole('button', { name: /^Все/u })
+    .evaluate((element) => getComputedStyle(element).backgroundColor)
+
+  await page.goto('/texts')
+  const textTabs = page.getByLabel('Доступность')
+  const textTabsBox = await textTabs.boundingBox()
+  const levelSelectBox = await page.getByLabel('Уровень').boundingBox()
+  expect(textTabsBox).not.toBeNull()
+  expect(levelSelectBox).not.toBeNull()
+  expect(
+    Math.abs(textTabsBox!.width - levelSelectBox!.width),
+  ).toBeLessThanOrEqual(1)
+  const textAccent = await textTabs
+    .getByRole('button', { name: 'Все тексты' })
+    .evaluate((element) => getComputedStyle(element).backgroundColor)
+
+  expect(vocabularyAccent).toBe(lessonAccent)
+  expect(vocabularyFilterAccent).toBe(lessonAccent)
+  expect(textAccent).toBe(lessonAccent)
+  await expectAccessible(page)
+})
+
 test('learner can move through the first lesson with keyboard controls', async ({
   page,
 }) => {

@@ -153,10 +153,11 @@ function VocabularyPage() {
       />
 
       <nav
-        className="mt-5 flex w-fit rounded-lg border bg-muted/25 p-1"
+        className="mt-5 flex w-full rounded-lg border bg-muted/25 p-1 sm:w-fit"
         aria-label="Раздел словаря"
       >
         <Button
+          className="min-w-0 flex-1 sm:flex-none"
           size="sm"
           variant={section === 'words' ? 'secondary' : 'ghost'}
           aria-current={section === 'words' ? 'page' : undefined}
@@ -173,6 +174,7 @@ function VocabularyPage() {
           </span>
         </Button>
         <Button
+          className="min-w-0 flex-1 sm:flex-none"
           size="sm"
           variant={section === 'grammar' ? 'secondary' : 'ghost'}
           aria-current={section === 'grammar' ? 'page' : undefined}
