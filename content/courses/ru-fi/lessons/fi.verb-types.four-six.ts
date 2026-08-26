@@ -60,7 +60,7 @@ const verbs: CuratedPresentVerb[] = [
   ),
   v(
     'lainata',
-    'одалживать',
+    'брать или давать взаймы',
     ['lainaan', 'lainaat', 'lainaa', 'lainaamme', 'lainaatte', 'lainaavat'],
     'lainaa',
     '4',
@@ -68,7 +68,7 @@ const verbs: CuratedPresentVerb[] = [
   ),
   v(
     'tykätä',
-    'нравиться',
+    'любить; нравиться',
     ['tykkään', 'tykkäät', 'tykkää', 'tykkäämme', 'tykkäätte', 'tykkäävät'],
     'tykkää',
     '4',
@@ -201,7 +201,7 @@ const verbs: CuratedPresentVerb[] = [
   ),
   v(
     'kylmetä',
-    'холодать',
+    'остывать; холодать',
     [
       'kylmenen',
       'kylmenet',
@@ -263,7 +263,7 @@ const verbs: CuratedPresentVerb[] = [
 ]
 
 export const verbTypesFourSixContent = {
-  version: 4,
+  version: 6,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {

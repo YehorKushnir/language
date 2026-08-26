@@ -20,7 +20,7 @@ export function LearningPageHeader({
   className,
 }: LearningPageHeaderProps) {
   return (
-    <header className={cn('border-b pb-5', className)}>
+    <header className={cn('pb-2', className)}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <div className="flex min-h-5 items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">

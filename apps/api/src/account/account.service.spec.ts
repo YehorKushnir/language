@@ -21,6 +21,7 @@ describe('AccountService', () => {
       name: 'Learner',
       email: 'learner@example.com',
       emailVerified: true,
+      role: 'USER',
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
       courseProgress: [
         {

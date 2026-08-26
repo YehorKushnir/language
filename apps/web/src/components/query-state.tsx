@@ -16,7 +16,7 @@ export function PageLoading() {
 
 export function QueryError({ message }: { message?: string }) {
   return (
-    <Card className="border-destructive/30 bg-destructive/5">
+    <Card className="bg-destructive/5">
       <CardContent className="flex items-start gap-3 text-sm">
         <AlertCircleIcon className="mt-0.5 size-4 text-destructive" />
         <div>

@@ -25,7 +25,8 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "user:set-role": "tsx prisma/set-user-role.ts"
   },
   "dependencies": {
     "@language/content-schema": "workspace:*",

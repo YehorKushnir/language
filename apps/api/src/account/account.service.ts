@@ -41,6 +41,7 @@ export class AccountService {
         name: user.name,
         email: user.email,
         emailVerified: user.emailVerified,
+        role: user.role,
         createdAt: user.createdAt.toISOString(),
       },
       courseProgress: user.courseProgress.map((progress) => ({

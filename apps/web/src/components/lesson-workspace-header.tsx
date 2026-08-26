@@ -59,10 +59,10 @@ export function LessonWorkspaceHeader({
         </>
       }
       title={lessonTitle}
-      className="border-b-0 pb-0 [&_h1]:text-2xl sm:[&_h1]:text-4xl"
+      className="pb-0 [&_h1]:text-2xl sm:[&_h1]:text-4xl"
     >
       <nav
-        className="mt-3 flex w-fit max-w-full gap-1 overflow-x-auto rounded-lg bg-muted/35 p-1 sm:mt-5"
+        className="mt-3 flex w-full gap-1 overflow-x-auto rounded-lg bg-muted p-1 sm:mt-5 sm:w-fit sm:max-w-full"
         aria-label="Части урока"
       >
         {parts.map((item) => {
@@ -76,7 +76,7 @@ export function LessonWorkspaceHeader({
               resetScroll={false}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-[color,background-color,transform] duration-150 active:scale-[0.98]',
+                'inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium transition-[color,background-color,transform] duration-150 active:scale-[0.98] sm:flex-none sm:px-3',
                 active
                   ? 'bg-accent text-foreground shadow-xs'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',

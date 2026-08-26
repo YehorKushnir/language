@@ -1,11 +1,15 @@
 import type {
   AccountDataExportResponse,
+  AdminExerciseReportExportResponse,
+  AdminExerciseReportListResponse,
+  AdminExerciseReportResponse,
   CourseOverviewResponse,
   CourseProgressResponse,
   ExerciseAttemptRequest,
   ExerciseAttemptResponse,
   ExerciseReportRequest,
   ExerciseReportResponse,
+  ExerciseReportStatus,
   LessonVocabularyAnswerRequest,
   LessonVocabularyAnswerResponse,
   LessonDetailResponse,
@@ -19,6 +23,7 @@ import type {
   PreparedTextCatalogResponse,
   PreparedTextDetailResponse,
   UserVocabularyResponse,
+  UpdateExerciseReportStatusRequest,
   VocabularyStudyRequest,
   VocabularyStudyResponse,
 } from '@language/contracts'
@@ -123,6 +128,50 @@ export function reportExercise(
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(report),
   })
+}
+
+export function getAdminReports(status?: ExerciseReportStatus) {
+  const search = status ? `?${new URLSearchParams({ status })}` : ''
+  return request<AdminExerciseReportListResponse>(`/admin/reports${search}`)
+}
+
+export function updateAdminReportStatus(
+  reportId: string,
+  update: UpdateExerciseReportStatusRequest,
+) {
+  return request<AdminExerciseReportResponse>(`/admin/reports/${reportId}`, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(update),
+  })
+}
+
+export async function downloadAdminReports(status?: ExerciseReportStatus) {
+  const search = status ? `?${new URLSearchParams({ status })}` : ''
+  const response = await fetch(`${apiUrl}/admin/reports/export${search}`, {
+    credentials: 'include',
+  })
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as {
+      message?: string | string[]
+    } | null
+    const message = Array.isArray(payload?.message)
+      ? payload.message.join(', ')
+      : payload?.message
+    throw new ApiError(
+      message || 'Не удалось выгрузить жалобы',
+      response.status,
+    )
+  }
+
+  const data = (await response.json()) as AdminExerciseReportExportResponse
+  const disposition = response.headers.get('content-disposition')
+  const filename = disposition?.match(/filename="?([^";]+)"?/u)?.[1]
+  return {
+    data,
+    filename:
+      filename ?? `exercise-reports-${status?.toLowerCase() ?? 'all'}.json`,
+  }
 }
 
 export function getCourseProgress(routeVersionId: string) {

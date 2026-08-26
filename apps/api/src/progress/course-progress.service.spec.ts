@@ -154,6 +154,66 @@ describe('CourseProgressService vocabulary study', () => {
     )
   })
 
+  it('adds an unknown word to learning without crediting a correct answer', async () => {
+    transaction.userLessonVocabularyProgress.findUniqueOrThrow.mockResolvedValue(
+      vocabularyProgress(0),
+    )
+
+    const result = await service.submitVocabularyAnswer(
+      'user.1',
+      'route.1',
+      'lesson.1',
+      'word.1',
+      '',
+      '20a6cc78-b299-490f-889f-48617837a8be',
+      true,
+    )
+
+    expect(result).toMatchObject({
+      itemId: 'word.1',
+      isCorrect: false,
+      expectedAnswer: 'opiskelija',
+      itemProgress: { correctAnswers: 0, attempts: 1 },
+    })
+    expect(
+      transaction.userLessonVocabularyProgress.updateMany,
+    ).not.toHaveBeenCalled()
+    expect(transaction.userMemory.upsert).toHaveBeenCalledWith({
+      where: {
+        userId_itemId: { userId: 'user.1', itemId: 'word.1' },
+      },
+      update: {},
+      create: expect.objectContaining({
+        userId: 'user.1',
+        itemId: 'word.1',
+        state: 'NEW',
+      }),
+    })
+    expect(transaction.userLessonVocabularyAttempt.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          answerText: '',
+          isCorrect: false,
+          correctAnswersAfter: 0,
+        }),
+      }),
+    )
+  })
+
+  it('rejects an empty answer unless the learner gives up', async () => {
+    await expect(
+      service.submitVocabularyAnswer(
+        'user.1',
+        'route.1',
+        'lesson.1',
+        'word.1',
+        ' ',
+        'abed50d7-b1f1-458c-a948-e9d16b8e4fde',
+      ),
+    ).rejects.toThrow('Введите ответ или выберите «Не знаю».')
+    expect(prisma.$transaction).not.toHaveBeenCalled()
+  })
+
   it('rejects an item outside the lesson vocabulary', async () => {
     prisma.lessonKnowledgeItem.findFirst.mockResolvedValue(null)
 

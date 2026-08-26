@@ -108,7 +108,7 @@ function SettingsPage() {
         </Alert>
       ) : null}
 
-      <section className="mt-6 grid gap-4 rounded-lg border bg-card p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+      <section className="mt-6 grid gap-4 rounded-lg bg-card p-4 shadow-xs sm:grid-cols-[1fr_auto] sm:items-center">
         <div>
           <h2 className="text-sm font-semibold">Выйти из аккаунта</h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
@@ -130,7 +130,7 @@ function SettingsPage() {
         </Button>
       </section>
 
-      <section className="mt-4 grid gap-4 rounded-lg border bg-card p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+      <section className="mt-4 grid gap-4 rounded-lg bg-card p-4 shadow-xs sm:grid-cols-[1fr_auto] sm:items-center">
         <div>
           <h2 className="text-sm font-semibold">Выгрузить данные</h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
@@ -152,7 +152,7 @@ function SettingsPage() {
         </Button>
       </section>
 
-      <section className="mt-4 rounded-lg border border-destructive/30 bg-card p-4">
+      <section className="mt-4 rounded-lg bg-destructive/5 p-4">
         <h2 className="text-sm font-semibold text-destructive">
           Удалить аккаунт
         </h2>

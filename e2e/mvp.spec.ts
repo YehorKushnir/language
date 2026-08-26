@@ -1,6 +1,11 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { execFile } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import { promisify } from 'node:util'
+
+const execFileAsync = promisify(execFile)
 
 test.afterEach(async ({ page }) => {
   const response = await page.request.delete('/api/v1/me', {
@@ -20,6 +25,117 @@ test('protected pages expose an accessible authentication boundary', async ({
     page.getByRole('link', { name: 'Создать аккаунт' }),
   ).toBeVisible()
   await expect(page.locator('main')).toHaveCount(1)
+  await expectAccessible(page)
+})
+
+test('admin can manage and export reports with the active status filter', async ({
+  page,
+}) => {
+  const email = await signUpLearner(page, 'Reports administrator')
+  const forbiddenResponse = await page.request.get('/api/v1/admin/reports')
+  expect(forbiddenResponse.status()).toBe(403)
+
+  const courseResponse = await page.request.get('/api/v1/courses/course.ru-fi')
+  expect(courseResponse.ok()).toBe(true)
+  const course = (await courseResponse.json()) as { route: { id: string } }
+  const routeVersionId = course.route.id
+  const exerciseId = 'exercise.fi.olla.negative.001'
+  const attemptResponse = await page.request.post(
+    `/api/v1/exercises/${exerciseId}/attempts`,
+    {
+      data: {
+        answer: 'xyz',
+        idempotencyKey: randomUUID(),
+        routeVersionId,
+        durationMs: 100,
+      },
+    },
+  )
+  expect(attemptResponse.ok()).toBe(true)
+  const attempt = (await attemptResponse.json()) as { attemptId: string }
+  const reportResponse = await page.request.post(
+    `/api/v1/exercises/${exerciseId}/reports`,
+    {
+      data: {
+        attemptId: attempt.attemptId,
+        reason: 'TECHNICAL_PROBLEM',
+        comment: 'Кнопка проверки не отвечает.',
+      },
+    },
+  )
+  expect(reportResponse.status()).toBe(201)
+  await expect(reportResponse.json()).resolves.toMatchObject({ status: 'NEW' })
+
+  await execFileAsync('pnpm', ['user:set-role', '--', email, 'ADMIN'], {
+    cwd: process.cwd(),
+  })
+
+  const prefetchedReportFilters = new Set<string>()
+  page.on('response', (response) => {
+    const url = new URL(response.url())
+    if (
+      response.request().method() === 'GET' &&
+      url.pathname === '/api/v1/admin/reports'
+    ) {
+      prefetchedReportFilters.add(url.searchParams.get('status') ?? 'ALL')
+    }
+  })
+  await page.goto('/admin/reports')
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Жалобы пользователей' }),
+  ).toBeVisible()
+  await expect
+    .poll(() => [...prefetchedReportFilters].sort())
+    .toEqual(['ALL', 'DISMISSED', 'FIXED', 'IN_PROGRESS', 'NEW'])
+  await expect(page.getByText('Кнопка проверки не отвечает.')).toBeVisible()
+  await expect(page.getByRole('link', { name: email })).toBeVisible()
+  const reportCard = page.getByRole('article').filter({
+    hasText: 'Кнопка проверки не отвечает.',
+  })
+  await expect(
+    reportCard.locator('[data-slot="badge"]').filter({ hasText: /^Новая$/u }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('navigation', { name: 'Основная навигация' }),
+  ).toContainText('Админка')
+
+  await page.getByRole('link', { name: /^Все\s/u }).click()
+  await expect(page).toHaveURL(/status=ALL/u)
+  const reportStatus = page.getByLabel('Статус жалобы от Reports administrator')
+  await reportStatus.selectOption('IN_PROGRESS')
+  await expect(reportStatus).toHaveValue('IN_PROGRESS')
+  await expect(
+    reportCard
+      .locator('[data-slot="badge"]')
+      .filter({ hasText: /^В работе$/u }),
+  ).toBeVisible()
+
+  await reportCard.getByRole('button', { name: 'Исправлено' }).click()
+  await expect(
+    reportCard
+      .locator('[data-slot="badge"]')
+      .filter({ hasText: /^Исправлена$/u }),
+  ).toBeVisible()
+  await page.getByRole('link', { name: /^Исправлена\s/u }).click()
+  await expect(page).toHaveURL(/status=FIXED/u)
+
+  const downloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Экспорт текущего фильтра' }).click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toBe('exercise-reports-fixed.json')
+  const downloadPath = await download.path()
+  expect(downloadPath).not.toBeNull()
+  const exported = JSON.parse(await readFile(downloadPath!, 'utf8')) as {
+    filter: string
+    totalCount: number
+    items: Array<{ status: string; reporter: { email: string } }>
+  }
+  expect(exported.filter).toBe('FIXED')
+  expect(exported.totalCount).toBeGreaterThanOrEqual(1)
+  expect(exported.items.every((item) => item.status === 'FIXED')).toBe(true)
+  expect(exported.items.some((item) => item.reporter.email === email)).toBe(
+    true,
+  )
   await expectAccessible(page)
 })
 
@@ -58,6 +174,130 @@ test('mobile layout keeps navigation reachable without horizontal overflow', asy
     page.getByRole('navigation', { name: 'Мобильная навигация' }),
   ).toHaveCount(0)
   expect(await page.evaluate(() => scrollY)).toBe(0)
+  await expectAccessible(page)
+})
+
+test('active tabs share the accent and dictionary controls adapt by viewport', async ({
+  page,
+}) => {
+  await signUpLearner(page, 'Mobile tabs learner')
+  await page.setViewportSize({ width: 390, height: 844 })
+
+  await page.goto('/lessons/fi.olla.basics/vocabulary')
+  const lessonTabs = page.getByRole('navigation', { name: 'Части урока' })
+  const lessonActiveTab = lessonTabs.getByRole('link', {
+    name: 'Слова',
+    exact: true,
+  })
+  const lessonTabsBox = await lessonTabs.boundingBox()
+  const lessonCardBox = await page
+    .locator('article[data-item-id]')
+    .boundingBox()
+  expect(lessonTabsBox).not.toBeNull()
+  expect(lessonCardBox).not.toBeNull()
+  expect(
+    Math.abs(lessonTabsBox!.width - lessonCardBox!.width),
+  ).toBeLessThanOrEqual(1)
+  const lessonAccent = await lessonActiveTab.evaluate(
+    (element) => getComputedStyle(element).backgroundColor,
+  )
+
+  await page.goto('/vocabulary')
+  const vocabularyTabs = page.getByRole('navigation', {
+    name: 'Раздел словаря',
+  })
+  const vocabularyTabsBox = await vocabularyTabs.boundingBox()
+  const vocabularySearchBox = await page
+    .getByLabel('Поиск по слову или переводу')
+    .boundingBox()
+  expect(vocabularyTabsBox).not.toBeNull()
+  expect(vocabularySearchBox).not.toBeNull()
+  expect(
+    Math.abs(vocabularyTabsBox!.width - vocabularySearchBox!.width),
+  ).toBeLessThanOrEqual(1)
+  expect(vocabularySearchBox!.y).toBeGreaterThan(
+    vocabularyTabsBox!.y + vocabularyTabsBox!.height,
+  )
+
+  await page.setViewportSize({ width: 1280, height: 720 })
+  const desktopVocabularyTabsBox = await vocabularyTabs.boundingBox()
+  const desktopVocabularySearchBox = await page
+    .getByLabel('Поиск по слову или переводу')
+    .boundingBox()
+  expect(desktopVocabularyTabsBox).not.toBeNull()
+  expect(desktopVocabularySearchBox).not.toBeNull()
+  expect(desktopVocabularyTabsBox!.x).toBeLessThan(
+    desktopVocabularySearchBox!.x,
+  )
+  expect(
+    Math.abs(
+      desktopVocabularyTabsBox!.y +
+        desktopVocabularyTabsBox!.height / 2 -
+        (desktopVocabularySearchBox!.y +
+          desktopVocabularySearchBox!.height / 2),
+    ),
+  ).toBeLessThanOrEqual(1)
+  const vocabularyAccent = await vocabularyTabs
+    .getByRole('button', { name: /^Слова/u })
+    .evaluate((element) => getComputedStyle(element).backgroundColor)
+  const vocabularyFilterAccent = await page
+    .getByLabel('Фильтр слов')
+    .getByRole('button', { name: /^Все/u })
+    .evaluate((element) => getComputedStyle(element).backgroundColor)
+  const vocabularyTabContrast = await vocabularyTabs.evaluate((tabs) => {
+    const activeTab = tabs.querySelector<HTMLElement>('[aria-current="page"]')
+    if (!activeTab) throw new Error('Active vocabulary tab was not found')
+
+    function toRgb(color: string) {
+      const canvas = document.createElement('canvas')
+      canvas.width = 1
+      canvas.height = 1
+      const context = canvas.getContext('2d')
+      if (!context) throw new Error('Canvas context is unavailable')
+      context.fillStyle = color
+      context.fillRect(0, 0, 1, 1)
+      return [...context.getImageData(0, 0, 1, 1).data.slice(0, 3)]
+    }
+
+    function difference(left: number[], right: number[]) {
+      return left.reduce(
+        (total, channel, index) =>
+          total + Math.abs(channel - (right[index] ?? 0)),
+        0,
+      )
+    }
+
+    const pageColor = toRgb(getComputedStyle(document.body).backgroundColor)
+    const tabsColor = toRgb(getComputedStyle(tabs).backgroundColor)
+    const activeColor = toRgb(getComputedStyle(activeTab).backgroundColor)
+    return {
+      tabsFromPage: difference(tabsColor, pageColor),
+      activeFromTabs: difference(activeColor, tabsColor),
+    }
+  })
+
+  expect(vocabularyAccent).toBe(lessonAccent)
+  expect(vocabularyFilterAccent).toBe(lessonAccent)
+  expect(vocabularyTabContrast.tabsFromPage).toBeGreaterThan(20)
+  expect(vocabularyTabContrast.activeFromTabs).toBeGreaterThan(20)
+  await expectAccessible(page)
+
+  await page.goto('/')
+  const lessonPartProgress = page.getByRole('list', {
+    name: 'Прогресс текущего урока',
+  })
+  const homeProgressColors = await lessonPartProgress.evaluate((list) => {
+    const card = list.closest('a')
+    const practice = [...list.children].find((item) =>
+      item.textContent?.includes('Практика'),
+    )
+    if (!card || !practice) throw new Error('Lesson progress surfaces missing')
+    return {
+      card: getComputedStyle(card).backgroundColor,
+      practice: getComputedStyle(practice).backgroundColor,
+    }
+  })
+  expect(homeProgressColors.practice).not.toBe(homeProgressColors.card)
   await expectAccessible(page)
 })
 
@@ -104,6 +344,23 @@ test('learner can move through the first lesson with keyboard controls', async (
   const firstLesson = page.getByRole('button', {
     name: /Личные местоимения и olla/u,
   })
+  const firstLessonItem = page.locator('li').filter({ has: firstLesson })
+  const outlinePractice = firstLessonItem.getByRole('link', {
+    name: 'Практика',
+    exact: true,
+  })
+  const outlineSurfaceColors = await firstLessonItem.evaluate((item) => {
+    const practice = [...item.querySelectorAll('a')].find((link) =>
+      link.textContent?.includes('Практика'),
+    )
+    if (!practice) throw new Error('Practice lesson link was not found')
+    return {
+      lesson: getComputedStyle(item).backgroundColor,
+      practice: getComputedStyle(practice).backgroundColor,
+    }
+  })
+  expect(outlineSurfaceColors.practice).not.toBe(outlineSurfaceColors.lesson)
+  await expect(outlinePractice).toBeVisible()
   const outlineUrl = page.url()
   await expect(firstLesson).toHaveAttribute('aria-expanded', 'true')
   await expect(page.getByRole('link', { name: 'Объяснение' })).toBeVisible()
@@ -218,17 +475,24 @@ test('learner can move through the first lesson with keyboard controls', async (
   )
   expect(activeWord).toBeTruthy()
   const vocabularyAnswer = page.getByLabel('Слово по-фински')
+  const vocabularyUnknownButton = page.getByRole('button', {
+    name: 'Не знаю',
+  })
   const vocabularyButton = page.getByRole('button', { name: 'Проверить' })
   const vocabularyAnswerBox = await vocabularyAnswer.boundingBox()
+  const vocabularyUnknownButtonBox = await vocabularyUnknownButton.boundingBox()
   const vocabularyButtonBox = await vocabularyButton.boundingBox()
   expect(vocabularyAnswerBox).not.toBeNull()
+  expect(vocabularyUnknownButtonBox).not.toBeNull()
   expect(vocabularyButtonBox).not.toBeNull()
   expect(vocabularyButtonBox!.y).toBeGreaterThan(
     vocabularyAnswerBox!.y + vocabularyAnswerBox!.height,
   )
   expect(
-    Math.abs(vocabularyButtonBox!.width - vocabularyAnswerBox!.width),
-  ).toBe(0)
+    Math.abs(vocabularyButtonBox!.width - vocabularyUnknownButtonBox!.width),
+  ).toBeLessThanOrEqual(1)
+  expect(vocabularyUnknownButtonBox!.y).toBe(vocabularyButtonBox!.y)
+  expect(vocabularyUnknownButtonBox!.x).toBeLessThan(vocabularyButtonBox!.x)
   await expect(vocabularyAnswer).toBeFocused()
   await vocabularyAnswer.fill(activeWord!.lemma)
   await page.keyboard.press('Enter')
@@ -289,6 +553,39 @@ test('learner can move through the first lesson with keyboard controls', async (
   await answer.press('Enter')
   await expect(page.getByText(/Нажми Enter, чтобы продолжить/u)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Следующий' })).toBeVisible()
+  await page.getByRole('button', { name: 'Сообщить о проблеме' }).click()
+  const reportForm = page.getByRole('form', {
+    name: 'Сообщить о проблеме',
+  })
+  await expect(reportForm).toBeVisible()
+  await expect(
+    reportForm.getByText(
+      'Выбери причину и, если можешь, опиши, что именно не так.',
+    ),
+  ).toBeVisible()
+  const reportReason = reportForm.getByLabel('Причина')
+  const reportComment = reportForm.getByPlaceholder(
+    'Например: правильный вариант тоже должен приниматься',
+  )
+  await reportComment.fill('Тест')
+  await expect(reportForm.getByText('4/500')).toBeVisible()
+  const reportReasonBox = await reportReason.boundingBox()
+  const reportCommentBox = await reportComment.boundingBox()
+  const reportSubmitBox = await reportForm
+    .getByRole('button', { name: 'Отправить жалобу' })
+    .boundingBox()
+  const reportCancel = reportForm.getByRole('button', { name: 'Отмена' })
+  const reportCancelBox = await reportCancel.boundingBox()
+  expect(reportReasonBox).not.toBeNull()
+  expect(reportCommentBox).not.toBeNull()
+  expect(reportSubmitBox).not.toBeNull()
+  expect(reportCancelBox).not.toBeNull()
+  expect(reportCommentBox!.y).toBeGreaterThan(
+    reportReasonBox!.y + reportReasonBox!.height,
+  )
+  expect(Math.abs(reportSubmitBox!.width - reportCancelBox!.width)).toBe(0)
+  await reportCancel.click()
+  await expect(reportForm).toHaveCount(0)
   await expectAccessible(page)
 
   await answer.press('Enter')
@@ -307,10 +604,8 @@ test('learner can move through the first lesson with keyboard controls', async (
   await expect(
     page.getByRole('heading', { level: 1, name: 'Тексты' }),
   ).toBeVisible()
-  await expect(page.getByRole('combobox')).toHaveCount(2)
-  await expect(
-    page.getByRole('button', { name: 'Все тексты' }),
-  ).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('combobox')).toHaveCount(0)
+  await expect(page.getByLabel('Фильтры текстов')).toHaveCount(0)
   await expect(
     page.getByRole('heading', { level: 2, name: /A1 · Начальный уровень/u }),
   ).toBeVisible()
@@ -323,11 +618,7 @@ test('learner can move through the first lesson with keyboard controls', async (
   await expect(
     page.getByRole('heading', { level: 2, name: /B2 · Выше среднего/u }),
   ).toHaveCount(0)
-  await expect(page.getByText(/Aamulla luen kirjaa/u)).toHaveCount(0)
   await expect(page.getByText(/% знакомых/u).last()).toBeVisible()
-  await page.getByRole('button', { name: 'Подходят сейчас' }).click()
-  await expect(page.getByText('Подходящих текстов пока нет')).toBeVisible()
-  await page.getByRole('button', { name: 'Все тексты' }).click()
   expect(Date.now() - textsNavigationStartedAt).toBeLessThan(1_000)
   await expect(page.locator('main')).toHaveCount(1)
   await expectAccessible(page)
@@ -460,7 +751,7 @@ test('text-only vocabulary enters review as a flashcard', async ({ page }) => {
 
   await page.goto('/vocabulary')
   await expect(
-    page.getByText(/1 слово в словаре · 1 пора повторить/u),
+    page.getByText(/1 слово · 0 конструкций · 1 пора повторить/u),
   ).toBeVisible()
   await page.getByRole('link', { name: 'Повторить' }).click()
   await expect(
@@ -611,6 +902,55 @@ test('lesson vocabulary requires three server-checked answers per word', async (
   await expectAccessible(page)
 })
 
+test('an unknown lesson word is added to learning immediately', async ({
+  page,
+}) => {
+  await signUpLearner(page, 'Unknown vocabulary learner')
+  const courseResponse = await page.request.get('/api/v1/courses/course.ru-fi')
+  expect(courseResponse.ok()).toBe(true)
+  const course = (await courseResponse.json()) as {
+    route: { id: string }
+  }
+  const vocabularyResponse = await page.request.get(
+    '/api/v1/lessons/fi.olla.basics/vocabulary',
+  )
+  expect(vocabularyResponse.ok()).toBe(true)
+  const vocabulary = (await vocabularyResponse.json()) as {
+    items: Array<{ itemId: string; lemma: string }>
+  }
+
+  await page.goto('/lessons/fi.olla.basics/vocabulary')
+  const activeItemId = await page
+    .locator('article[data-item-id]')
+    .getAttribute('data-item-id')
+  const activeWord = vocabulary.items.find(
+    (item) => item.itemId === activeItemId,
+  )
+  expect(activeWord).toBeTruthy()
+
+  await page.getByRole('button', { name: 'Не знаю' }).click()
+  await expect(
+    page.getByText('Добавлено в изучаемое', { exact: true }),
+  ).toBeVisible()
+  await expect(page.getByText(activeWord!.lemma, { exact: true })).toBeVisible()
+  await expect(page.getByLabel('Правильных ответов: 0 из 3')).toHaveText('0/3')
+
+  const userVocabularyResponse = await page.request.get(
+    `/api/v1/me/vocabulary/${course.route.id}`,
+  )
+  expect(userVocabularyResponse.ok()).toBe(true)
+  const userVocabulary = (await userVocabularyResponse.json()) as {
+    items: Array<{ itemId: string; memory: { state: string } }>
+  }
+  expect(userVocabulary.items).toContainEqual(
+    expect.objectContaining({
+      itemId: activeWord!.itemId,
+      memory: expect.objectContaining({ state: 'NEW' }),
+    }),
+  )
+  await expectAccessible(page)
+})
+
 test('password recovery keeps account existence private', async ({ page }) => {
   await page.goto('/sign-in')
   await page.getByRole('link', { name: 'Забыли пароль?' }).click()
@@ -637,6 +977,60 @@ test('new learner is not sent into an empty review session', async ({
   ).toBeDisabled()
 })
 
+test('a grammar mistake automatically appears in the grammar section', async ({
+  page,
+}) => {
+  await signUpLearner(page, 'Grammar memory learner')
+  const courseResponse = await page.request.get('/api/v1/courses/course.ru-fi')
+  const course = (await courseResponse.json()) as { route: { id: string } }
+  const routeVersionId = course.route.id
+
+  const sessionResponse = await page.request.put(
+    `/api/v1/me/course-progress/${routeVersionId}/lessons/fi.olla.basics/practice-session`,
+  )
+  expect(sessionResponse.ok()).toBe(true)
+  const attemptResponse = await page.request.post(
+    '/api/v1/exercises/exercise.fi.olla.negative.001/attempts',
+    {
+      data: {
+        answer: 'xyz',
+        idempotencyKey: randomUUID(),
+        routeVersionId,
+        durationMs: 100,
+      },
+    },
+  )
+  expect(attemptResponse.ok()).toBe(true)
+  const attempt = (await attemptResponse.json()) as {
+    evidence: Array<{ itemId: string; result: string }>
+  }
+  const failedGrammar = attempt.evidence.find(
+    (item) => item.itemId.startsWith('grammar.') && item.result === 'FAILURE',
+  )
+  expect(failedGrammar).toBeDefined()
+
+  const vocabularyResponse = await page.request.get(
+    `/api/v1/me/vocabulary/${routeVersionId}`,
+  )
+  expect(vocabularyResponse.ok()).toBe(true)
+  const vocabulary = (await vocabularyResponse.json()) as {
+    grammarItems: Array<{ itemId: string; name: { ru: string } }>
+  }
+  const grammarItem = vocabulary.grammarItems.find(
+    (item) => item.itemId === failedGrammar?.itemId,
+  )
+  expect(grammarItem).toBeDefined()
+
+  await page.goto('/vocabulary?section=grammar')
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Мои знания' }),
+  ).toBeVisible()
+  await expect(
+    page.getByText(grammarItem!.name.ru, { exact: true }),
+  ).toBeVisible()
+  await expectAccessible(page)
+})
+
 test('text catalog has no horizontal overflow on a phone', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await signUpLearner(page, 'Mobile reader')
@@ -645,14 +1039,16 @@ test('text catalog has no horizontal overflow on a phone', async ({ page }) => {
   await expect(
     page.getByRole('heading', { level: 1, name: 'Тексты' }),
   ).toBeVisible()
-  await page.getByLabel('Уровень').selectOption('A1')
-  await expect(page).toHaveURL(/level=A1/u)
+  await expect(page.getByRole('combobox')).toHaveCount(0)
   await page
     .getByRole('link', { name: /Открыть/u })
     .first()
     .click()
   await page.goBack()
-  await expect(page.getByLabel('Уровень')).toHaveValue('A1')
+  await expect(page).toHaveURL(/\/texts$/u)
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Тексты' }),
+  ).toBeVisible()
   expect(
     await page.evaluate(
       () =>
@@ -664,16 +1060,14 @@ test('text catalog has no horizontal overflow on a phone', async ({ page }) => {
 })
 
 async function signUpLearner(page: Page, name: string) {
+  const email = `e2e-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`
   await page.goto('/sign-up')
   await page.getByLabel('Имя').fill(name)
-  await page
-    .getByLabel('Email')
-    .fill(
-      `e2e-${Date.now()}-${Math.random().toString(16).slice(2)}@example.test`,
-    )
+  await page.getByLabel('Email').fill(email)
   await page.getByLabel('Пароль', { exact: true }).fill('e2e-password-2026')
   await page.getByRole('button', { name: 'Создать аккаунт' }).click()
   await expect(page).toHaveURL(/\/lessons\/?$/u)
+  return email
 }
 
 async function expectAccessible(page: Page) {

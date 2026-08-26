@@ -22,6 +22,10 @@ import {
 } from '@language/language-fi'
 import { Inject, Injectable } from '@nestjs/common'
 
+import {
+  EXERCISE_CHECKER_VERSION,
+  toPreparedAnswerSpec,
+} from '../common/answer-spec'
 import { PrismaService } from '../database/prisma.service'
 import { FinnishMorphologyService } from '../morphology/finnish-morphology.service'
 
@@ -37,6 +41,7 @@ interface GeneratedCandidateRecord {
   id: string
   lessonId: string | null
   targetLanguage: string
+  answerSpec: unknown
   prompts: Array<{ text: string }>
   items: Array<{ itemId: string; role: ExerciseItemRole }>
 }
@@ -528,6 +533,8 @@ export class ExerciseGenerationService {
       sourceLanguage,
       targetLanguage: exercise.targetLanguage,
       prompt: prompt.text,
+      answerSpec: toPreparedAnswerSpec(exercise.answerSpec),
+      checkerVersion: EXERCISE_CHECKER_VERSION,
       reviewItemIds: exercise.items
         .filter((item) => dueSet.has(item.itemId))
         .map((item) => item.itemId),

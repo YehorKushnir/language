@@ -192,7 +192,7 @@ function ReviewSessionPage() {
             <ArrowLeftIcon /> К словарю
           </Link>
         </Button>
-        <Card className="border-dashed">
+        <Card>
           <CardContent className="flex flex-col items-start py-5">
             {hasUnavailableItems ? (
               <XCircleIcon className="size-9 text-destructive" />
@@ -227,7 +227,7 @@ function ReviewSessionPage() {
           <ArrowLeftIcon /> Завершить сессию
         </Link>
       </Button>
-      <header className="border-b pb-3 sm:pb-5">
+      <header className="pb-1 sm:pb-2">
         <div className="flex items-center justify-between gap-4">
           <Badge variant="secondary">
             <BrainIcon /> Повторение · {Math.min(total, completedItemCount + 1)}{' '}
@@ -375,7 +375,7 @@ function ReviewFlashcard({
           <ArrowLeftIcon /> Завершить сессию
         </Link>
       </Button>
-      <header className="border-b pb-3 sm:pb-5">
+      <header className="pb-1 sm:pb-2">
         <div className="flex items-center justify-between gap-4">
           <Badge variant="secondary">
             <BrainIcon /> Повторение · {Math.min(total, completed + 1)} из{' '}
@@ -395,7 +395,7 @@ function ReviewFlashcard({
         />
       </header>
 
-      <section className="mt-5 rounded-xl border bg-card p-5 text-center shadow-xs sm:mt-7 sm:p-8">
+      <section className="mt-5 rounded-xl bg-card p-5 text-center shadow-xs sm:mt-7 sm:p-8">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Финский
         </p>
@@ -403,7 +403,7 @@ function ReviewFlashcard({
           {flashcard.lemma}
         </h2>
         {revealed ? (
-          <div className="motion-feedback mt-6 border-t pt-6">
+          <div className="motion-feedback mt-6">
             <p className="font-serif text-2xl font-semibold">
               {localizedText(flashcard.gloss)}
             </p>

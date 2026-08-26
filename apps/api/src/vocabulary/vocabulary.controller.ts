@@ -30,8 +30,8 @@ export class VocabularyController {
   constructor(private readonly vocabulary: VocabularyService) {}
 
   @Get(':routeVersionId')
-  @ApiOperation({ summary: 'Получить словарь текущего пользователя' })
-  @ApiOkResponse({ description: 'Слова курса и их состояния памяти' })
+  @ApiOperation({ summary: 'Получить слова и грамматику пользователя' })
+  @ApiOkResponse({ description: 'Слова, навыки и их состояния памяти' })
   @ApiNotFoundResponse({ description: 'Версия маршрута не найдена' })
   getUserVocabulary(
     @CurrentUserId() userId: string,

@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 
 import { AccountModule } from './account/account.module'
+import { AdminModule } from './admin/admin.module'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './auth/auth.module'
@@ -35,6 +36,7 @@ import { validateEnvironment } from './environment'
       },
     ]),
     DatabaseModule,
+    AdminModule,
     AccountModule,
     AuthModule,
     MediaModule,

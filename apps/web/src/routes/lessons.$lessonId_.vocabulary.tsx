@@ -2,6 +2,7 @@ import type {
   LessonVocabularyAnswerResponse,
   LessonVocabularyItemResponse,
 } from '@language/contracts'
+import { normalizeExactAnswer } from '@language/domain'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
@@ -9,7 +10,6 @@ import {
   CheckCircle2Icon,
   CheckIcon,
   CircleXIcon,
-  RotateCcwIcon,
 } from 'lucide-react'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 
@@ -22,6 +22,7 @@ import {
   userVocabularyQuery,
   vocabularyStudySessionQuery,
 } from '@/api/queries'
+import { preloadCourseRoute } from '@/api/route-preload'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
@@ -29,12 +30,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { localizedText } from '@/lib/localized-text'
-import { getNextVocabularyItemId } from '@/lib/vocabulary-study-session'
+import {
+  appendVocabularyAnswer,
+  getNextVocabularyItemId,
+} from '@/lib/vocabulary-study-session'
 
 export const Route = createFileRoute('/lessons/$lessonId_/vocabulary')({
   loader: ({ context, params }) =>
     Promise.all([
-      context.queryClient.ensureQueryData(courseQuery),
+      preloadCourseRoute(context.queryClient, (routeVersionId, queryClient) =>
+        queryClient.ensureQueryData(
+          vocabularyStudySessionQuery(params.lessonId, routeVersionId),
+        ),
+      ),
       context.queryClient.ensureQueryData(lessonQuery(params.lessonId)),
       context.queryClient.ensureQueryData(
         lessonVocabularyQuery(params.lessonId),
@@ -48,8 +56,12 @@ function LessonVocabularyPage() {
   const queryClient = useQueryClient()
   const answerInput = useRef<HTMLInputElement>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
+  const continueAfterSave = useRef(false)
   const [activeItemId, setActiveItemId] = useState<string | null>(null)
   const [answer, setAnswer] = useState('')
+  const [localFeedback, setLocalFeedback] =
+    useState<LessonVocabularyAnswerResponse | null>(null)
+  const [gaveUp, setGaveUp] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
   const lesson = useQuery(lessonQuery(lessonId))
   const vocabulary = useQuery(lessonVocabularyQuery(lessonId))
@@ -64,16 +76,20 @@ function LessonVocabularyPage() {
       itemId,
       value,
       requestId,
+      gaveUp,
     }: {
       itemId: string
       value: string
       requestId: string
+      gaveUp: boolean
     }) =>
       submitVocabularyAnswer(routeVersionId, lessonId, itemId, {
         answer: value,
         idempotencyKey: requestId,
+        gaveUp,
       }),
     onSuccess: (result) => {
+      setLocalFeedback(result)
       queryClient.setQueryData(
         vocabularyStudySessionQuery(lessonId, routeVersionId).queryKey,
         result.session,
@@ -86,12 +102,19 @@ function LessonVocabularyPage() {
           queryKey: userVocabularyQuery(routeVersionId).queryKey,
         }),
       ])
+      if (continueAfterSave.current) {
+        continueAfterSave.current = false
+        continueStudy(result)
+      }
+    },
+    onError: () => {
+      continueAfterSave.current = false
     },
   })
 
   useEffect(() => {
     if (!session.data || !vocabulary.data) return
-    if (study.data) return
+    if (localFeedback) return
     const activeProgress = session.data.items.find(
       (item) => item.itemId === activeItemId,
     )
@@ -108,11 +131,11 @@ function LessonVocabularyPage() {
         session.data,
       ),
     )
-  }, [activeItemId, session.data, study.data, vocabulary.data])
+  }, [activeItemId, localFeedback, session.data, vocabulary.data])
 
   useEffect(() => {
-    if (!study.isPending) answerInput.current?.focus()
-  }, [activeItemId, study.data, study.isPending])
+    if (!localFeedback) answerInput.current?.focus()
+  }, [activeItemId, localFeedback])
 
   if (
     lesson.isPending ||
@@ -142,10 +165,14 @@ function LessonVocabularyPage() {
   if (items.length === 0) {
     return <PartPageState message="В этом уроке пока нет слов." />
   }
+  const feedback =
+    localFeedback?.itemId === activeItemId ? localFeedback : undefined
+  const currentSession = session.data
+  const displaySession = feedback?.session ?? currentSession
   const sessionCompleted =
-    session.data.totalItems > 0 &&
-    session.data.completedItems === session.data.totalItems
-  const shouldShowSummary = sessionCompleted && (!study.data || showSummary)
+    displaySession.totalItems > 0 &&
+    displaySession.completedItems === displaySession.totalItems
+  const shouldShowSummary = sessionCompleted && (!feedback || showSummary)
 
   if (shouldShowSummary) {
     return (
@@ -159,7 +186,7 @@ function LessonVocabularyPage() {
 
   const item =
     items.find((candidate) => candidate.itemId === activeItemId) ?? items[0]!
-  const itemProgress = session.data.items.find(
+  const itemProgress = displaySession.items.find(
     (progress) => progress.itemId === item.itemId,
   ) ?? {
     itemId: item.itemId,
@@ -167,24 +194,60 @@ function LessonVocabularyPage() {
     attempts: 0,
     completedAt: null,
   }
-  const feedback = study.data?.itemId === item.itemId ? study.data : undefined
   const totalRequired =
-    session.data.totalItems * session.data.requiredCorrectAnswers
+    displaySession.totalItems * displaySession.requiredCorrectAnswers
   const progress = totalRequired
-    ? (session.data.totalCorrectAnswers / totalRequired) * 100
+    ? (displaySession.totalCorrectAnswers / totalRequired) * 100
     : 0
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (feedback) {
-      continueStudy(feedback)
+      if (study.isPending) {
+        continueAfterSave.current = true
+        return
+      }
+      if (study.isError) {
+        continueAfterSave.current = true
+        if (study.variables) study.mutate(study.variables)
+      } else {
+        continueStudy(feedback)
+      }
       return
     }
-    if (!answer.trim() || study.isPending || !routeVersionId) return
+    submitCurrentAnswer(false)
+  }
+
+  function submitCurrentAnswer(nextGaveUp: boolean) {
+    if (
+      (!nextGaveUp && !answer.trim()) ||
+      study.isPending ||
+      !routeVersionId ||
+      feedback
+    ) {
+      return
+    }
+    const isCorrect =
+      !nextGaveUp &&
+      normalizeExactAnswer(answer) === normalizeExactAnswer(item.lemma)
+    const optimistic = appendVocabularyAnswer(
+      currentSession,
+      item.itemId,
+      isCorrect,
+      new Date().toISOString(),
+    )
+    setLocalFeedback({
+      itemId: item.itemId,
+      isCorrect,
+      expectedAnswer: item.lemma,
+      ...optimistic,
+    })
+    setGaveUp(nextGaveUp)
     study.mutate({
       itemId: item.itemId,
       value: answer,
       requestId: idempotencyKey.current,
+      gaveUp: nextGaveUp,
     })
   }
 
@@ -203,6 +266,9 @@ function LessonVocabularyPage() {
     )
     setActiveItemId(nextItemId)
     setAnswer('')
+    setLocalFeedback(null)
+    setGaveUp(false)
+    continueAfterSave.current = false
     study.reset()
     idempotencyKey.current = crypto.randomUUID()
   }
@@ -218,7 +284,8 @@ function LessonVocabularyPage() {
       <section className="mt-4 sm:mt-7">
         <header className="flex items-end justify-between gap-4">
           <h2 className="font-serif text-xl font-semibold sm:text-2xl">
-            Изучено {session.data.completedItems} из {session.data.totalItems}
+            Изучено {displaySession.completedItems} из{' '}
+            {displaySession.totalItems}
           </h2>
           <span className="text-xs tabular-nums text-muted-foreground">
             {Math.round(progress)}%
@@ -231,7 +298,7 @@ function LessonVocabularyPage() {
         />
 
         <article
-          className="mt-4 rounded-xl border bg-card p-4 shadow-xs sm:mt-5 sm:p-7"
+          className="mt-4 rounded-xl bg-card p-4 shadow-xs sm:mt-5 sm:p-7"
           data-item-id={item.itemId}
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -247,7 +314,7 @@ function LessonVocabularyPage() {
             </div>
             <AnswerMarkers
               correctAnswers={itemProgress.correctAnswers}
-              required={session.data.requiredCorrectAnswers}
+              required={displaySession.requiredCorrectAnswers}
             />
           </div>
 
@@ -255,7 +322,7 @@ function LessonVocabularyPage() {
             <label className="sr-only" htmlFor="vocabulary-answer">
               Слово по-фински
             </label>
-            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_10rem]">
+            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_20.5rem]">
               <Input
                 ref={answerInput}
                 id="vocabulary-answer"
@@ -271,44 +338,63 @@ function LessonVocabularyPage() {
                   event.currentTarget.form?.requestSubmit()
                 }}
               />
-              {feedback ? (
-                <Button className="h-11" type="submit">
-                  {sessionCompleted ? 'Завершить' : 'Продолжить'}
-                  <ArrowRightIcon />
-                </Button>
-              ) : (
-                <Button
-                  className="h-11"
-                  disabled={!answer.trim() || study.isPending}
-                  type="submit"
-                >
-                  {study.isPending ? 'Проверяем…' : 'Проверить'}
-                </Button>
-              )}
+              <div className={feedback ? undefined : 'grid grid-cols-2 gap-2'}>
+                {feedback ? (
+                  <Button
+                    className="h-11 w-full"
+                    disabled={study.isPending}
+                    type="submit"
+                  >
+                    {study.isPending
+                      ? 'Сохраняем…'
+                      : study.isError
+                        ? 'Повторить'
+                        : sessionCompleted
+                          ? 'Завершить'
+                          : 'Продолжить'}
+                    {!study.isPending && !study.isError ? (
+                      <ArrowRightIcon />
+                    ) : null}
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      className="h-11"
+                      disabled={study.isPending}
+                      type="button"
+                      variant="outline"
+                      onClick={() => submitCurrentAnswer(true)}
+                    >
+                      Не знаю
+                    </Button>
+                    <Button
+                      className="h-11"
+                      disabled={!answer.trim() || study.isPending}
+                      type="submit"
+                    >
+                      Проверить
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </form>
 
           <div className="pt-3" aria-live="polite">
             {feedback ? (
-              <VocabularyFeedback item={item} result={feedback} />
-            ) : study.isError ? (
-              <div>
-                <QueryError message={study.error.message} />
-                <Button
-                  className="mt-3"
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    study.mutate({
-                      itemId: item.itemId,
-                      value: answer,
-                      requestId: idempotencyKey.current,
-                    })
-                  }
-                >
-                  <RotateCcwIcon /> Повторить отправку
-                </Button>
-              </div>
+              <>
+                <VocabularyFeedback
+                  gaveUp={gaveUp}
+                  isSaving={study.isPending}
+                  item={item}
+                  result={feedback}
+                />
+                {study.isError ? (
+                  <div className="mt-2">
+                    <QueryError message={study.error.message} />
+                  </div>
+                ) : null}
+              </>
             ) : null}
           </div>
         </article>
@@ -340,18 +426,22 @@ function AnswerMarkers({
 }
 
 function VocabularyFeedback({
+  gaveUp,
+  isSaving,
   item,
   result,
 }: {
+  gaveUp: boolean
+  isSaving: boolean
   item: LessonVocabularyItemResponse
   result: LessonVocabularyAnswerResponse
 }) {
   return (
     <div
-      className={`motion-feedback rounded-lg border px-4 py-3 text-sm ${
+      className={`motion-feedback rounded-lg px-4 py-3 text-sm ${
         result.isCorrect
-          ? 'border-primary/25 bg-primary/5 text-primary'
-          : 'border-destructive/25 bg-destructive/5 text-destructive'
+          ? 'bg-primary/5 text-primary'
+          : 'bg-destructive/5 text-destructive'
       }`}
     >
       <div className="flex items-start gap-2.5">
@@ -366,7 +456,11 @@ function VocabularyFeedback({
               ? result.itemProgress.completedAt
                 ? 'Слово изучено'
                 : `Верно · ${result.itemProgress.correctAnswers} из ${result.session.requiredCorrectAnswers}`
-              : 'Пока неверно'}
+              : gaveUp
+                ? isSaving
+                  ? 'Добавляем в изучаемое…'
+                  : 'Добавлено в изучаемое'
+                : 'Пока неверно'}
           </p>
           <p className="mt-1 text-foreground">
             Правильный ответ:{' '}
@@ -402,7 +496,7 @@ function VocabularySummary({
         lessonTitle={lessonTitle}
         activePart="vocabulary"
       />
-      <section className="mt-7 rounded-xl border bg-card p-6 text-center shadow-xs sm:p-8">
+      <section className="mt-7 rounded-xl bg-card p-6 text-center shadow-xs sm:p-8">
         <span className="motion-success mx-auto grid size-10 place-items-center rounded-full bg-primary text-primary-foreground">
           <CheckIcon className="size-5" />
         </span>

@@ -49,10 +49,17 @@ const verbs: TypeOneVerbSeed[] = [
   ),
   verb(
     'sanoa',
-    'сказать',
+    'сказать; произносить',
     ['sanon', 'sanot', 'sanoo', 'sanomme', 'sanotte', 'sanovat'],
     'sano',
-    ['говорю', 'говоришь', 'говорит', 'говорим', 'говорите', 'говорят'],
+    [
+      'произношу',
+      'произносишь',
+      'произносит',
+      'произносим',
+      'произносите',
+      'произносят',
+    ],
     'transitive',
   ),
   verb(
@@ -103,10 +110,17 @@ const verbs: TypeOneVerbSeed[] = [
   ),
   verb(
     'oppia',
-    'учиться',
+    'усваивать; научиться',
     ['opin', 'opit', 'oppii', 'opimme', 'opitte', 'oppivat'],
     'opi',
-    ['учусь', 'учишься', 'учится', 'учимся', 'учитесь', 'учатся'],
+    [
+      'усваиваю',
+      'усваиваешь',
+      'усваивает',
+      'усваиваем',
+      'усваиваете',
+      'усваивают',
+    ],
     'ambitransitive',
   ),
   verb(
@@ -313,7 +327,7 @@ const pronouns = [
 ] as const
 
 export const presentCommonContent = {
-  version: 4,
+  version: 6,
   sections: ['explanation', 'vocabulary', 'practice'],
   explanationScreens: [
     {
@@ -592,6 +606,8 @@ function buildExercises(): PreparedExerciseSeed[] {
         acceptedVariants: [
           `Sinä ${item.forms[1]} nyt.`,
           `${capitalize(item.forms[1])} nyt.`,
+          `Nyt sinä ${item.forms[1]}.`,
+          `Nyt ${item.forms[1]}.`,
         ],
         slots: [
           grammarSlot('subject', ['sinä'], true),
@@ -669,7 +685,10 @@ function buildExercises(): PreparedExerciseSeed[] {
         selectionOrder: exercises.length + 1,
         prompt: `Они сейчас ${item.source[5]}.`,
         targetText: `He ${item.forms[5]} nyt.`,
-        acceptedVariants: [`He ${item.forms[5]} nyt.`],
+        acceptedVariants: [
+          `He ${item.forms[5]} nyt.`,
+          `Nyt he ${item.forms[5]}.`,
+        ],
         slots: [
           grammarSlot('subject', ['he']),
           vocabularySlot('mainVerb', [item.forms[5]], vocabulary.itemId),

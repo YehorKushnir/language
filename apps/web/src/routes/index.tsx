@@ -130,7 +130,7 @@ function HomePage() {
           <Link
             to={continuation.to}
             params={{ lessonId: currentLessonId }}
-            className="interactive-surface group flex min-h-64 flex-col rounded-xl border bg-card p-5 shadow-xs sm:p-6"
+            className="interactive-surface group flex min-h-64 flex-col rounded-xl bg-card p-5 shadow-xs sm:p-6"
           >
             <div className="flex items-center justify-between gap-4">
               <span className="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -156,7 +156,7 @@ function HomePage() {
                 activePart={nextPart}
                 progress={currentLessonProgress}
               />
-              <div className="mt-5 flex flex-col items-start gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="mt-5 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <span className="text-xs text-muted-foreground">
                   {completedParts} из 3 частей завершено
                 </span>
@@ -180,7 +180,7 @@ function HomePage() {
         </div>
       </div>
 
-      <section className="mt-7 border-t pt-5">
+      <section className="mt-8">
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -222,12 +222,12 @@ function LessonPartProgress({
             key={item.part}
             aria-current={active ? 'step' : undefined}
             className={cn(
-              'flex min-w-0 items-center justify-center rounded-lg border px-1.5 py-2 text-[11px] font-medium sm:justify-start sm:gap-2 sm:px-3 sm:text-xs',
+              'flex min-w-0 items-center justify-center rounded-lg px-1.5 py-2 text-[11px] font-medium sm:justify-start sm:gap-2 sm:px-3 sm:text-xs',
               complete
-                ? 'border-primary/20 bg-primary/8 text-primary'
+                ? 'bg-secondary/75 text-primary'
                 : active
-                  ? 'border-primary/25 bg-secondary text-foreground'
-                  : 'bg-background/60 text-muted-foreground',
+                  ? 'bg-accent text-accent-foreground'
+                  : 'bg-muted text-foreground',
             )}
           >
             <span className="sr-only">
@@ -258,7 +258,7 @@ function ReviewCard({ dueReviews }: { dueReviews: number }) {
   return (
     <Link
       to={hasReviews ? '/reviews/session' : '/vocabulary'}
-      className="interactive-surface group flex min-h-31 flex-col rounded-xl border bg-card p-4 shadow-xs"
+      className="interactive-surface group flex min-h-31 flex-col rounded-xl bg-card p-4 shadow-xs"
     >
       <div className="flex items-start justify-between gap-4">
         <span className="grid size-9 place-items-center rounded-lg bg-secondary text-primary">
@@ -292,7 +292,7 @@ function ModuleProgressCard({
   return (
     <Link
       to="/lessons"
-      className="interactive-surface group flex min-h-31 flex-col rounded-xl border bg-card p-4 shadow-xs"
+      className="interactive-surface group flex min-h-31 flex-col rounded-xl bg-card p-4 shadow-xs"
     >
       <div className="flex items-center justify-between gap-4">
         <div>
@@ -329,7 +329,7 @@ function RecommendedTextCard({
     return (
       <Link
         to="/texts"
-        className="interactive-surface mt-3 flex items-center gap-3 rounded-xl border bg-card px-4 py-4 shadow-xs"
+        className="interactive-surface mt-3 flex items-center gap-3 rounded-xl bg-card px-4 py-4 shadow-xs"
       >
         <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary text-primary">
           <ScrollTextIcon className="size-4" />
@@ -351,7 +351,7 @@ function RecommendedTextCard({
     <Link
       to="/texts/$textId"
       params={{ textId: text.id }}
-      className="interactive-surface group mt-3 grid gap-4 rounded-xl border bg-card px-4 py-4 shadow-xs sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:px-5"
+      className="interactive-surface group mt-3 grid gap-4 rounded-xl bg-card px-4 py-4 shadow-xs sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:px-5"
     >
       <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-secondary text-primary max-sm:hidden">
         <ScrollTextIcon className="size-4.5" />
@@ -404,7 +404,7 @@ function GuestHome({ course }: { course: CourseOverviewResponse }) {
       </section>
 
       {firstLesson ? (
-        <section className="mt-6 rounded-xl border bg-card p-5 shadow-xs sm:p-6">
+        <section className="mt-6 rounded-xl bg-card p-5 shadow-xs sm:p-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
             Первый урок
           </p>
@@ -431,7 +431,7 @@ function CourseFact({
   label: string
 }) {
   return (
-    <div className="rounded-xl border bg-card px-2.5 py-3 text-center shadow-xs sm:px-4 sm:py-4 sm:text-left">
+    <div className="rounded-xl bg-card px-2.5 py-3 text-center shadow-xs sm:px-4 sm:py-4 sm:text-left">
       <p className="font-serif text-xl font-semibold text-primary sm:text-2xl">
         {value}
       </p>

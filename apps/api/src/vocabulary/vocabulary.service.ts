@@ -44,7 +44,14 @@ export class VocabularyService {
       where: {
         userId,
         item: {
-          kind: KnowledgeItemKind.LEXICAL_SENSE,
+          kind: {
+            in: [
+              KnowledgeItemKind.LEXICAL_SENSE,
+              KnowledgeItemKind.GRAMMAR,
+              KnowledgeItemKind.SPECIFIC_SKILL,
+              KnowledgeItemKind.REGISTER,
+            ],
+          },
           OR: [
             {
               lessonItems: {
@@ -108,6 +115,7 @@ export class VocabularyService {
                 },
               },
             },
+            skill: true,
           },
         },
       },
@@ -164,24 +172,59 @@ export class VocabularyService {
       left.lemma.localeCompare(right.lemma, 'fi', { sensitivity: 'base' }),
     )
 
-    const counts = {
-      all: items.length,
-      due: items.filter((item) => item.memory.isDue).length,
-      new: items.filter((item) => item.memory.state === MemoryState.NEW).length,
-      learning: items.filter(
-        (item) =>
-          item.memory.state === MemoryState.LEARNING ||
-          item.memory.state === MemoryState.RELEARNING,
-      ).length,
-      review: items.filter((item) => item.memory.state === MemoryState.REVIEW)
-        .length,
-    }
+    const grammarItems = memories.flatMap<
+      UserVocabularyResponse['grammarItems'][number]
+    >((memory) => {
+      const skill = memory.item.skill
+      const lesson = memory.item.lessonItems[0]?.lesson
+      const text = memory.item.textItems[0]?.text
+      if (!skill || (!lesson && !text)) return []
+
+      return [
+        {
+          itemId: memory.itemId,
+          kind: memory.item.kind as Exclude<KnowledgeItemKind, 'LEXICAL_SENSE'>,
+          name: toLocalizedText(skill.name),
+          description: skill.description
+            ? toLocalizedText(skill.description)
+            : null,
+          introducedIn: lesson
+            ? {
+                kind: 'lesson',
+                lessonId: lesson.id,
+                title: toLocalizedText(lesson.title),
+              }
+            : {
+                kind: 'text',
+                textId: text!.id,
+                title: toLocalizedText(text!.title),
+              },
+          memory: {
+            state: memory.state,
+            dueAt: memory.dueAt.toISOString(),
+            isDue: memory.dueAt <= now,
+            repetitions: memory.repetitions,
+            lapses: memory.lapses,
+          },
+        },
+      ]
+    })
+    grammarItems.sort((left, right) =>
+      (left.name.ru ?? '').localeCompare(right.name.ru ?? '', 'ru', {
+        sensitivity: 'base',
+      }),
+    )
+
+    const counts = createMemoryCounts(items)
+    const grammarCounts = createMemoryCounts(grammarItems)
     return {
       routeVersionId,
-      totalCount: counts.all,
-      dueCount: counts.due,
+      totalCount: counts.all + grammarCounts.all,
+      dueCount: counts.due + grammarCounts.due,
       counts,
       items,
+      grammarCounts,
+      grammarItems,
     }
   }
 
@@ -328,6 +371,25 @@ function toStudyResponse(memory: {
     dueAt: memory.dueAt.toISOString(),
     repetitions: memory.repetitions,
     lapses: memory.lapses,
+  }
+}
+
+function createMemoryCounts(
+  items: Array<{
+    memory: { state: MemoryState; isDue: boolean }
+  }>,
+) {
+  return {
+    all: items.length,
+    due: items.filter((item) => item.memory.isDue).length,
+    new: items.filter((item) => item.memory.state === MemoryState.NEW).length,
+    learning: items.filter(
+      (item) =>
+        item.memory.state === MemoryState.LEARNING ||
+        item.memory.state === MemoryState.RELEARNING,
+    ).length,
+    review: items.filter((item) => item.memory.state === MemoryState.REVIEW)
+      .length,
   }
 }
 

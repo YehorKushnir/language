@@ -33,45 +33,45 @@
 
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.982 0.012 92);
-  --foreground: oklch(0.22 0.025 145);
-  --card: oklch(0.995 0.004 92);
-  --card-foreground: oklch(0.22 0.025 145);
+  --background: oklch(0.975 0.014 92);
+  --foreground: oklch(0.2 0.03 145);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.03 145);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.025 145);
-  --primary: oklch(0.43 0.11 145);
+  --popover-foreground: oklch(0.2 0.03 145);
+  --primary: oklch(0.39 0.13 145);
   --primary-foreground: oklch(0.985 0.01 100);
-  --secondary: oklch(0.93 0.025 105);
-  --secondary-foreground: oklch(0.3 0.04 145);
-  --muted: oklch(0.945 0.015 95);
-  --muted-foreground: oklch(0.52 0.025 145);
-  --accent: oklch(0.91 0.045 130);
-  --accent-foreground: oklch(0.3 0.055 145);
+  --secondary: oklch(0.895 0.05 125);
+  --secondary-foreground: oklch(0.25 0.055 145);
+  --muted: oklch(0.925 0.025 100);
+  --muted-foreground: oklch(0.44 0.035 145);
+  --accent: oklch(0.86 0.075 135);
+  --accent-foreground: oklch(0.24 0.07 145);
   --destructive: oklch(0.53 0.22 27);
-  --border: oklch(0.88 0.02 100);
-  --input: oklch(0.88 0.02 100);
-  --ring: oklch(0.55 0.1 145);
+  --border: oklch(0.82 0.025 100);
+  --input: oklch(0.8 0.03 100);
+  --ring: oklch(0.47 0.12 145);
 }
 
 .dark {
-  --background: oklch(0.18 0.02 145);
+  --background: oklch(0.16 0.025 145);
   --foreground: oklch(0.96 0.01 100);
-  --card: oklch(0.23 0.025 145);
+  --card: oklch(0.22 0.03 145);
   --card-foreground: oklch(0.96 0.01 100);
-  --popover: oklch(0.23 0.025 145);
+  --popover: oklch(0.22 0.03 145);
   --popover-foreground: oklch(0.96 0.01 100);
-  --primary: oklch(0.72 0.12 145);
-  --primary-foreground: oklch(0.2 0.03 145);
-  --secondary: oklch(0.3 0.03 145);
+  --primary: oklch(0.76 0.13 145);
+  --primary-foreground: oklch(0.17 0.035 145);
+  --secondary: oklch(0.34 0.05 145);
   --secondary-foreground: oklch(0.96 0.01 100);
-  --muted: oklch(0.28 0.02 145);
-  --muted-foreground: oklch(0.72 0.02 100);
-  --accent: oklch(0.34 0.05 145);
+  --muted: oklch(0.29 0.03 145);
+  --muted-foreground: oklch(0.78 0.025 100);
+  --accent: oklch(0.4 0.075 145);
   --accent-foreground: oklch(0.96 0.01 100);
-  --destructive: oklch(0.7 0.19 22);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.62 0.08 145);
+  --destructive: oklch(0.72 0.19 22);
+  --border: oklch(1 0 0 / 20%);
+  --input: oklch(1 0 0 / 25%);
+  --ring: oklch(0.72 0.1 145);
 }
 
 @layer base {
@@ -114,7 +114,6 @@
   .interactive-surface {
     transition:
       transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
-      border-color 160ms ease-out,
       background-color 160ms ease-out,
       box-shadow 160ms ease-out;
   }
@@ -141,7 +140,6 @@
 @media (hover: hover) and (pointer: fine) {
   .interactive-surface:hover {
     transform: translateY(-1px);
-    border-color: color-mix(in oklab, var(--primary) 32%, var(--border));
     box-shadow: 0 8px 24px -18px color-mix(in oklab, var(--primary) 45%, black);
   }
 

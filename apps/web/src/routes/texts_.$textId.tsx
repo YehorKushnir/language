@@ -124,7 +124,7 @@ function PreparedTextPage() {
         }
       />
 
-      <article className="mt-6 w-full rounded-xl border bg-card px-5 py-6 shadow-xs sm:px-8 sm:py-8">
+      <article className="mt-6 w-full rounded-xl bg-card px-5 py-6 shadow-xs sm:px-8 sm:py-8">
         <p className="mb-5 text-xs text-muted-foreground">
           Нажми на слово, чтобы увидеть перевод и разбор.
         </p>

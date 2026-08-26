@@ -9,6 +9,10 @@ import {
 } from '@language/database'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 
+import {
+  EXERCISE_CHECKER_VERSION,
+  toPreparedAnswerSpec,
+} from '../common/answer-spec'
 import { toLocalizedText, toVocabularyExample } from '../common/content-mapper'
 import { createRouteMemoryScope } from '../common/route-memory-scope'
 import { PrismaService } from '../database/prisma.service'
@@ -188,6 +192,8 @@ export class ReviewQueueService {
         sourceLanguage,
         targetLanguage: exercise.targetLanguage,
         prompt: prompt.text,
+        answerSpec: toPreparedAnswerSpec(exercise.answerSpec),
+        checkerVersion: EXERCISE_CHECKER_VERSION,
         reviewItemIds: exercise.items.map((item) => item.itemId),
       },
       flashcard: null,

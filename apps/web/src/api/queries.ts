@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 
 import {
+  getAdminReports,
   getCourse,
   getCourseProgress,
   getExercise,
@@ -14,6 +15,14 @@ import {
   startOrResumePractice,
   startOrResumeVocabulary,
 } from './language-api'
+import type { ExerciseReportStatus } from '@language/contracts'
+
+export function adminReportsQuery(status?: ExerciseReportStatus) {
+  return queryOptions({
+    queryKey: ['admin-reports', status ?? 'ALL'],
+    queryFn: () => getAdminReports(status),
+  })
+}
 
 export const courseQuery = queryOptions({
   queryKey: ['course', 'course.ru-fi'],
@@ -50,6 +59,7 @@ export function nextExerciseQuery(
     queryFn: () =>
       getNextExercise(lessonId, routeVersionId, 'ru', excludedExerciseIds),
     placeholderData: (previousExercise) => previousExercise,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -61,6 +71,7 @@ export function practiceExerciseQuery(
   return queryOptions({
     queryKey: ['practice-exercise', routeVersionId, lessonId, exerciseId, 'ru'],
     queryFn: () => getExercise(lessonId, exerciseId, routeVersionId, 'ru'),
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -76,7 +87,7 @@ export function practiceSessionQuery(lessonId: string, routeVersionId: string) {
     queryKey: ['practice-session', routeVersionId, lessonId],
     queryFn: () => startOrResumePractice(routeVersionId, lessonId),
     staleTime: 0,
-    gcTime: 1_000,
+    gcTime: 5 * 60_000,
     refetchOnMount: 'always',
   })
 }
@@ -89,7 +100,7 @@ export function vocabularyStudySessionQuery(
     queryKey: ['vocabulary-study-session', routeVersionId, lessonId],
     queryFn: () => startOrResumeVocabulary(routeVersionId, lessonId),
     staleTime: 0,
-    gcTime: 1_000,
+    gcTime: 5 * 60_000,
     refetchOnMount: 'always',
   })
 }

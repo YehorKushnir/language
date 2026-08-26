@@ -31,6 +31,15 @@ export class AuthService {
       database: prismaAdapter(prisma, {
         provider: 'postgresql',
       }),
+      user: {
+        additionalFields: {
+          role: {
+            type: 'string',
+            defaultValue: 'USER',
+            input: false,
+          },
+        },
+      },
       emailAndPassword: {
         enabled: true,
         resetPasswordTokenExpiresIn: 60 * 60,

@@ -1,9 +1,32 @@
 import type { LessonVocabularyStudySessionResponse } from '@language/contracts'
 import { describe, expect, it } from 'vitest'
 
-import { getNextVocabularyItemId } from './vocabulary-study-session'
+import {
+  appendVocabularyAnswer,
+  getNextVocabularyItemId,
+} from './vocabulary-study-session'
 
 describe('vocabulary study queue', () => {
+  it('applies an answer locally before the server confirms it', () => {
+    const result = appendVocabularyAnswer(
+      session([2, 1]),
+      'word.1',
+      true,
+      '2026-08-25T12:00:00.000Z',
+    )
+
+    expect(result.itemProgress).toEqual({
+      itemId: 'word.1',
+      correctAnswers: 3,
+      attempts: 3,
+      completedAt: '2026-08-25T12:00:00.000Z',
+    })
+    expect(result.session).toMatchObject({
+      completedItems: 1,
+      totalCorrectAnswers: 4,
+    })
+  })
+
   it('rotates to a word with fewer correct answers', () => {
     expect(
       getNextVocabularyItemId(
