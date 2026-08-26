@@ -59,7 +59,7 @@ export function ExerciseReport({
       ) : (
         <form
           aria-labelledby={titleId}
-          className="motion-feedback rounded-xl border bg-card p-4 shadow-xs sm:p-5"
+          className="motion-feedback rounded-xl bg-card p-4 shadow-sm sm:p-5"
           onSubmit={(event) => {
             event.preventDefault()
             if (!report.isPending) report.mutate()
@@ -122,7 +122,7 @@ export function ExerciseReport({
             </p>
           ) : null}
 
-          <div className="mt-4 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
+          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               className="w-full sm:w-auto"
               type="button"

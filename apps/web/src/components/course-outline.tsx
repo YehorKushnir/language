@@ -116,7 +116,7 @@ export function CourseOutline({
 
         return (
           <section key={modulePosition}>
-            <header className="flex items-baseline justify-between gap-4 border-b px-1 pb-3">
+            <header className="flex items-baseline justify-between gap-4 px-1 pb-1">
               <h2 className="font-serif text-xl font-semibold">
                 {modulePosition}. {module.title}
               </h2>
@@ -143,9 +143,8 @@ export function CourseOutline({
                   <li
                     key={absolutePosition}
                     className={cn(
-                      'overflow-hidden rounded-xl border bg-card transition-[border-color,box-shadow] duration-200',
-                      isExpanded && 'border-primary/30 shadow-sm',
-                      isAvailable && !isExpanded && 'hover:border-primary/20',
+                      'overflow-hidden rounded-xl bg-card shadow-xs transition-[box-shadow] duration-200',
+                      isExpanded && 'shadow-sm ring-1 ring-primary/15',
                     )}
                   >
                     <button
@@ -208,7 +207,7 @@ export function CourseOutline({
                         <div className="overflow-hidden">
                           <div
                             className={cn(
-                              'border-t bg-background/45 px-4 py-4 sm:px-5 sm:pl-[4.75rem]',
+                              'bg-background/45 px-4 py-4 sm:px-5 sm:pl-[4.75rem]',
                               isExpanded && 'motion-feedback',
                             )}
                           >
@@ -227,7 +226,12 @@ export function CourseOutline({
                                     key={item.part}
                                     to={item.to}
                                     params={{ lessonId: lesson.id }}
-                                    className="interactive-surface flex items-center justify-center gap-2 rounded-lg border bg-card px-3 py-2.5 text-sm font-medium"
+                                    className={cn(
+                                      'interactive-surface flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium shadow-xs',
+                                      complete
+                                        ? 'bg-secondary/80 text-primary hover:bg-secondary'
+                                        : 'bg-muted text-foreground hover:bg-accent',
+                                    )}
                                   >
                                     {complete ? (
                                       <CheckIcon className="size-3.5 text-primary" />

@@ -59,10 +59,10 @@ export function LessonWorkspaceHeader({
         </>
       }
       title={lessonTitle}
-      className="border-b-0 pb-0 [&_h1]:text-2xl sm:[&_h1]:text-4xl"
+      className="pb-0 [&_h1]:text-2xl sm:[&_h1]:text-4xl"
     >
       <nav
-        className="mt-3 flex w-full gap-1 overflow-x-auto rounded-lg bg-muted/35 p-1 sm:mt-5 sm:w-fit sm:max-w-full"
+        className="mt-3 flex w-full gap-1 overflow-x-auto rounded-lg bg-muted p-1 sm:mt-5 sm:w-fit sm:max-w-full"
         aria-label="Части урока"
       >
         {parts.map((item) => {

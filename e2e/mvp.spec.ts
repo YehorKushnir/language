@@ -177,7 +177,7 @@ test('mobile layout keeps navigation reachable without horizontal overflow', asy
   await expectAccessible(page)
 })
 
-test('active tabs share the lesson accent and fill mobile content width', async ({
+test('active tabs share the accent and dictionary controls adapt by viewport', async ({
   page,
 }) => {
   await signUpLearner(page, 'Mobile tabs learner')
@@ -215,6 +215,28 @@ test('active tabs share the lesson accent and fill mobile content width', async 
   expect(
     Math.abs(vocabularyTabsBox!.width - vocabularySearchBox!.width),
   ).toBeLessThanOrEqual(1)
+  expect(vocabularySearchBox!.y).toBeGreaterThan(
+    vocabularyTabsBox!.y + vocabularyTabsBox!.height,
+  )
+
+  await page.setViewportSize({ width: 1280, height: 720 })
+  const desktopVocabularyTabsBox = await vocabularyTabs.boundingBox()
+  const desktopVocabularySearchBox = await page
+    .getByLabel('Поиск по слову или переводу')
+    .boundingBox()
+  expect(desktopVocabularyTabsBox).not.toBeNull()
+  expect(desktopVocabularySearchBox).not.toBeNull()
+  expect(desktopVocabularyTabsBox!.x).toBeLessThan(
+    desktopVocabularySearchBox!.x,
+  )
+  expect(
+    Math.abs(
+      desktopVocabularyTabsBox!.y +
+        desktopVocabularyTabsBox!.height / 2 -
+        (desktopVocabularySearchBox!.y +
+          desktopVocabularySearchBox!.height / 2),
+    ),
+  ).toBeLessThanOrEqual(1)
   const vocabularyAccent = await vocabularyTabs
     .getByRole('button', { name: /^Слова/u })
     .evaluate((element) => getComputedStyle(element).backgroundColor)
@@ -222,23 +244,60 @@ test('active tabs share the lesson accent and fill mobile content width', async 
     .getByLabel('Фильтр слов')
     .getByRole('button', { name: /^Все/u })
     .evaluate((element) => getComputedStyle(element).backgroundColor)
+  const vocabularyTabContrast = await vocabularyTabs.evaluate((tabs) => {
+    const activeTab = tabs.querySelector<HTMLElement>('[aria-current="page"]')
+    if (!activeTab) throw new Error('Active vocabulary tab was not found')
 
-  await page.goto('/texts')
-  const textTabs = page.getByLabel('Доступность')
-  const textTabsBox = await textTabs.boundingBox()
-  const levelSelectBox = await page.getByLabel('Уровень').boundingBox()
-  expect(textTabsBox).not.toBeNull()
-  expect(levelSelectBox).not.toBeNull()
-  expect(
-    Math.abs(textTabsBox!.width - levelSelectBox!.width),
-  ).toBeLessThanOrEqual(1)
-  const textAccent = await textTabs
-    .getByRole('button', { name: 'Все тексты' })
-    .evaluate((element) => getComputedStyle(element).backgroundColor)
+    function toRgb(color: string) {
+      const canvas = document.createElement('canvas')
+      canvas.width = 1
+      canvas.height = 1
+      const context = canvas.getContext('2d')
+      if (!context) throw new Error('Canvas context is unavailable')
+      context.fillStyle = color
+      context.fillRect(0, 0, 1, 1)
+      return [...context.getImageData(0, 0, 1, 1).data.slice(0, 3)]
+    }
+
+    function difference(left: number[], right: number[]) {
+      return left.reduce(
+        (total, channel, index) =>
+          total + Math.abs(channel - (right[index] ?? 0)),
+        0,
+      )
+    }
+
+    const pageColor = toRgb(getComputedStyle(document.body).backgroundColor)
+    const tabsColor = toRgb(getComputedStyle(tabs).backgroundColor)
+    const activeColor = toRgb(getComputedStyle(activeTab).backgroundColor)
+    return {
+      tabsFromPage: difference(tabsColor, pageColor),
+      activeFromTabs: difference(activeColor, tabsColor),
+    }
+  })
 
   expect(vocabularyAccent).toBe(lessonAccent)
   expect(vocabularyFilterAccent).toBe(lessonAccent)
-  expect(textAccent).toBe(lessonAccent)
+  expect(vocabularyTabContrast.tabsFromPage).toBeGreaterThan(20)
+  expect(vocabularyTabContrast.activeFromTabs).toBeGreaterThan(20)
+  await expectAccessible(page)
+
+  await page.goto('/')
+  const lessonPartProgress = page.getByRole('list', {
+    name: 'Прогресс текущего урока',
+  })
+  const homeProgressColors = await lessonPartProgress.evaluate((list) => {
+    const card = list.closest('a')
+    const practice = [...list.children].find((item) =>
+      item.textContent?.includes('Практика'),
+    )
+    if (!card || !practice) throw new Error('Lesson progress surfaces missing')
+    return {
+      card: getComputedStyle(card).backgroundColor,
+      practice: getComputedStyle(practice).backgroundColor,
+    }
+  })
+  expect(homeProgressColors.practice).not.toBe(homeProgressColors.card)
   await expectAccessible(page)
 })
 
@@ -285,6 +344,23 @@ test('learner can move through the first lesson with keyboard controls', async (
   const firstLesson = page.getByRole('button', {
     name: /Личные местоимения и olla/u,
   })
+  const firstLessonItem = page.locator('li').filter({ has: firstLesson })
+  const outlinePractice = firstLessonItem.getByRole('link', {
+    name: 'Практика',
+    exact: true,
+  })
+  const outlineSurfaceColors = await firstLessonItem.evaluate((item) => {
+    const practice = [...item.querySelectorAll('a')].find((link) =>
+      link.textContent?.includes('Практика'),
+    )
+    if (!practice) throw new Error('Practice lesson link was not found')
+    return {
+      lesson: getComputedStyle(item).backgroundColor,
+      practice: getComputedStyle(practice).backgroundColor,
+    }
+  })
+  expect(outlineSurfaceColors.practice).not.toBe(outlineSurfaceColors.lesson)
+  await expect(outlinePractice).toBeVisible()
   const outlineUrl = page.url()
   await expect(firstLesson).toHaveAttribute('aria-expanded', 'true')
   await expect(page.getByRole('link', { name: 'Объяснение' })).toBeVisible()
@@ -528,10 +604,8 @@ test('learner can move through the first lesson with keyboard controls', async (
   await expect(
     page.getByRole('heading', { level: 1, name: 'Тексты' }),
   ).toBeVisible()
-  await expect(page.getByRole('combobox')).toHaveCount(2)
-  await expect(
-    page.getByRole('button', { name: 'Все тексты' }),
-  ).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('combobox')).toHaveCount(0)
+  await expect(page.getByLabel('Фильтры текстов')).toHaveCount(0)
   await expect(
     page.getByRole('heading', { level: 2, name: /A1 · Начальный уровень/u }),
   ).toBeVisible()
@@ -544,11 +618,7 @@ test('learner can move through the first lesson with keyboard controls', async (
   await expect(
     page.getByRole('heading', { level: 2, name: /B2 · Выше среднего/u }),
   ).toHaveCount(0)
-  await expect(page.getByText(/Aamulla luen kirjaa/u)).toHaveCount(0)
   await expect(page.getByText(/% знакомых/u).last()).toBeVisible()
-  await page.getByRole('button', { name: 'Подходят сейчас' }).click()
-  await expect(page.getByText('Подходящих текстов пока нет')).toBeVisible()
-  await page.getByRole('button', { name: 'Все тексты' }).click()
   expect(Date.now() - textsNavigationStartedAt).toBeLessThan(1_000)
   await expect(page.locator('main')).toHaveCount(1)
   await expectAccessible(page)
@@ -969,14 +1039,16 @@ test('text catalog has no horizontal overflow on a phone', async ({ page }) => {
   await expect(
     page.getByRole('heading', { level: 1, name: 'Тексты' }),
   ).toBeVisible()
-  await page.getByLabel('Уровень').selectOption('A1')
-  await expect(page).toHaveURL(/level=A1/u)
+  await expect(page.getByRole('combobox')).toHaveCount(0)
   await page
     .getByRole('link', { name: /Открыть/u })
     .first()
     .click()
   await page.goBack()
-  await expect(page.getByLabel('Уровень')).toHaveValue('A1')
+  await expect(page).toHaveURL(/\/texts$/u)
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Тексты' }),
+  ).toBeVisible()
   expect(
     await page.evaluate(
       () =>

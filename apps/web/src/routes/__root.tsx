@@ -154,7 +154,7 @@ function RootLayout() {
               </nav>
             ) : null}
             {session.data ? (
-              <div className="flex items-center gap-2 border-l pl-3">
+              <div className="flex items-center gap-2 pl-2">
                 <span className="hidden max-w-36 truncate text-sm font-medium sm:inline">
                   {session.data.user.name}
                 </span>
@@ -174,7 +174,7 @@ function RootLayout() {
                 </Button>
               </div>
             ) : session.isPending ? null : (
-              <div className="flex items-center gap-1 border-l pl-3">
+              <div className="flex items-center gap-1 pl-2">
                 {!isSignInPage ? (
                   <Button asChild size="sm" variant="ghost">
                     <Link to="/sign-in">Войти</Link>

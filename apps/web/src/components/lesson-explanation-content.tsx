@@ -27,7 +27,7 @@ export function LessonExplanationContent({
           <section
             key={screen.id}
             id={`explanation-${screen.id}`}
-            className="scroll-mt-24 border-t pt-5 first:border-t-0 first:pt-8"
+            className="scroll-mt-24 pt-3 first:pt-8"
           >
             <h2 className="font-serif text-xl leading-tight font-semibold sm:text-2xl">
               {localizedText(screen.title)}
@@ -49,7 +49,7 @@ export function LessonExplanationContent({
               {screen.callout ? (
                 <aside
                   aria-label="Важно"
-                  className="flex max-w-full items-start gap-2.5 rounded-lg border border-destructive/25 bg-destructive/5 py-2.5 pr-3.5 pl-4"
+                  className="flex max-w-full items-start gap-2.5 rounded-lg bg-destructive/5 py-2.5 pr-3.5 pl-4"
                 >
                   <AlertCircleIcon
                     aria-hidden="true"
@@ -72,7 +72,7 @@ function ExplanationTable({ screen }: { screen: LessonExplanationScreen }) {
   if (!screen.table) return null
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
+    <div className="overflow-hidden rounded-xl bg-card shadow-xs">
       <Table>
         <TableCaption className="sr-only">
           {localizedText(screen.title)}

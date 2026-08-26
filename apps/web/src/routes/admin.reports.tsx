@@ -174,7 +174,7 @@ function AdminReportsPage() {
 
       <nav
         aria-label="Статус жалоб"
-        className="mt-5 flex w-full gap-1 overflow-x-auto rounded-lg border bg-muted/25 p-1 sm:w-fit"
+        className="mt-5 flex w-full gap-1 overflow-x-auto rounded-lg bg-muted p-1 sm:w-fit"
       >
         {filters.map((item) => (
           <Button
@@ -208,7 +208,7 @@ function AdminReportsPage() {
       ) : null}
 
       {reports.data.items.length === 0 ? (
-        <section className="mt-6 rounded-xl border border-dashed p-6 text-center">
+        <section className="mt-6 rounded-xl bg-muted/25 p-6 text-center">
           <h2 className="text-sm font-semibold">В этом статусе жалоб нет</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Выбери другой фильтр или дождись новых сообщений.
@@ -245,17 +245,16 @@ function ReportCard({
   onStatusChange: (status: ExerciseReportStatus) => void
 }) {
   return (
-    <article className="rounded-xl border bg-card p-4 shadow-xs sm:p-5">
+    <article className="rounded-xl bg-card p-4 shadow-xs sm:p-5">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">{reasonLabels[report.reason]}</Badge>
             <Badge
               className={cn(
-                report.status === 'NEW' &&
-                  'border-primary/25 bg-primary/10 text-primary',
+                report.status === 'NEW' && 'bg-primary/10 text-primary',
                 report.status === 'FIXED' &&
-                  'border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200',
+                  'bg-emerald-500/10 text-emerald-800 dark:text-emerald-200',
               )}
               variant="outline"
             >
@@ -349,7 +348,7 @@ function ReportCard({
 function AdminAccessDenied() {
   return (
     <PageShell>
-      <section className="mx-auto max-w-lg rounded-xl border bg-card p-6 text-center shadow-xs sm:p-8">
+      <section className="mx-auto max-w-lg rounded-xl bg-card p-6 text-center shadow-xs sm:p-8">
         <ShieldCheckIcon className="mx-auto size-8 text-muted-foreground" />
         <h1 className="mt-4 font-serif text-2xl font-semibold">Нет доступа</h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">

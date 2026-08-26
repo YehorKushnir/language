@@ -79,13 +79,10 @@ const stateLabels: Record<ReviewMemoryState, string> = {
 }
 
 const stateClasses: Record<ReviewMemoryState, string> = {
-  NEW: 'border-border bg-background text-foreground',
-  LEARNING:
-    'border-amber-500/30 bg-amber-400/15 text-amber-900 dark:text-amber-200',
-  REVIEW:
-    'border-emerald-500/30 bg-emerald-500/15 text-emerald-800 dark:text-emerald-200',
-  RELEARNING:
-    'border-amber-500/30 bg-amber-400/15 text-amber-900 dark:text-amber-200',
+  NEW: 'bg-background text-foreground',
+  LEARNING: 'bg-amber-400/15 text-amber-900 dark:text-amber-200',
+  REVIEW: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-200',
+  RELEARNING: 'bg-amber-400/15 text-amber-900 dark:text-amber-200',
 }
 
 function VocabularyPage() {
@@ -152,48 +149,51 @@ function VocabularyPage() {
         }
       />
 
-      <nav
-        className="mt-5 flex w-full rounded-lg border bg-muted/25 p-1 sm:w-fit"
-        aria-label="Раздел словаря"
+      <section
+        className="mt-5 grid gap-3 sm:flex sm:items-center sm:justify-between"
+        aria-label="Навигация и поиск по словарю"
       >
-        <Button
-          className="min-w-0 flex-1 sm:flex-none"
-          size="sm"
-          variant={section === 'words' ? 'secondary' : 'ghost'}
-          aria-current={section === 'words' ? 'page' : undefined}
-          onClick={() => {
-            void navigate({
-              replace: true,
-              search: (current) => ({ ...current, section: undefined }),
-            })
-          }}
+        <nav
+          className="flex w-full rounded-lg bg-muted p-1 sm:w-fit sm:shrink-0"
+          aria-label="Раздел словаря"
         >
-          <LanguagesIcon /> Слова
-          <span className="tabular-nums text-muted-foreground">
-            {vocabulary.data.counts.all}
-          </span>
-        </Button>
-        <Button
-          className="min-w-0 flex-1 sm:flex-none"
-          size="sm"
-          variant={section === 'grammar' ? 'secondary' : 'ghost'}
-          aria-current={section === 'grammar' ? 'page' : undefined}
-          onClick={() => {
-            void navigate({
-              replace: true,
-              search: (current) => ({ ...current, section: 'grammar' }),
-            })
-          }}
-        >
-          <BookOpenIcon /> Грамматика
-          <span className="tabular-nums text-muted-foreground">
-            {vocabulary.data.grammarCounts.all}
-          </span>
-        </Button>
-      </nav>
+          <Button
+            className="min-w-0 flex-1 sm:flex-none"
+            size="sm"
+            variant={section === 'words' ? 'secondary' : 'ghost'}
+            aria-current={section === 'words' ? 'page' : undefined}
+            onClick={() => {
+              void navigate({
+                replace: true,
+                search: (current) => ({ ...current, section: undefined }),
+              })
+            }}
+          >
+            <LanguagesIcon /> Слова
+            <span className="tabular-nums text-muted-foreground">
+              {vocabulary.data.counts.all}
+            </span>
+          </Button>
+          <Button
+            className="min-w-0 flex-1 sm:flex-none"
+            size="sm"
+            variant={section === 'grammar' ? 'secondary' : 'ghost'}
+            aria-current={section === 'grammar' ? 'page' : undefined}
+            onClick={() => {
+              void navigate({
+                replace: true,
+                search: (current) => ({ ...current, section: 'grammar' }),
+              })
+            }}
+          >
+            <BookOpenIcon /> Грамматика
+            <span className="tabular-nums text-muted-foreground">
+              {vocabulary.data.grammarCounts.all}
+            </span>
+          </Button>
+        </nav>
 
-      <section className="mt-5" aria-label="Поиск и фильтры словаря">
-        <div className="relative max-w-md">
+        <div className="relative w-full sm:max-w-md">
           <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             aria-label={
@@ -218,35 +218,35 @@ function VocabularyPage() {
             }}
           />
         </div>
-
-        <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Фильтр слов">
-          {filters.map((item) => (
-            <Button
-              key={item.id}
-              size="sm"
-              variant={filter === item.id ? 'secondary' : 'ghost'}
-              aria-pressed={filter === item.id}
-              onClick={() => {
-                void navigate({
-                  replace: true,
-                  search: (current) => ({
-                    ...current,
-                    filter: item.id === 'all' ? undefined : item.id,
-                  }),
-                })
-              }}
-            >
-              {item.label}
-              <span className="tabular-nums text-muted-foreground">
-                {activeCounts[item.id]}
-              </span>
-            </Button>
-          ))}
-        </div>
       </section>
 
+      <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Фильтр слов">
+        {filters.map((item) => (
+          <Button
+            key={item.id}
+            size="sm"
+            variant={filter === item.id ? 'secondary' : 'ghost'}
+            aria-pressed={filter === item.id}
+            onClick={() => {
+              void navigate({
+                replace: true,
+                search: (current) => ({
+                  ...current,
+                  filter: item.id === 'all' ? undefined : item.id,
+                }),
+              })
+            }}
+          >
+            {item.label}
+            <span className="tabular-nums text-muted-foreground">
+              {activeCounts[item.id]}
+            </span>
+          </Button>
+        ))}
+      </div>
+
       {!hasItems ? (
-        <section className="motion-feedback mt-6 rounded-lg border border-dashed p-5">
+        <section className="motion-feedback mt-6 rounded-lg bg-muted/25 p-5">
           <BookOpenIcon className="size-5 text-primary" />
           <h2 className="mt-3 text-sm font-semibold">
             {section === 'words'
@@ -270,7 +270,7 @@ function VocabularyPage() {
           ) : null}
         </section>
       ) : visibleCount === 0 ? (
-        <section className="motion-feedback mt-6 rounded-lg border border-dashed p-5">
+        <section className="motion-feedback mt-6 rounded-lg bg-muted/25 p-5">
           <h2 className="text-sm font-semibold">Ничего не найдено</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Измени запрос или выбери другой фильтр.
@@ -306,20 +306,20 @@ function VocabularyList({ items }: { items: UserVocabularyItemResponse[] }) {
   }
 
   return (
-    <section className="mt-5 overflow-hidden rounded-lg border bg-card">
+    <section className="mt-5 overflow-hidden rounded-lg bg-card shadow-xs">
       <div className="hidden grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto_1.25rem] gap-5 bg-muted/35 px-4 py-2 text-xs font-medium text-muted-foreground sm:grid">
         <span>Слово</span>
         <span>Перевод</span>
         <span>Статус</span>
         <span className="sr-only">Раскрыть</span>
       </div>
-      <ul>
+      <ul className="grid gap-0.5 p-1">
         {items.map((item) => {
           const expanded = expandedItems.has(item.itemId)
           const detailsId = `vocabulary-details-${item.itemId.replaceAll('.', '-')}`
 
           return (
-            <li key={item.itemId} className="border-t first:border-t-0">
+            <li key={item.itemId} className="overflow-hidden rounded-md">
               <button
                 type="button"
                 aria-controls={detailsId}
@@ -368,17 +368,17 @@ const grammarKindLabels: Record<UserGrammarItemResponse['kind'], string> = {
 
 function GrammarList({ items }: { items: UserGrammarItemResponse[] }) {
   return (
-    <section className="mt-5 overflow-hidden rounded-lg border bg-card">
+    <section className="mt-5 overflow-hidden rounded-lg bg-card shadow-xs">
       <div className="hidden grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] gap-5 bg-muted/35 px-4 py-2 text-xs font-medium text-muted-foreground sm:grid">
         <span>Конструкция</span>
         <span>Что нужно знать</span>
         <span>Статус</span>
       </div>
-      <ul>
+      <ul className="grid gap-0.5 p-1">
         {items.map((item) => (
           <li
             key={item.itemId}
-            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] sm:gap-5"
+            className="interactive-row grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md px-3 py-3 sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] sm:gap-5"
           >
             <div className="min-w-0">
               <h2 className="text-sm font-semibold sm:text-base">
@@ -427,10 +427,7 @@ function VocabularyDetails({
   const hasSelections = Object.values(selections).some(Boolean)
 
   return (
-    <div
-      id={id}
-      className="motion-feedback border-t bg-muted/20 px-4 py-5 sm:px-5"
-    >
+    <div id={id} className="motion-feedback bg-muted/25 px-4 py-5 sm:px-5">
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <h3 className="text-lg font-semibold tracking-tight">{item.lemma}</h3>
         <span className="text-sm text-muted-foreground">
@@ -472,7 +469,7 @@ function VocabularyDetails({
       ) : null}
 
       {morphology.change ? (
-        <div className="mt-4 w-full rounded-md border bg-background/80 px-3.5 py-3 text-sm">
+        <div className="mt-4 w-full rounded-md bg-background/80 px-3.5 py-3 text-sm shadow-xs">
           <p className="font-medium">
             <span className="font-semibold">{item.lemma}</span>
             <span className="mx-2 text-muted-foreground">→</span>
@@ -498,7 +495,7 @@ function VocabularyDetails({
           {morphology.keyForms.map(({ form, label }) => (
             <li
               key={form.id}
-              className="flex min-w-0 items-baseline justify-between gap-3 border-b py-2 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 lg:[&:nth-last-child(-n+3)]:border-b-0"
+              className="flex min-w-0 items-baseline justify-between gap-3 py-2"
             >
               <span className="min-w-0 text-xs leading-5 text-muted-foreground">
                 {label}
@@ -529,10 +526,7 @@ function VocabularyDetails({
       </Button>
 
       {showAllForms ? (
-        <section
-          className="motion-feedback mt-4 border-t pt-4"
-          aria-label="Все формы слова"
-        >
+        <section className="motion-feedback mt-5" aria-label="Все формы слова">
           {dimensions.length > 0 ? (
             <div className="flex flex-wrap items-end gap-2">
               {dimensions.map((dimension) => (
@@ -577,7 +571,7 @@ function VocabularyDetails({
               {visibleForms.map((form) => (
                 <li
                   key={form.id}
-                  className="rounded-md border bg-background px-3 py-2"
+                  className="rounded-md bg-background px-3 py-2 shadow-xs"
                 >
                   <span className="text-sm font-semibold">{form.surface}</span>
                   <span className="ml-1.5 text-xs text-muted-foreground">

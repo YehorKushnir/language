@@ -487,7 +487,7 @@ function LessonPracticePage() {
               : 'Следующий урок сейчас откроется.'
             : 'Заверши практику, чтобы открыть следующий урок.'}
         </p>
-        <article className="mt-4 rounded-xl border bg-card p-4 shadow-xs sm:mt-5 sm:p-7">
+        <article className="mt-4 rounded-xl bg-card p-4 shadow-xs sm:mt-5 sm:p-7">
           <h2
             key={activeExerciseId}
             className={`motion-feedback font-serif text-2xl font-semibold leading-snug transition-opacity sm:text-3xl ${
@@ -545,10 +545,10 @@ function LessonPracticePage() {
           <div className="pt-3" aria-live="polite">
             {feedback && localResult ? (
               <div
-                className={`motion-feedback flex items-start gap-2.5 rounded-lg border px-3 py-2.5 text-sm leading-6 ${
+                className={`motion-feedback flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-sm leading-6 ${
                   localResult.isCorrect
-                    ? 'border-primary/25 bg-primary/5 text-primary'
-                    : 'border-destructive/25 bg-destructive/5 text-destructive'
+                    ? 'bg-primary/5 text-primary'
+                    : 'bg-destructive/5 text-destructive'
                 }`}
               >
                 {localResult.isCorrect ? (
@@ -610,7 +610,7 @@ function PracticeSummary({
         lessonTitle={lessonTitle}
         activePart="practice"
       />
-      <section className="mt-8 border-t pt-7">
+      <section className="mt-8">
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">
           Практика завершена
         </p>
