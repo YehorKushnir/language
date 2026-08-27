@@ -85,6 +85,7 @@ jobs:
           set -euo pipefail
           tar -czf /tmp/morpho-learning-release.tgz \
             compose.production.yaml \
+            compose.audio-generation.yaml \
             deploy/caddy-sites \
             scripts/deploy
           scp -i ~/.ssh/morpho_deploy \

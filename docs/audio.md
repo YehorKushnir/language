@@ -85,21 +85,26 @@ AUDIO_STORAGE_PROVIDER=local
 AUDIO_LOCAL_DIRECTORY=/app/.data
 ```
 
-После деплоя полный прогон слов запускается внутри API-контейнера, чтобы файлы
-попали в тот же volume:
+Обычный API-контейнер не получает Google credentials: для раздачи уже готовых
+MP3 они не нужны. После деплоя полный прогон слов запускается одноразовым
+контейнером, которому credentials монтируются только на время генерации. Файлы
+попадают в тот же persistent volume:
 
 ```bash
-docker compose --env-file .env.production -f compose.production.yaml \
-  exec api pnpm audio:generate:words
+./scripts/deploy/generate-audio.sh words
 ```
 
 Предложения для автоматического озвучивания после проверки в практике
 генерируются отдельно, без повторного обхода слов:
 
 ```bash
-docker compose --env-file .env.production -f compose.production.yaml \
-  exec api pnpm audio:generate:sentences
+./scripts/deploy/generate-audio.sh sentences
 ```
+
+Для текстов используйте `./scripts/deploy/generate-audio.sh texts`, для всех
+scope — `./scripts/deploy/generate-audio.sh`. Без корректного
+`GOOGLE_TTS_CREDENTIALS_FILE` завершится только generation-команда, а обычный
+deploy и воспроизведение готового аудио продолжат работать.
 
 ## Опционально: Cloudflare R2 или S3
 
@@ -119,9 +124,10 @@ AUDIO_PUBLIC_URL=https://media.example.com
 необходимости оставьте endpoint пустым. `AUDIO_PUBLIC_URL` — публичный HTTPS
 origin bucket/CDN, а не S3 API endpoint.
 
-Production Compose монтирует Google JSON как Docker secret. На host задайте
-`GOOGLE_TTS_CREDENTIALS_FILE=/secure/path/key.json`; внутри API он доступен как
-`GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/google-tts`.
+Generation Compose монтирует Google JSON как Docker secret только в одноразовый
+контейнер. На host задайте
+`GOOGLE_TTS_CREDENTIALS_FILE=/secure/path/key.json`; внутри генератора он
+доступен как `GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/google-tts`.
 
 ## Переменные
 

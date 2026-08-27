@@ -70,6 +70,13 @@ cd /home/deploy/morpho-learning
 docker compose --env-file .env.production -f compose.production.yaml config --quiet
 ```
 
+Google credentials не блокируют обычный deploy и не монтируются в постоянно
+работающий API. Они проверяются и подключаются только при запуске генерации:
+
+```bash
+./scripts/deploy/generate-audio.sh all
+```
+
 Для реальных пользователей SMTP обязателен: после первого деплоя нужно
 запросить сброс пароля и проверить фактическую доставку. Успешное TCP-соединение
 с relay не заменяет эту проверку.

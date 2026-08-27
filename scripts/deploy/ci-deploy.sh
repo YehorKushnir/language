@@ -53,6 +53,18 @@ write_value() {
   mv "$temporary" "$ENV_FILE"
 }
 
+write_default_value() {
+  key=$1
+  default_value=$2
+  current_value=$(read_value "$key")
+  case "$current_value" in
+    "" | CHANGE_ME*)
+      write_value "$key" "$default_value"
+      printf 'Configured default value for %s.\n' "$key"
+      ;;
+  esac
+}
+
 prune_old_release_images() {
   image_repo=$(read_value IMAGE_REPO)
   for component in api web; do
@@ -86,6 +98,18 @@ command -v flock > /dev/null 2>&1 || {
 
 exec 9>"$LOCK_FILE"
 flock --exclusive 9
+
+write_default_value TTS_PROVIDER google
+write_default_value GOOGLE_TTS_AUTH_MODE adc
+write_default_value GOOGLE_TTS_PROJECT_ID morpho-506714
+write_default_value GOOGLE_TTS_VOICE fi-FI-Chirp3-HD-Aoede
+write_default_value GOOGLE_TTS_LANGUAGE fi-FI
+write_default_value GOOGLE_TTS_CHIRP3_MIN_INTERVAL_MS 310
+write_default_value AUDIO_NORMAL_SPEAKING_RATE 1
+write_default_value AUDIO_GENERATION_VERSION v1
+write_default_value AUDIO_GENERATION_CONCURRENCY 4
+write_default_value AUDIO_STORAGE_PROVIDER local
+write_default_value AUDIO_LOCAL_DIRECTORY /app/.data
 
 "$SCRIPT_DIR/check-env.sh" "$ENV_FILE"
 PREVIOUS_TAG=$(read_value IMAGE_TAG)

@@ -30,11 +30,10 @@ x-api-environment: &api-environment
   MEDIA_BASE_URL: ${MEDIA_BASE_URL:-}
   TTS_PROVIDER: ${TTS_PROVIDER:-google}
   GOOGLE_TTS_AUTH_MODE: adc
-  GOOGLE_TTS_PROJECT_ID: ${GOOGLE_TTS_PROJECT_ID:?GOOGLE_TTS_PROJECT_ID is required}
-  GOOGLE_TTS_VOICE: ${GOOGLE_TTS_VOICE:?GOOGLE_TTS_VOICE is required}
+  GOOGLE_TTS_PROJECT_ID: ${GOOGLE_TTS_PROJECT_ID:-morpho-506714}
+  GOOGLE_TTS_VOICE: ${GOOGLE_TTS_VOICE:-fi-FI-Chirp3-HD-Aoede}
   GOOGLE_TTS_LANGUAGE: ${GOOGLE_TTS_LANGUAGE:-fi-FI}
   GOOGLE_TTS_CHIRP3_MIN_INTERVAL_MS: ${GOOGLE_TTS_CHIRP3_MIN_INTERVAL_MS:-310}
-  GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google-tts
   AUDIO_NORMAL_SPEAKING_RATE: ${AUDIO_NORMAL_SPEAKING_RATE:-1}
   AUDIO_GENERATION_VERSION: ${AUDIO_GENERATION_VERSION:-v1}
   AUDIO_GENERATION_CONCURRENCY: ${AUDIO_GENERATION_CONCURRENCY:-4}
@@ -108,8 +107,6 @@ services:
     tmpfs:
       - /tmp:size=64m,mode=1777
     init: true
-    secrets:
-      - google-tts
     volumes:
       - audio-data:/app/.data
     stop_grace_period: 30s
@@ -159,7 +156,3 @@ networks:
     name: ${EDGE_NETWORK:-framed_default}
   database:
     internal: true
-
-secrets:
-  google-tts:
-    file: ${GOOGLE_TTS_CREDENTIALS_FILE:?GOOGLE_TTS_CREDENTIALS_FILE is required}
