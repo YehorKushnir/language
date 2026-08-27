@@ -154,12 +154,14 @@ export function validateEnvironment(
     }
   }
 
-  const audioPublicUrl = parseUrl(
-    'AUDIO_PUBLIC_URL',
-    String(environment.AUDIO_PUBLIC_URL),
-  )
-  if (audioPublicUrl.protocol !== 'https:') {
-    throw new Error('AUDIO_PUBLIC_URL must use HTTPS in production')
+  if (hasText(environment.AUDIO_PUBLIC_URL)) {
+    const audioPublicUrl = parseUrl(
+      'AUDIO_PUBLIC_URL',
+      String(environment.AUDIO_PUBLIC_URL),
+    )
+    if (audioPublicUrl.protocol !== 'https:') {
+      throw new Error('AUDIO_PUBLIC_URL must use HTTPS in production')
+    }
   }
 
   return result

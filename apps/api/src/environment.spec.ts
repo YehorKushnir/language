@@ -105,6 +105,7 @@ describe('validateEnvironment', () => {
       validateEnvironment({
         ...productionEnvironment,
         AUDIO_STORAGE_PROVIDER: 'local',
+        AUDIO_PUBLIC_URL: '',
       }),
     ).toMatchObject({ AUDIO_STORAGE_PROVIDER: 'local' })
   })

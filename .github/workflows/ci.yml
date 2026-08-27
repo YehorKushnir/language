@@ -52,3 +52,6 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm e2e
       - run: pnpm api:smoke:production
+        env:
+          GOOGLE_TTS_PROJECT_ID: morpho-506714
+          GOOGLE_TTS_VOICE: fi-FI-Chirp3-HD-Aoede
