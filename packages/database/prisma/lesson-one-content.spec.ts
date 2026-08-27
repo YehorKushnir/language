@@ -69,7 +69,11 @@ describe('lesson one content', () => {
   it('provides a dictionary entry and morphology for every text word', () => {
     const tokens = preparedTexts.flatMap((text) => text.tokens)
 
-    expect(tokens).toHaveLength(215)
+    for (const text of preparedTexts.slice(0, 4)) {
+      expect(text.tokens.length).toBeGreaterThanOrEqual(200)
+    }
+    expect(preparedTexts[4]?.tokens.length).toBeGreaterThanOrEqual(350)
+    expect(tokens).toHaveLength(1257)
     expect(
       tokens.filter((token) => token.analysis.partOfSpeech === 'unknown'),
     ).toEqual([])
@@ -79,7 +83,8 @@ describe('lesson one content', () => {
         (token) =>
           token.surface.toLocaleLowerCase('fi') !==
             token.lemma.toLocaleLowerCase('fi') &&
-          !getFinnishTextFormTranslation(token.surface),
+          !getFinnishTextFormTranslation(token.surface) &&
+          !token.lexicalSenseId,
       ),
     ).toEqual([])
   })

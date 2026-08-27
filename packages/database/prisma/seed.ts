@@ -641,6 +641,14 @@ async function seedTexts() {
   })
 
   for (const text of preparedTexts) {
+    const existingText = await prisma.text.findUnique({
+      where: { id: text.id },
+      select: { body: true },
+    })
+    if (existingText && existingText.body !== text.body) {
+      await prisma.textAudioAsset.deleteMany({ where: { textId: text.id } })
+    }
+
     await prisma.text.upsert({
       where: { id: text.id },
       update: {

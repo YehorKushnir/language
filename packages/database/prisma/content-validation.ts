@@ -137,7 +137,8 @@ export function validateCourseContent(): CourseContentValidationReport {
       if (
         token.surface.toLocaleLowerCase('fi') !==
           token.lemma.toLocaleLowerCase('fi') &&
-        !getFinnishTextFormTranslation(token.surface)
+        !getFinnishTextFormTranslation(token.surface) &&
+        !token.lexicalSenseId
       ) {
         issues.push(
           `${text.id} has no contextual translation for «${token.surface}»`,

@@ -1,5 +1,6 @@
-import { moduleOneVocabularyByLemma } from '../module-one.js'
+import { moduleOneLessons, moduleOneVocabularyByLemma } from '../module-one.js'
 import {
+  finnishLearnerDictionaryEntries,
   finnishLearnerDictionaryItemId,
   getFinnishLearnerDictionaryEntry,
 } from '../../../../packages/language-fi/src/learner-dictionary.js'
@@ -195,6 +196,24 @@ const inflectedVocabularyReferences: Record<string, string> = {
   yliopistoon: 'yliopisto',
   ystävälle: 'ystävä',
   ystäväni: 'ystävä',
+  aamuna: 'aamu',
+  asuntoonsa: 'asunto',
+  asuntonsa: 'asunto',
+  auttamaan: 'auttaa',
+  halunneet: 'haluta',
+  hitaasti: 'hidas',
+  kerralla: 'kerta',
+  laukustaan: 'laukku',
+  löytäneet: 'löytää',
+  nimensä: 'nimi',
+  nopeasti: 'nopea',
+  opiskelemaan: 'opiskella',
+  perheensä: 'perhe',
+  perheistään: 'perhe',
+  puhelimensa: 'puhelin',
+  seuraavalla: 'seuraava',
+  voimakkaasti: 'voimakas',
+  ystävälleen: 'ystävä',
 }
 
 const tokenAnalysisOverrides: Record<string, Record<string, string>> = {
@@ -210,6 +229,22 @@ const tokenAnalysisOverrides: Record<string, Record<string, string>> = {
     number: 'singular',
   },
 }
+
+const moduleVocabularyBySurface = new Map(
+  [...moduleOneVocabularyByLemma.values()].flatMap((item) =>
+    item.forms.map(
+      (form) => [form.surface.toLocaleLowerCase('fi'), item] as const,
+    ),
+  ),
+)
+
+const learnerDictionaryBySurface = new Map(
+  finnishLearnerDictionaryEntries.flatMap((entry) =>
+    entry.forms.map(
+      (form) => [form.surface.toLocaleLowerCase('fi'), entry] as const,
+    ),
+  ),
+)
 
 function pronoun(
   lemma: string,
@@ -252,6 +287,39 @@ function vocabularyReference(lemma: string): TokenReference | undefined {
   }
 }
 
+function vocabularyFormReference(surface: string): TokenReference | undefined {
+  const item = moduleVocabularyBySurface.get(surface)
+  return item
+    ? {
+        lemma: item.lemma,
+        lexicalSenseId: item.itemId,
+        analysis: { partOfSpeech: item.partOfSpeech },
+      }
+    : undefined
+}
+
+function dictionaryFormReference(surface: string): TokenReference | undefined {
+  const entry = learnerDictionaryBySurface.get(surface)
+  return entry
+    ? {
+        lemma: entry.lemma,
+        lexicalSenseId: finnishLearnerDictionaryItemId(entry.lemma),
+        analysis: { partOfSpeech: entry.partOfSpeech },
+      }
+    : undefined
+}
+
+function encliticReference(surface: string): TokenReference | undefined {
+  for (const suffix of ['kin', 'kaan', 'kään', 'ko', 'kö']) {
+    if (!surface.endsWith(suffix)) continue
+    const base = surface.slice(0, -suffix.length)
+    const reference =
+      vocabularyFormReference(base) ?? dictionaryFormReference(base)
+    if (reference) return reference
+  }
+  return undefined
+}
+
 function resolveReference(surface: string): TokenReference | undefined {
   const normalized = surface.toLocaleLowerCase('fi')
   const lemma = inflectedVocabularyReferences[normalized] ?? normalized
@@ -262,6 +330,9 @@ function resolveReference(surface: string): TokenReference | undefined {
   const resolvedReference =
     grammarReference ??
     vocabularyReference(lemma) ??
+    vocabularyFormReference(normalized) ??
+    dictionaryFormReference(normalized) ??
+    encliticReference(normalized) ??
     (dictionary
       ? {
           lemma: dictionary.lemma,
@@ -321,77 +392,99 @@ function createText(definition: TextDefinition): PreparedTextSeed {
   }
 }
 
+function skillItemIdsForLessons(from: number, to: number): string[] {
+  return moduleOneLessons
+    .filter(
+      (lesson) => lesson.lessonPosition >= from && lesson.lessonPosition <= to,
+    )
+    .flatMap((lesson) => lesson.skills.map((skill) => skill.id))
+}
+
 export const preparedTexts: PreparedTextSeed[] = [
   createText({
     id: 'text.fi.module-one.04.study-day',
-    title: { ru: 'Учебный день' },
+    title: { ru: 'Первый день на курсах' },
     level: 'A1',
     topics: ['уроки 1–4', 'учёба', 'общение'],
-    body: 'Minä olen opiskelija. Ystäväni on opettaja. Aamulla luen kirjaa ja kirjoitan viestin. Minulla on kysymys, opettaja kysyy ja minä vastaan. Illalla haluan mennä kotiin, syödä ja kuunnella uutisia. En vielä ymmärrä kaikkea, mutta opin joka päivä.',
-    skillItemIds: [
-      'grammar.fi.olla.affirmative',
-      'grammar.fi.olla.negative',
-      'grammar.fi.present.common',
-      'grammar.fi.questions.word-order',
-      'grammar.fi.verb-types.two-three',
-    ],
+    body: [
+      'Minä olen Anna, ja olen uusi opiskelija. Tänään tulen ensimmäistä kertaa suomen kurssille. Olen vähän väsynyt, koska aamu alkaa aikaisin, mutta olen myös iloinen. Oven vieressä odottaa nuori mies. Hän hymyilee ja sanoo:',
+      '– Hei! Minä olen Mika. Oletko sinäkin opiskelija?\n– Kyllä olen. Olen Anna. Oletko sinä suomalainen?\n– En ole. Olen venäläinen, mutta asun Suomessa ja työskentelen täällä.',
+      'Opettaja tulee luokkaan ja sulkee oven. Opettaja on Laura. Hän puhuu hitaasti, kirjoittaa taululle sanoja ja kysyy helppoja kysymyksiä. Me kuuntelemme, luemme lyhyen keskustelun ja kirjoitamme vastaukset vihkoon. Mika ymmärtää melkein kaiken, mutta minä en muista yhtä sanaa. Laura näyttää kuvan ja selittää sanan uudelleen. Nyt ymmärrän merkityksen.',
+      'Tauolla menemme pieneen kahvilaan. Mika juo kahvia ja syö leipää. Minä juon teetä, mutta en syö, koska en ole nälkäinen. Pöydässä istuu myös Sofia. Hän on lääkäri ja opiskelee suomea.',
+      '– Puhutteko te jo hyvin suomea? Sofia kysyy.\n– Emme puhu hyvin, mutta harjoittelemme joka päivä, Mika vastaa.',
+      'Sitten sanomme puhelinnumeromme. Mika kirjoittaa yhden numeron väärin, ja minä tarkistan sen.',
+      'Tauon jälkeen Laura antaa meille uuden tehtävän. Teemme sen yhdessä. Minä kysyn, Mika vastaa, ja sitten vaihdamme osia. Kun kurssi loppuu, kirjoitan lyhyen viestin uudelle ystävälle: ”Hei Mika! Kiitos keskustelusta. Nähdään huomenna.”',
+      'Hetken kuluttua puhelin soi. Mika vastaa: ”Kiitos, Anna. Huomenna jatkamme suomen opiskelua yhdessä.”',
+      'Nyt en ole enää väsynyt. Ensimmäinen kurssipäivä on hyvä alku.',
+    ].join('\n\n'),
+    skillItemIds: skillItemIdsForLessons(1, 4),
   }),
   createText({
     id: 'text.fi.module-one.08.home-plan',
-    title: { ru: 'Планы семьи' },
+    title: { ru: 'Потерянный ключ' },
     level: 'A1',
     topics: ['уроки 5–8', 'семья', 'дом', 'планы'],
-    body: 'Me olemme perhe, ja asumme kaupungissa. Koti on asunto, jossa on keittiö, olohuone ja parveke. Äiti haluaa siivota ja isä yrittää korjata oven. Minä voin auttaa ja sisko osaa kokata. Illalla suunnittelemme matkaa. Tarvitsemme lipun, laukun ja avaimen.',
-    skillItemIds: [
-      'grammar.fi.verb-types.four-six',
-      'grammar.fi.consonant-gradation',
-      'grammar.fi.infinitive.chains',
-      'grammar.fi.genitive.possession',
-    ],
+    body: [
+      'Lauantaiaamuna Emilia muuttaa uuteen asuntoon. Hänen perheensä tulee auttamaan aikaisin. Emilian uusi koti on pieni, mutta valoisa. Siellä on keittiö, olohuone, makuuhuone ja parveke. Liisalla, Emilian siskolla, on auto. Isä kantaa sänkyä ja suurta pöytää. Äiti haluaa siivota keittiön ennen kuin tavarat tulevat sisään. Pikkuveli Oskari yrittää kantaa laatikkoa, vaikka laatikko on melkein yhtä suuri kuin hän.',
+      'Kaikki ovat valmiita aloittamaan, mutta Emilia ei voi avata ovea. Avain ei ole laukussa.',
+      '– Onko avain äidin takissa? Liisa kysyy.\n– Ei ole. Minä tarkistan kaikki taskut, äiti vastaa.\n– Onko se isän laukussa?\n– Ei ole sielläkään.',
+      'Emilia alkaa pelätä, että avain on vanhassa kodissa. Hän yrittää soittaa vuokranantajalle, mutta tämä ei vastaa. Perhe etsii avainta autosta, laukkujen alta ja tavaralaatikoista. Lopulta Oskari muistaa jotain.',
+      '– Minä panin avaimen siniseen kuppiin, hän sanoo. – En halunnut pudottaa sitä.',
+      'Sininen kuppi löytyy keittiötavaroiden laatikosta. Emilia avaa oven, ja kaikki nauravat helpottuneina.',
+      'Sisällä työt jatkuvat. Isä yrittää korjata parvekkeen ovea. Äiti alkaa pestä kaappeja. Liisa pakkaa vaatteet hyllyille, ja Oskari saa avata pienet laatikot. Emilia haluaa maalata yhden seinän, mutta tänään siihen ei ole aikaa.',
+      'Iltapäivällä naapuri tulee tervehtimään. Hänen nimensä on Aino. Ainolla on kaksi ylimääräistä tuolia, ja hän lupaa lainata ne Emilialle. Illalla perhe istuu vielä lattialla, koska pöytä ei ole valmis. He syövät pizzaa, katsovat uutta asuntoa ja suunnittelevat huomista.',
+      'Emilia on väsynyt mutta onnellinen. Nyt hänellä on uusi koti — ja avain on turvallisesti hänen taskussaan.',
+    ].join('\n\n'),
+    skillItemIds: skillItemIdsForLessons(5, 8),
   }),
   createText({
     id: 'text.fi.module-one.12.market-day',
-    title: { ru: 'День на рынке' },
+    title: { ru: 'Ужин-сюрприз' },
     level: 'A1+',
     topics: ['уроки 9–12', 'еда', 'город', 'свободное время'],
-    body: 'Lauantaina menemme torille. Ostamme leipää, maitoa, juustoa, kalaa, perunoita ja omenoita. Sen jälkeen juon kahvia kahvilassa ja ystävä ottaa teetä. Iltapäivällä käymme kirjastossa ja museossa. Minä pidän musiikista ja lukemisesta. Päivässä on iloa, vaikka kaupungissa on kiire.',
-    skillItemIds: [
-      'grammar.fi.nouns.gradation',
-      'grammar.fi.partitive.formation',
-      'grammar.fi.partitive.usage',
-      'grammar.fi.local-cases.internal',
-    ],
+    body: [
+      'Aino haluaa järjestää yllätysillallisen ystävälleen Leolle. Leolla on syntymäpäivä, mutta hän luulee, että illalla ei tapahdu mitään erityistä. Aino kutsuu muutaman ystävän asuntoonsa ja suunnittelee yksinkertaisen ruoan.',
+      'Aamulla Aino tarkistaa keittiön. Kaapissa on riisiä, pastaa ja yksi pullo mehua. Jääkaapissa on kaksi munaa ja vähän juustoa, mutta siellä ei ole maitoa, voita eikä vihanneksia. Aino kirjoittaa ostoslistan paperille ja panee paperin pöydälle. Sitten hän ottaa laukun ja lähtee kauppaan.',
+      'Kaupassa Aino huomaa, että ostoslista on edelleen keittiön pöydällä. Hän ei halua palata kotiin, joten hän yrittää muistaa kaiken. Hän ostaa leipää, maitoa, voita, perunoita, porkkanoita ja tomaatteja. Hän ottaa myös kolme omenaa ja kaksi appelsiinia. Lihaa hän ei osta, koska Leo ei syö lihaa.',
+      'Kassalla Aino ei löydä lompakkoa. Hän etsii sitä laukusta, kirjan alta ja pienestä taskusta. Lopulta lompakko löytyy vihkon välistä. Kaupasta Aino menee kahvilaan. Kahvilasta hän hakee pienen kakun, jonka hän tilasi eilen. Sen jälkeen hän käy kirjastossa ja palauttaa Leon kirjan.',
+      'Kotona ystävät auttavat ruoan kanssa. Mira tekee salaattia, Olli keittää perunakeittoa ja Aino kattaa pöydän. Yksi veitsi puuttuu, mutta se löytyy laatikosta pyyhkeen alta. Pian keittiössä tuoksuu hyvältä.',
+      'Kun Leo tulee asuntoon, kaikki huutavat: ”Paljon onnea!”',
+      'Leo yllättyy täysin. Ystävät syövät keittoa, salaattia ja kakkua. He kuuntelevat musiikkia, katsovat valokuvia ja puhuvat pitkään. Illan lopussa Leo sanoo, että paras lahja ei ole kakku eikä kirja. Paras lahja on yhteinen ilta ystävien kanssa.',
+    ].join('\n\n'),
+    skillItemIds: skillItemIdsForLessons(9, 12),
   }),
   createText({
     id: 'text.fi.module-one.16.journey',
-    title: { ru: 'Поездка к морю' },
+    title: { ru: 'Потерянный телефон на острове' },
     level: 'A2',
     topics: ['уроки 13–16', 'транспорт', 'природа', 'прошедшее время'],
-    body: 'Eilen lähdimme rautatieasemalta. Minulla oli matkalaukku, passi, matkalippu ja kartta. Juna oli nopea, mutta matka oli pitkä. Ikkunasta näin metsän, järven, joen ja suuren vuoren. Illalla tulimme hotelliin ja söimme ravintolassa. Seuraavana päivänä aurinko lämmitti, eikä sade tullut.',
-    skillItemIds: [
-      'grammar.fi.local-cases.external',
-      'grammar.fi.plural.agreement',
-      'grammar.fi.imperfect.affirmative',
-      'grammar.fi.imperfect.negative-question',
-    ],
+    body: [
+      'Viime lauantaina neljä ystävää lähti pienelle retkelle. Aino, Leo, Mira ja Olli matkustivat junalla kaupungista satamaan. Asemalla oli paljon ihmisiä, ja suuret junat olivat täynnä matkustajia. Ystävillä oli raskaat laukut, lämpimät takit ja uusi kartta.',
+      'Junassa Mira kysyi Ollilta:',
+      '– Otitko sinä varmasti matkaliput?\n– Otin, mutta en ottanut paperikarttaa, Olli vastasi.\n– Ei hätää. Minulla on kartta puhelimessa.',
+      'Satamasta ystävät matkustivat lautalla pienelle saarelle. Merellä tuuli voimakkaasti, mutta aurinko paistoi. Saarella korkeat puut liikkuivat tuulessa, ja kapeat polut kulkivat metsän läpi. Ystävät kävelivät rannalta vanhalle näköalapaikalle. Sieltä he näkivät meren, pieniä saaria ja kaukana kulkevia laivoja.',
+      'Iltapäivällä pilvet muuttuivat tummiksi. Kun ystävät palasivat rannalle, Olli huomasi, että hänen puhelimensa ei ollut taskussa.',
+      '– Pudotitko sen näköalapaikalla? Aino kysyi.\n– En tiedä. Käytin sitä viimeksi metsässä.',
+      'He eivät halunneet lähteä ilman puhelinta. Ystävät palasivat samaa polkua pitkin. He katsoivat kivien taakse, märkään ruohoon ja vanhojen puiden alle, mutta eivät löytäneet mitään. Sitten Mira soitti Ollin numeroon. Ensin he eivät kuulleet ääntä. Toisella kerralla metsästä kuului hiljainen soittoääni.',
+      'Puhelin löytyi keltaisten lehtien alta. Sen näyttö ei ollut rikki, ja kaikki hymyilivät helpottuneina.',
+      'Sade alkoi juuri, kun ystävät juoksivat takaisin rannalle. He eivät myöhästyneet viimeiseltä lautalta, mutta heidän vaatteensa olivat märät ja kengät likaiset. Junassa he olivat väsyneitä mutta iloisia.',
+      '– Oliko retki hyvä? Leo kysyi.\n– Oli, Olli vastasi. – Mutta seuraavalla kerralla puhelin pysyy laukussa.',
+    ].join('\n\n'),
+    skillItemIds: skillItemIdsForLessons(13, 16),
   }),
   createText({
     id: 'text.fi.module-one.final.new-life',
     title: { ru: 'Первый месяц в Финляндии' },
     level: 'A2',
     topics: ['финал модуля 1', 'повседневная жизнь', 'повторение'],
-    body: 'Kuukausi sitten tulin Suomeen. Aluksi olin väsynyt, mutta uusi koti ja kaupunki olivat hyvä alku. Aamulla menin yliopistoon bussilla ja illalla opiskelin kirjastossa. Opin uuden sanan joka päivä, puhuimme suomea ja kirjoitin viestin ystävälle. Viikonloppuna ostin ruokaa torilta, katsoimme elokuvan ja kävelimme puistossa. Kerran matkustin junalla meren rannalle. Sää oli kylmä ja tuuli oli voimakas, mutta aurinko tuli esiin. Nyt ymmärrän enemmän ja haluan jatkaa opiskelua.',
-    skillItemIds: [
-      'grammar.fi.olla.affirmative',
-      'grammar.fi.present.common',
-      'grammar.fi.infinitive.chains',
-      'grammar.fi.genitive.possession',
-      'grammar.fi.partitive.usage',
-      'grammar.fi.local-cases.internal',
-      'grammar.fi.local-cases.external',
-      'grammar.fi.plural.agreement',
-      'grammar.fi.imperfect.affirmative',
-      'grammar.fi.imperfect.negative-question',
-    ],
+    body: [
+      'Kuukausi sitten Anna tuli Suomeen opiskelemaan. Hän ei tuntenut kaupungissa ketään, eikä hän puhunut hyvin suomea. Ensimmäisenä aamuna hän oli väsynyt mutta iloinen. Hänen uusi asuntonsa oli pieni ja valoisa. Asunnossa oli keittiö, makuuhuone ja parveke. Annalla ei ollut vielä pöytää eikä tuoleja, mutta naapuri lainasi hänelle yhden tuolin. Naapurin nimi oli Mika.',
+      'Seuraavana päivänä Anna meni suomen kurssille bussilla. Opettaja puhui hitaasti, kirjoitti taululle ja näytti kuvia. Anna kuunteli tarkasti ja yritti vastata jokaiseen kysymykseen. Kun hän ei ymmärtänyt sanan merkitystä, hän kysyi: ”Voitko selittää tämän uudelleen?” Opettaja selitti, ja Anna kirjoitti vastauksen vihkoon. Tauolla opiskelijat joivat kahvia ja teetä. He kertoivat perheistään, työstään ja kotimaistaan. Anna sai uusia ystäviä ja alkoi harjoitella suomea heidän kanssaan joka päivä.',
+      'Viikonloppuna Mika halusi auttaa Annaa uudessa kodissa. He tapasivat aamulla kaupassa. Anna tarvitsi lampun, maton, kaksi kuppia ja pienen kattilan. Tavarat eivät olleet halpoja, joten hän tarkisti hinnat huolellisesti. Kassalla Anna ei ensin löytänyt lompakkoa laukustaan. Lopulta se löytyi kirjan alta. Kotona Mika korjasi parvekkeen ovea, ja Anna siivosi keittiön. Sitten he päättivät kokata yhdessä. He tekivät perunakeittoa ja salaattia. Keittoon tuli vettä, perunoita, porkkanaa ja sipulia. Jälkiruoaksi he söivät omenoita ja pienen kakun.',
+      'Sunnuntaina Anna ja kurssin muut opiskelijat lähtivät retkelle. He matkustivat junalla satamaan ja jatkoivat matkaa lautalla saarelle. Päivä oli kylmä, mutta kauniit metsät, korkeat puut ja pienet rannat näyttivät upeilta. Saarella ystävät kävelivät pitkää polkua, ottivat valokuvia ja söivät eväitä. Iltapäivällä taivaalle tuli tummia pilviä. Tuuli voimistui, ja pian alkoi sataa.',
+      'Kun ryhmä palasi rannalle, Anna huomasi, ettei hänen puhelimensa ollut taskussa. Hän etsi sitä laukusta, mutta ei löytänyt sitä. Mika kysyi: ”Käytitkö puhelinta metsässä?” Anna vastasi: ”Käytin, mutta en muista, mihin panin sen.” He palasivat polulle ja katsoivat kivien sekä puiden alle. Puhelin löytyi lopulta märästä ruohosta. Se ei ollut rikki, mutta viimeinen lautta oli jo lähdössä. Ystävät juoksivat nopeasti ja ehtivät mukaan.',
+      'Illalla Anna istui kotona naapurin tuolilla ja katsoi päivän valokuvia. Ensimmäinen kuukausi ei ollut helppo: hän teki virheitä, unohti sanoja ja kerran melkein kadotti puhelimensa. Hän ei kuitenkaan halunnut lopettaa. Nyt hän osasi kysyä, vastata, hoitaa tavallisia asioita ja puhua ystävien kanssa. Seuraavana aamuna Mika lähetti viestin: ”Oletko valmis uuteen viikkoon?” Anna hymyili ja kirjoitti: ”Olen. Nähdään kurssilla!”',
+    ].join('\n\n'),
+    skillItemIds: skillItemIdsForLessons(1, 16),
   }),
 ]

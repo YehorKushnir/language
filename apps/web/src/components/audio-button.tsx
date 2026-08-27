@@ -12,18 +12,25 @@ import { cn } from '@/lib/utils'
 
 type PlaybackState = 'idle' | 'loading' | 'playing' | 'error'
 
+export interface AudioPlaybackProgress {
+  currentTime: number
+  duration: number
+}
+
 export function AudioButton({
   src,
   label = 'Прослушать',
   className,
   compact = false,
   playbackRate = 1,
+  onPlaybackProgress,
 }: {
   src: string | null | undefined
   label?: string
   className?: string
   compact?: boolean
   playbackRate?: number
+  onPlaybackProgress?: (progress: AudioPlaybackProgress | null) => void
 }) {
   const [state, setState] = useState<PlaybackState>('idle')
   const playbackRef = useRef<AudioPlayback | null>(null)
@@ -42,6 +49,11 @@ export function AudioButton({
     [],
   )
 
+  useEffect(() => {
+    playbackRef.current?.stop()
+    playbackRef.current = null
+  }, [playbackRate, src])
+
   async function toggle() {
     if (!src) return
     if (state === 'loading' || state === 'playing') {
@@ -55,11 +67,22 @@ export function AudioButton({
         if (playbackRef.current !== playback) return
         playbackRef.current = null
         setState('idle')
+        onPlaybackProgress?.(null)
       },
     })
     const { audio } = playback
     playbackRef.current = playback
     setState('loading')
+    const reportProgress = () => {
+      if (playbackRef.current !== playback) return
+      if (!Number.isFinite(audio.duration) || audio.duration <= 0) return
+      onPlaybackProgress?.({
+        currentTime: audio.currentTime,
+        duration: audio.duration,
+      })
+    }
+    audio.addEventListener('loadedmetadata', reportProgress)
+    audio.addEventListener('timeupdate', reportProgress)
     audio.addEventListener(
       'playing',
       () => {
@@ -73,6 +96,7 @@ export function AudioButton({
         if (playbackRef.current !== playback) return
         playbackRef.current = null
         setState('idle')
+        onPlaybackProgress?.(null)
       },
       { once: true },
     )
@@ -82,6 +106,7 @@ export function AudioButton({
         if (playbackRef.current !== playback) return
         playbackRef.current = null
         setState('error')
+        onPlaybackProgress?.(null)
       },
       { once: true },
     )

@@ -2,7 +2,7 @@ import type { PreparedTextTokenResponse } from '@language/contracts'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeftIcon } from 'lucide-react'
-import { Fragment } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 
 import { addVocabularyItem } from '@/api/language-api'
 import {
@@ -14,7 +14,10 @@ import {
 } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { LearningPageHeader } from '@/components/learning-page-header'
-import { AudioButton } from '@/components/audio-button'
+import {
+  AudioButton,
+  type AudioPlaybackProgress,
+} from '@/components/audio-button'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import {
@@ -24,6 +27,11 @@ import {
 } from '@/components/ui/hover-card'
 import { Button } from '@/components/ui/button'
 import { localizedText } from '@/lib/localized-text'
+import {
+  getActiveTextPlaybackSegment,
+  getTextPlaybackSegments,
+} from '@/lib/text-playback'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/texts_/$textId')({
   loader: ({ context, params }) =>
@@ -63,12 +71,27 @@ function PreparedTextPage() {
       ])
     },
   })
+  const [playbackProgress, setPlaybackProgress] =
+    useState<AudioPlaybackProgress | null>(null)
+  const playbackSegments = useMemo(
+    () => getTextPlaybackSegments(text.data?.body ?? ''),
+    [text.data?.body],
+  )
+
+  useEffect(() => setPlaybackProgress(null), [textId])
 
   if (course.isPending || text.isPending) return <PageState loading />
   if (course.isError || text.isError) {
     return <PageState message={(course.error ?? text.error)?.message} />
   }
   const textData = text.data
+  const activePlaybackSegment = playbackProgress
+    ? getActiveTextPlaybackSegment(
+        playbackSegments,
+        playbackProgress.currentTime,
+        playbackProgress.duration,
+      )
+    : null
 
   return (
     <PageShell>
@@ -88,11 +111,13 @@ function PreparedTextPage() {
             <AudioButton
               className="flex-1"
               label="Обычная"
+              onPlaybackProgress={setPlaybackProgress}
               src={textData.audioUrl}
             />
             <AudioButton
               className="flex-1"
               label="Медленно"
+              onPlaybackProgress={setPlaybackProgress}
               playbackRate={0.85}
               src={textData.audioUrl}
             />
@@ -110,6 +135,8 @@ function PreparedTextPage() {
             tokens={textData.tokens}
             addingItemId={addWord.isPending ? addWord.variables : undefined}
             addErrorItemId={addWord.isError ? addWord.variables : undefined}
+            activePlaybackSegment={activePlaybackSegment}
+            playbackSegments={playbackSegments}
             onAdd={(itemId) => addWord.mutate(itemId)}
           />
         </p>
@@ -123,15 +150,85 @@ function InteractiveText({
   tokens,
   addingItemId,
   addErrorItemId,
+  activePlaybackSegment,
+  playbackSegments,
   onAdd,
 }: {
   body: string
   tokens: PreparedTextTokenResponse[]
   addingItemId?: string
   addErrorItemId?: string
+  activePlaybackSegment: number | null
+  playbackSegments: ReturnType<typeof getTextPlaybackSegments>
   onAdd: (itemId: string) => void
 }) {
   let cursor = 0
+  let tokenIndex = 0
+
+  return (
+    <>
+      {playbackSegments.map((segment, segmentIndex) => {
+        const before = body.slice(cursor, segment.start)
+        const segmentTokens: PreparedTextTokenResponse[] = []
+        while (
+          tokenIndex < tokens.length &&
+          (tokens[tokenIndex]?.charStart ?? body.length) < segment.end
+        ) {
+          const token = tokens[tokenIndex]
+          if (token && token.charEnd > segment.start) segmentTokens.push(token)
+          tokenIndex += 1
+        }
+        cursor = segment.end
+
+        return (
+          <Fragment key={segment.start}>
+            {before}
+            <span
+              className={cn(
+                'rounded-sm transition-colors duration-150',
+                activePlaybackSegment === segmentIndex &&
+                  '-mx-0.5 box-decoration-clone bg-primary/15 px-0.5',
+              )}
+              data-audio-active={
+                activePlaybackSegment === segmentIndex ? 'true' : undefined
+              }
+            >
+              <InteractiveTextSegment
+                body={body}
+                end={segment.end}
+                start={segment.start}
+                tokens={segmentTokens}
+                addingItemId={addingItemId}
+                addErrorItemId={addErrorItemId}
+                onAdd={onAdd}
+              />
+            </span>
+          </Fragment>
+        )
+      })}
+      {body.slice(cursor)}
+    </>
+  )
+}
+
+function InteractiveTextSegment({
+  body,
+  start,
+  end,
+  tokens,
+  addingItemId,
+  addErrorItemId,
+  onAdd,
+}: {
+  body: string
+  start: number
+  end: number
+  tokens: PreparedTextTokenResponse[]
+  addingItemId?: string
+  addErrorItemId?: string
+  onAdd: (itemId: string) => void
+}) {
+  let cursor = start
 
   return (
     <>
@@ -169,7 +266,7 @@ function InteractiveText({
           </Fragment>
         )
       })}
-      {body.slice(cursor)}
+      {body.slice(cursor, end)}
     </>
   )
 }

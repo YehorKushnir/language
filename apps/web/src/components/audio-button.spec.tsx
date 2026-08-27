@@ -37,9 +37,13 @@ describe('AudioButton', () => {
   })
 
   it('sets the requested client-side playback rate before playing', async () => {
+    const listeners = new Map<string, EventListener>()
     const audio = {
-      addEventListener: vi.fn(),
+      addEventListener: vi.fn((event: string, listener: EventListener) => {
+        listeners.set(event, listener)
+      }),
       currentTime: 0,
+      duration: 20,
       pause: vi.fn(),
       play: vi.fn().mockResolvedValue(undefined),
       playbackRate: 1,
@@ -47,6 +51,7 @@ describe('AudioButton', () => {
       src: '',
     }
     const AudioConstructor = vi.fn(() => audio)
+    const onPlaybackProgress = vi.fn()
     vi.stubGlobal('Audio', AudioConstructor)
     container = document.createElement('div')
     document.body.append(container)
@@ -56,6 +61,7 @@ describe('AudioButton', () => {
       root?.render(
         <AudioButton
           label="Медленно"
+          onPlaybackProgress={onPlaybackProgress}
           playbackRate={0.85}
           src="/api/v1/media/audio/test.mp3"
         />,
@@ -71,5 +77,12 @@ describe('AudioButton', () => {
     )
     expect(audio.playbackRate).toBe(0.85)
     expect(audio.play).toHaveBeenCalledOnce()
+
+    audio.currentTime = 5
+    act(() => listeners.get('timeupdate')?.(new Event('timeupdate')))
+    expect(onPlaybackProgress).toHaveBeenLastCalledWith({
+      currentTime: 5,
+      duration: 20,
+    })
   })
 })
