@@ -40,19 +40,19 @@ for key in \
   BETTER_AUTH_SECRET \
   SMTP_HOST \
   MAIL_FROM \
-  TTS_PROVIDER \
   GOOGLE_TTS_PROJECT_ID \
   GOOGLE_TTS_VOICE \
-  GOOGLE_TTS_CREDENTIALS_FILE \
-  AUDIO_STORAGE_PROVIDER
+  GOOGLE_TTS_CREDENTIALS_FILE
 do
   require_value "$key"
 done
 
 tts_provider=$(read_value TTS_PROVIDER)
+tts_provider=${tts_provider:-google}
 [ "$tts_provider" = "google" ] || fail "TTS_PROVIDER must be google"
 
 audio_storage_provider=$(read_value AUDIO_STORAGE_PROVIDER)
+audio_storage_provider=${audio_storage_provider:-local}
 case "$audio_storage_provider" in
   local) ;;
   r2)

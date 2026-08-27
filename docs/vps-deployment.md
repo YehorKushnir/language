@@ -54,6 +54,7 @@ SMTP_USER=<smtp user>
 SMTP_PASSWORD=<smtp password>
 MAIL_FROM=Morpho Learning <sender@example.com>
 MEDIA_BASE_URL=
+TTS_PROVIDER=google
 GOOGLE_TTS_PROJECT_ID=<Google Cloud project>
 GOOGLE_TTS_VOICE=fi-FI-Chirp3-HD-Aoede
 GOOGLE_TTS_CREDENTIALS_FILE=/secure/path/google-tts-service-account.json
