@@ -618,6 +618,7 @@ export interface PreparedExerciseResponse {
   sourceLanguage: string
   targetLanguage: string
   prompt: string
+  audioUrl: string | null
   answerSpec: PreparedAnswerSpec
   checkerVersion: string
 }

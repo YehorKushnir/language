@@ -119,7 +119,13 @@ export class VocabularyService {
                   include: {
                     forms: {
                       orderBy: { id: 'asc' },
-                      include: { audioAsset: true },
+                      include: {
+                        audioAssets: {
+                          where: { variant: 'standard' },
+                          take: 1,
+                          include: { audioAsset: true },
+                        },
+                      },
                     },
                   },
                 },
@@ -152,7 +158,9 @@ export class VocabularyService {
                 id: form.id,
                 surface: form.surface,
                 features: toLexicalFeatures(form.features),
-                audioUrl: this.media.resolve(form.audioAsset?.storageKey),
+                audioUrl: this.media.resolve(
+                  form.audioAssets?.[0]?.audioAsset.url,
+                ),
               }))
               .sort(compareVocabularyForms),
             status: sense.status,

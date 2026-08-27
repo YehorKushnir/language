@@ -1,8 +1,8 @@
 import type { PreparedTextTokenResponse } from '@language/contracts'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ArrowLeftIcon, SquareIcon, Volume2Icon } from 'lucide-react'
-import { Fragment, useEffect, useState } from 'react'
+import { ArrowLeftIcon } from 'lucide-react'
+import { Fragment } from 'react'
 
 import { addVocabularyItem } from '@/api/language-api'
 import {
@@ -14,14 +14,15 @@ import {
 } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { LearningPageHeader } from '@/components/learning-page-header'
+import { AudioButton } from '@/components/audio-button'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
-import { Button } from '@/components/ui/button'
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card'
+import { Button } from '@/components/ui/button'
 import { localizedText } from '@/lib/localized-text'
 
 export const Route = createFileRoute('/texts_/$textId')({
@@ -43,7 +44,6 @@ function PreparedTextPage() {
     ...preparedTextQuery(routeVersionId, textId),
     enabled: Boolean(routeVersionId),
   })
-  const [speaking, setSpeaking] = useState(false)
   const addWord = useMutation({
     mutationFn: (itemId: string) => addVocabularyItem(routeVersionId, itemId),
     onSuccess: async () => {
@@ -64,35 +64,11 @@ function PreparedTextPage() {
     },
   })
 
-  useEffect(
-    () => () => {
-      window.speechSynthesis?.cancel()
-    },
-    [],
-  )
-
   if (course.isPending || text.isPending) return <PageState loading />
   if (course.isError || text.isError) {
     return <PageState message={(course.error ?? text.error)?.message} />
   }
   const textData = text.data
-
-  function toggleSpeech() {
-    if (speaking) {
-      window.speechSynthesis.cancel()
-      setSpeaking(false)
-      return
-    }
-
-    const utterance = new SpeechSynthesisUtterance(textData.body)
-    utterance.lang = 'fi-FI'
-    utterance.rate = 0.86
-    utterance.onend = () => setSpeaking(false)
-    utterance.onerror = () => setSpeaking(false)
-    window.speechSynthesis.cancel()
-    window.speechSynthesis.speak(utterance)
-    setSpeaking(true)
-  }
 
   return (
     <PageShell>
@@ -108,19 +84,19 @@ function PreparedTextPage() {
         title={localizedText(textData.title)}
         description={`${textData.level} · ${textData.wordCount} слов · ${textData.knownPercent}% знакомых`}
         aside={
-          textData.audioUrl ? (
-            <audio className="h-9 w-full" controls src={textData.audioUrl} />
-          ) : (
-            <Button
-              className="w-full"
-              size="sm"
-              variant="outline"
-              onClick={toggleSpeech}
-            >
-              {speaking ? <SquareIcon /> : <Volume2Icon />}
-              {speaking ? 'Остановить' : 'Озвучить'}
-            </Button>
-          )
+          <div className="flex w-full gap-2">
+            <AudioButton
+              className="flex-1"
+              label="Обычная"
+              src={textData.audioUrl}
+            />
+            <AudioButton
+              className="flex-1"
+              label="Медленно"
+              playbackRate={0.85}
+              src={textData.audioUrl}
+            />
+          </div>
         }
       />
 

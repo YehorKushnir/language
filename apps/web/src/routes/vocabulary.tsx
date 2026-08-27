@@ -19,6 +19,7 @@ import { changeVocabularyMemoryStatus } from '@/api/language-api'
 import { courseQuery, userVocabularyQuery } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { LearningPageHeader } from '@/components/learning-page-header'
+import { AudioButton } from '@/components/audio-button'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Badge } from '@/components/ui/badge'
@@ -645,8 +646,11 @@ function VocabularyDetails({
               <span className="block min-w-0 text-xs leading-4 text-muted-foreground">
                 {label}
               </span>
-              <span className="mt-1 block truncate text-base font-semibold">
-                {form.surface}
+              <span className="mt-1 flex items-center justify-between gap-2">
+                <span className="truncate text-base font-semibold">
+                  {form.surface}
+                </span>
+                <AudioButton compact label={form.surface} src={form.audioUrl} />
               </span>
             </li>
           ))}
@@ -704,7 +708,14 @@ function VocabularyDetails({
                   key={form.id}
                   className="rounded-md border border-border/70 bg-card px-3 py-2"
                 >
-                  <span className="text-sm font-semibold">{form.surface}</span>
+                  <span className="inline-flex items-center gap-2 text-sm font-semibold">
+                    {form.surface}
+                    <AudioButton
+                      compact
+                      label={form.surface}
+                      src={form.audioUrl}
+                    />
+                  </span>
                   <span className="ml-1.5 text-xs text-muted-foreground">
                     {getVocabularyFormLabel(form)}
                   </span>

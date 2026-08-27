@@ -87,6 +87,7 @@ describe('ExerciseGenerationService', () => {
       sourceLanguage: 'ru',
       targetLanguage: 'fi',
       prompt: 'Я студент.',
+      audioUrl: null,
       answerSpec: {
         acceptedVariants: ['Minä olen opiskelija.'],
         slots: [],

@@ -12,6 +12,15 @@ const productionEnvironment = {
   SMTP_HOST: 'smtp.example.com',
   SMTP_PORT: '587',
   MAIL_FROM: 'Language Learning <hello@example.com>',
+  TTS_PROVIDER: 'google',
+  GOOGLE_TTS_PROJECT_ID: 'language-test',
+  GOOGLE_TTS_VOICE: 'fi-FI-test-voice',
+  AUDIO_STORAGE_PROVIDER: 'r2',
+  AUDIO_STORAGE_BUCKET: 'audio',
+  AUDIO_STORAGE_ENDPOINT: 'https://account.r2.cloudflarestorage.com',
+  AUDIO_STORAGE_ACCESS_KEY: 'access',
+  AUDIO_STORAGE_SECRET_KEY: 'secret',
+  AUDIO_PUBLIC_URL: 'https://media.example.com',
 }
 
 describe('validateEnvironment', () => {
@@ -86,5 +95,17 @@ describe('validateEnvironment', () => {
       API_PORT: 8080,
       WEB_ORIGIN: 'https://learn.example.com',
     })
+  })
+
+  it('validates audio rates and production storage configuration', () => {
+    expect(() =>
+      validateEnvironment({ AUDIO_NORMAL_SPEAKING_RATE: 'fast' }),
+    ).toThrow(/AUDIO_NORMAL_SPEAKING_RATE/u)
+    expect(
+      validateEnvironment({
+        ...productionEnvironment,
+        AUDIO_STORAGE_PROVIDER: 'local',
+      }),
+    ).toMatchObject({ AUDIO_STORAGE_PROVIDER: 'local' })
   })
 })

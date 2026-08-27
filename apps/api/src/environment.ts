@@ -33,6 +33,46 @@ export function validateEnvironment(
     5,
     0,
   )
+  result.AUDIO_NORMAL_SPEAKING_RATE = parseNumber(
+    'AUDIO_NORMAL_SPEAKING_RATE',
+    environment.AUDIO_NORMAL_SPEAKING_RATE,
+    0.25,
+    4,
+    1,
+  )
+  result.AUDIO_GENERATION_CONCURRENCY = parseInteger(
+    'AUDIO_GENERATION_CONCURRENCY',
+    environment.AUDIO_GENERATION_CONCURRENCY,
+    1,
+    32,
+    4,
+  )
+  result.GOOGLE_TTS_CHIRP3_MIN_INTERVAL_MS = parseInteger(
+    'GOOGLE_TTS_CHIRP3_MIN_INTERVAL_MS',
+    environment.GOOGLE_TTS_CHIRP3_MIN_INTERVAL_MS,
+    0,
+    60_000,
+    310,
+  )
+
+  const ttsProvider = String(environment.TTS_PROVIDER ?? 'google')
+  if (ttsProvider !== 'google') {
+    throw new Error('TTS_PROVIDER must be google')
+  }
+  result.TTS_PROVIDER = ttsProvider
+  const googleTtsAuthMode = String(environment.GOOGLE_TTS_AUTH_MODE ?? 'adc')
+  if (!['adc', 'gcloud'].includes(googleTtsAuthMode)) {
+    throw new Error('GOOGLE_TTS_AUTH_MODE must be adc or gcloud')
+  }
+  if (environment.NODE_ENV === 'production' && googleTtsAuthMode !== 'adc') {
+    throw new Error('GOOGLE_TTS_AUTH_MODE must be adc in production')
+  }
+  result.GOOGLE_TTS_AUTH_MODE = googleTtsAuthMode
+  const storageProvider = String(environment.AUDIO_STORAGE_PROVIDER ?? 'local')
+  if (!['local', 's3', 'r2'].includes(storageProvider)) {
+    throw new Error('AUDIO_STORAGE_PROVIDER must be local, s3 or r2')
+  }
+  result.AUDIO_STORAGE_PROVIDER = storageProvider
 
   const hasSmtpUser = hasText(environment.SMTP_USER)
   const hasSmtpPassword = hasText(environment.SMTP_PASSWORD)
@@ -56,6 +96,23 @@ export function validateEnvironment(
   if (missing.length > 0) {
     throw new Error(
       `Missing required production environment variables: ${missing.join(', ')}`,
+    )
+  }
+
+  const audioRequired = ['GOOGLE_TTS_PROJECT_ID', 'GOOGLE_TTS_VOICE']
+  if (storageProvider !== 'local') {
+    audioRequired.push(
+      'AUDIO_STORAGE_BUCKET',
+      'AUDIO_STORAGE_ACCESS_KEY',
+      'AUDIO_STORAGE_SECRET_KEY',
+      'AUDIO_PUBLIC_URL',
+    )
+    if (storageProvider === 'r2') audioRequired.push('AUDIO_STORAGE_ENDPOINT')
+  }
+  const missingAudio = audioRequired.filter((key) => !hasText(environment[key]))
+  if (missingAudio.length > 0) {
+    throw new Error(
+      `Missing required production audio variables: ${missingAudio.join(', ')}`,
     )
   }
 
@@ -97,6 +154,14 @@ export function validateEnvironment(
     }
   }
 
+  const audioPublicUrl = parseUrl(
+    'AUDIO_PUBLIC_URL',
+    String(environment.AUDIO_PUBLIC_URL),
+  )
+  if (audioPublicUrl.protocol !== 'https:') {
+    throw new Error('AUDIO_PUBLIC_URL must use HTTPS in production')
+  }
+
   return result
 }
 
@@ -122,6 +187,21 @@ function parseInteger(
     throw new Error(
       `${key} must be an integer between ${minimum} and ${maximum}`,
     )
+  }
+  return parsed
+}
+
+function parseNumber(
+  key: string,
+  value: unknown,
+  minimum: number,
+  maximum: number,
+  fallback: number,
+): number {
+  if (value === undefined || value === '') return fallback
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < minimum || parsed > maximum) {
+    throw new Error(`${key} must be a number between ${minimum} and ${maximum}`)
   }
   return parsed
 }

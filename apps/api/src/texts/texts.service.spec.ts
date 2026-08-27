@@ -28,7 +28,7 @@ describe('TextsService', () => {
     topics: ['знакомство'],
     body: 'Minä olen opiskelija.',
     status: ContentStatus.CURATED,
-    audioAsset: null,
+    audioAssets: [],
     knowledgeItems: [
       {
         itemId: 'grammar.fi.olla.affirmative',
@@ -65,6 +65,7 @@ describe('TextsService', () => {
                 id: 'form.fi.opiskelija.nom.sg',
                 surface: 'opiskelija',
                 features: { case: 'nominative' },
+                audioAssets: [],
               },
             ],
           },

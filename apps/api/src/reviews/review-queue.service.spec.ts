@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PrismaService } from '../database/prisma.service'
 import { ExerciseGenerationService } from '../generation/exercise-generation.service'
+import { MediaUrlService } from '../media/media-url.service'
 import { ReviewQueueService } from './review-queue.service'
 
 describe('ReviewQueueService', () => {
@@ -18,9 +19,11 @@ describe('ReviewQueueService', () => {
     exercise: { findMany: vi.fn() },
   }
   const generation = { getOrCreateReviewExercise: vi.fn() }
+  const media = { resolve: vi.fn((value?: string) => value ?? null) }
   const service = new ReviewQueueService(
     prisma as unknown as PrismaService,
     generation as unknown as ExerciseGenerationService,
+    media as unknown as MediaUrlService,
   )
 
   beforeEach(() => {
@@ -81,6 +84,7 @@ describe('ReviewQueueService', () => {
         sourceLanguage: 'ru',
         targetLanguage: 'fi',
         prompt: 'Приоритетное задание',
+        audioUrl: null,
         answerSpec: {
           acceptedVariants: ['Ensisijainen vastaus.'],
           slots: [],

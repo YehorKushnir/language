@@ -108,7 +108,11 @@ export async function validatePublishedCourse(
       item: {
         include: {
           lexicalSense: {
-            include: { lexicalEntry: { include: { forms: true } } },
+            include: {
+              lexicalEntry: {
+                include: { forms: { include: { audioAssets: true } } },
+              },
+            },
           },
         },
       },
@@ -371,6 +375,7 @@ export async function validatePublishedCourse(
   const texts = await prisma.text.findMany({
     where: { courseId: route.courseId, status: ContentStatus.CURATED },
     include: {
+      audioAssets: true,
       tokens: { orderBy: { position: 'asc' } },
       knowledgeItems: {
         include: {
@@ -424,11 +429,11 @@ export async function validatePublishedCourse(
   }
 
   const linkedAudioCount =
-    texts.filter((text) => text.audioAssetId).length +
+    texts.filter((text) => text.audioAssets.length > 0).length +
     lessonItems.filter(
       (lessonItem) =>
         lessonItem.item.lexicalSense?.lexicalEntry.forms?.some(
-          (form) => form.audioAssetId,
+          (form) => form.audioAssets.length > 0,
         ) ?? false,
     ).length
   if (linkedAudioCount === 0) {

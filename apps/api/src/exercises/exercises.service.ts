@@ -46,6 +46,7 @@ import {
   toUserMemoryData,
 } from '../common/user-memory'
 import { FinnishMorphologyService } from '../morphology/finnish-morphology.service'
+import { MediaUrlService } from '../media/media-url.service'
 
 interface StoredAnswerSpec {
   acceptedVariants: string[]
@@ -71,6 +72,7 @@ export class ExercisesService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(FinnishMorphologyService)
     private readonly morphology: FinnishMorphologyService,
+    @Inject(MediaUrlService) private readonly media: MediaUrlService,
   ) {}
 
   async getNextExercise(
@@ -103,6 +105,11 @@ export class ExercisesService {
             itemId: true,
             item: { select: { kind: true } },
           },
+        },
+        audioAssets: {
+          where: { variant: 'standard' },
+          take: 1,
+          include: { audioAsset: true },
         },
       },
     })
@@ -149,6 +156,7 @@ export class ExercisesService {
       sourceLanguage,
       targetLanguage: exercise.targetLanguage,
       prompt: prompt.text,
+      audioUrl: this.media.resolve(exercise.audioAssets?.[0]?.audioAsset.url),
       answerSpec: toPreparedAnswerSpec(exercise.answerSpec),
       checkerVersion: EXERCISE_CHECKER_VERSION,
     }
@@ -182,6 +190,11 @@ export class ExercisesService {
             item: { select: { kind: true } },
           },
         },
+        audioAssets: {
+          where: { variant: 'standard' },
+          take: 1,
+          include: { audioAsset: true },
+        },
       },
     })
     const prompt = exercise?.prompts[0]
@@ -199,6 +212,7 @@ export class ExercisesService {
       sourceLanguage,
       targetLanguage: exercise.targetLanguage,
       prompt: prompt.text,
+      audioUrl: this.media.resolve(exercise.audioAssets?.[0]?.audioAsset.url),
       answerSpec: toPreparedAnswerSpec(exercise.answerSpec),
       checkerVersion: EXERCISE_CHECKER_VERSION,
     }

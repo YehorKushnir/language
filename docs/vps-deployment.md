@@ -18,8 +18,9 @@ Framed, поэтому Morpho не публикует собственные `80
 - Центральный `framed-caddy-1` импортирует
   `/home/deploy/caddy-sites/*.caddy` и проксирует домен на `morpho-web:80`.
 - PostgreSQL хранится в именованном volume
-  `morpho-learning-postgres-data`; checkout и образы можно заменить без потери
-  пользовательских данных.
+  `morpho-learning-postgres-data`, а готовые MP3 — в
+  `morpho-learning-audio-data`; checkout и образы можно заменить без потери
+  пользовательских данных и сгенерированного аудио.
 
 Изменение общего Caddy версионируется в репозитории Framed: его `Caddyfile`
 импортирует отдельный каталог сайтов, а Compose монтирует каталог read-only.
@@ -53,6 +54,11 @@ SMTP_USER=<smtp user>
 SMTP_PASSWORD=<smtp password>
 MAIL_FROM=Morpho Learning <sender@example.com>
 MEDIA_BASE_URL=
+GOOGLE_TTS_PROJECT_ID=<Google Cloud project>
+GOOGLE_TTS_VOICE=fi-FI-Chirp3-HD-Aoede
+GOOGLE_TTS_CREDENTIALS_FILE=/secure/path/google-tts-service-account.json
+AUDIO_STORAGE_PROVIDER=local
+AUDIO_LOCAL_DIRECTORY=/app/.data
 ```
 
 Проверка env и Compose не раскрывает значения:

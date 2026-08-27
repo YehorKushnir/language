@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PrismaService } from '../database/prisma.service'
 import { FinnishMorphologyService } from '../morphology/finnish-morphology.service'
+import { MediaUrlService } from '../media/media-url.service'
 import { ExercisesService } from './exercises.service'
 
 describe('ExercisesService morphology diagnostics', () => {
@@ -31,9 +32,11 @@ describe('ExercisesService morphology diagnostics', () => {
     ),
   }
   const morphology = { compareForms: vi.fn() }
+  const media = { resolve: vi.fn((value?: string) => value ?? null) }
   const service = new ExercisesService(
     prisma as unknown as PrismaService,
     morphology as unknown as FinnishMorphologyService,
+    media as unknown as MediaUrlService,
   )
 
   beforeEach(() => {

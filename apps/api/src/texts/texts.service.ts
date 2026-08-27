@@ -28,7 +28,10 @@ interface TextWithTokens {
   level: string
   topics: string[]
   body: string
-  audioAsset: { storageKey: string } | null
+  audioAssets: Array<{
+    variant: string
+    audioAsset: { url: string }
+  }>
   knowledgeItems: Array<{
     itemId: string
     item: {
@@ -52,7 +55,10 @@ interface TextWithTokens {
           id: string
           surface: string
           features: unknown
-          audioAsset: { storageKey: string } | null
+          audioAssets: Array<{
+            variant: string
+            audioAsset: { url: string }
+          }>
         }>
       }
       knowledgeItem: {
@@ -67,7 +73,10 @@ interface TextWithTokens {
 }
 
 const textInclude = (userId: string) => ({
-  audioAsset: { select: { storageKey: true } },
+  audioAssets: {
+    where: { variant: 'normal' },
+    select: { variant: true, audioAsset: { select: { url: true } } },
+  },
   knowledgeItems: {
     include: { item: { include: { skill: true } } },
   },
@@ -81,7 +90,14 @@ const textInclude = (userId: string) => ({
               forms: {
                 orderBy: { id: 'asc' as const },
                 include: {
-                  audioAsset: { select: { storageKey: true } },
+                  audioAssets: {
+                    where: { variant: 'standard' },
+                    take: 1,
+                    select: {
+                      variant: true,
+                      audioAsset: { select: { url: true } },
+                    },
+                  },
                 },
               },
             },
@@ -228,7 +244,9 @@ export class TextsService {
         (token.lexicalSense?.knowledgeItem.userMemories[0]?.repetitions ?? 0) >
         0,
     ).length
-
+    const normalAudio = text.audioAssets.find(
+      (audio) => audio.variant === 'normal',
+    )?.audioAsset.url
     return {
       id: text.id,
       title: toLocalizedText(text.title),
@@ -247,7 +265,7 @@ export class TextsService {
           ? 0
           : Math.round((knownWordCount / text.tokens.length) * 100),
       isGrammarReady,
-      audioUrl: this.media.resolve(text.audioAsset?.storageKey),
+      audioUrl: this.media.resolve(normalAudio),
     }
   }
 
@@ -268,7 +286,7 @@ export class TextsService {
             id: form.id,
             surface: form.surface,
             features: toLexicalFeatures(form.features),
-            audioUrl: this.media.resolve(form.audioAsset?.storageKey),
+            audioUrl: this.media.resolve(form.audioAssets[0]?.audioAsset.url),
           })),
         }
       : coreEntry
@@ -328,7 +346,7 @@ export class TextsService {
               id: form.id,
               surface: form.surface,
               features: toLexicalFeatures(form.features),
-              audioUrl: this.media.resolve(form.audioAsset?.storageKey),
+              audioUrl: this.media.resolve(form.audioAssets[0]?.audioAsset.url),
             })),
             memory: {
               state: memory?.state ?? 'NEW',
