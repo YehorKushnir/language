@@ -47,6 +47,36 @@ export function getActiveTextPlaybackSegment(
     return null
   }
 
+  const boundaries = getTextPlaybackSegmentBoundaries(segments, duration)
+  const activeIndex = boundaries.findIndex((boundary) => currentTime < boundary)
+
+  return activeIndex === -1 ? segments.length - 1 : activeIndex
+}
+
+export function getTextPlaybackSegmentStartTime(
+  segments: TextPlaybackSegment[],
+  segmentIndex: number,
+  duration: number,
+): number | null {
+  if (
+    segments.length === 0 ||
+    !Number.isInteger(segmentIndex) ||
+    segmentIndex < 0 ||
+    segmentIndex >= segments.length ||
+    !Number.isFinite(duration) ||
+    duration <= 0
+  ) {
+    return null
+  }
+
+  if (segmentIndex === 0) return 0
+  return getTextPlaybackSegmentBoundaries(segments, duration)[segmentIndex - 1]!
+}
+
+function getTextPlaybackSegmentBoundaries(
+  segments: TextPlaybackSegment[],
+  duration: number,
+): number[] {
   const leadIn = Math.min(0.35, duration * 0.03)
   const tail = Math.min(0.2, duration * 0.02)
   const pause = Math.min(0.38, duration * 0.025)
@@ -58,17 +88,14 @@ export function getActiveTextPlaybackSegment(
   )
   let boundary = leadIn
 
-  for (let index = 0; index < segments.length; index += 1) {
-    const segment = segments[index]!
+  return segments.map((segment, index) => {
     const speechDuration = totalWeight
       ? (speechBudget * segment.weight) / totalWeight
       : speechBudget / segments.length
     boundary += speechDuration
     if (index < segments.length - 1) boundary += pause
-    if (currentTime < boundary) return index
-  }
-
-  return segments.length - 1
+    return boundary
+  })
 }
 
 function createSegment(

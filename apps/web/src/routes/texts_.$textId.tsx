@@ -2,7 +2,7 @@ import type { PreparedTextTokenResponse } from '@language/contracts'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { ArrowLeftIcon } from 'lucide-react'
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 
 import { addVocabularyItem } from '@/api/language-api'
 import {
@@ -16,19 +16,26 @@ import { preloadCourseRoute } from '@/api/route-preload'
 import { LearningPageHeader } from '@/components/learning-page-header'
 import {
   AudioButton,
+  type AudioButtonHandle,
   type AudioPlaybackProgress,
 } from '@/components/audio-button'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
+import { Button } from '@/components/ui/button'
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card'
-import { Button } from '@/components/ui/button'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { localizedText } from '@/lib/localized-text'
 import {
   getActiveTextPlaybackSegment,
+  getTextPlaybackSegmentStartTime,
   getTextPlaybackSegments,
 } from '@/lib/text-playback'
 import { cn } from '@/lib/utils'
@@ -73,25 +80,50 @@ function PreparedTextPage() {
   })
   const [playbackProgress, setPlaybackProgress] =
     useState<AudioPlaybackProgress | null>(null)
+  const [requestedPlaybackSegment, setRequestedPlaybackSegment] = useState<
+    number | null
+  >(null)
+  const normalAudioRef = useRef<AudioButtonHandle>(null)
   const playbackSegments = useMemo(
     () => getTextPlaybackSegments(text.data?.body ?? ''),
     [text.data?.body],
   )
 
-  useEffect(() => setPlaybackProgress(null), [textId])
+  useEffect(() => {
+    setPlaybackProgress(null)
+    setRequestedPlaybackSegment(null)
+  }, [textId])
 
   if (course.isPending || text.isPending) return <PageState loading />
   if (course.isError || text.isError) {
     return <PageState message={(course.error ?? text.error)?.message} />
   }
   const textData = text.data
-  const activePlaybackSegment = playbackProgress
-    ? getActiveTextPlaybackSegment(
-        playbackSegments,
-        playbackProgress.currentTime,
-        playbackProgress.duration,
-      )
-    : null
+  const activePlaybackSegment =
+    requestedPlaybackSegment ??
+    (playbackProgress
+      ? getActiveTextPlaybackSegment(
+          playbackSegments,
+          playbackProgress.currentTime,
+          playbackProgress.duration,
+        )
+      : null)
+  const handlePlaybackProgress = (progress: AudioPlaybackProgress | null) => {
+    setPlaybackProgress(progress)
+    setRequestedPlaybackSegment(null)
+  }
+  const playSentence = (segmentIndex: number) => {
+    if (!textData.audioUrl) return
+    normalAudioRef.current?.playFrom(
+      (duration) =>
+        getTextPlaybackSegmentStartTime(
+          playbackSegments,
+          segmentIndex,
+          duration,
+        ) ?? 0,
+    )
+    setRequestedPlaybackSegment(segmentIndex)
+  }
 
   return (
     <PageShell>
@@ -109,15 +141,16 @@ function PreparedTextPage() {
         aside={
           <div className="flex w-full gap-2">
             <AudioButton
+              ref={normalAudioRef}
               className="flex-1"
               label="Обычная"
-              onPlaybackProgress={setPlaybackProgress}
+              onPlaybackProgress={handlePlaybackProgress}
               src={textData.audioUrl}
             />
             <AudioButton
               className="flex-1"
               label="Медленно"
-              onPlaybackProgress={setPlaybackProgress}
+              onPlaybackProgress={handlePlaybackProgress}
               playbackRate={0.85}
               src={textData.audioUrl}
             />
@@ -127,7 +160,7 @@ function PreparedTextPage() {
 
       <article className="mt-6 w-full rounded-xl bg-card px-5 py-6 shadow-xs sm:px-8 sm:py-8">
         <p className="mb-5 text-xs text-muted-foreground">
-          Нажми на слово, чтобы увидеть перевод и разбор.
+          <TextInteractionHint />
         </p>
         <p className="whitespace-pre-wrap font-serif text-xl leading-[2.05] sm:text-[1.65rem]">
           <InteractiveText
@@ -138,6 +171,7 @@ function PreparedTextPage() {
             activePlaybackSegment={activePlaybackSegment}
             playbackSegments={playbackSegments}
             onAdd={(itemId) => addWord.mutate(itemId)}
+            onPlaySegment={playSentence}
           />
         </p>
       </article>
@@ -145,7 +179,7 @@ function PreparedTextPage() {
   )
 }
 
-function InteractiveText({
+export function InteractiveText({
   body,
   tokens,
   addingItemId,
@@ -153,6 +187,7 @@ function InteractiveText({
   activePlaybackSegment,
   playbackSegments,
   onAdd,
+  onPlaySegment,
 }: {
   body: string
   tokens: PreparedTextTokenResponse[]
@@ -161,9 +196,11 @@ function InteractiveText({
   activePlaybackSegment: number | null
   playbackSegments: ReturnType<typeof getTextPlaybackSegments>
   onAdd: (itemId: string) => void
+  onPlaySegment: (segmentIndex: number) => void
 }) {
   let cursor = 0
   let tokenIndex = 0
+  const hasFinePointer = useFinePointer()
 
   return (
     <>
@@ -185,13 +222,15 @@ function InteractiveText({
             {before}
             <span
               className={cn(
-                'rounded-sm transition-colors duration-150',
+                'interactive-text-sentence cursor-pointer rounded-sm transition-colors duration-150',
                 activePlaybackSegment === segmentIndex &&
-                  '-mx-0.5 box-decoration-clone bg-primary/15 px-0.5',
+                  '-mx-0.5 box-decoration-clone bg-primary/20 px-0.5 ring-1 ring-primary/20',
               )}
               data-audio-active={
                 activePlaybackSegment === segmentIndex ? 'true' : undefined
               }
+              data-sentence-index={segmentIndex}
+              onClick={() => onPlaySegment(segmentIndex)}
             >
               <InteractiveTextSegment
                 body={body}
@@ -200,7 +239,9 @@ function InteractiveText({
                 tokens={segmentTokens}
                 addingItemId={addingItemId}
                 addErrorItemId={addErrorItemId}
+                hasFinePointer={hasFinePointer}
                 onAdd={onAdd}
+                onPlaySegment={() => onPlaySegment(segmentIndex)}
               />
             </span>
           </Fragment>
@@ -218,7 +259,9 @@ function InteractiveTextSegment({
   tokens,
   addingItemId,
   addErrorItemId,
+  hasFinePointer,
   onAdd,
+  onPlaySegment,
 }: {
   body: string
   start: number
@@ -226,7 +269,9 @@ function InteractiveTextSegment({
   tokens: PreparedTextTokenResponse[]
   addingItemId?: string
   addErrorItemId?: string
+  hasFinePointer: boolean
   onAdd: (itemId: string) => void
+  onPlaySegment: () => void
 }) {
   let cursor = start
 
@@ -236,39 +281,85 @@ function InteractiveTextSegment({
         const before = body.slice(cursor, token.charStart)
         cursor = token.charEnd
         const translation = localizedText(token.translation)
+        const trigger = (
+          <button
+            type="button"
+            aria-label={`${token.surface}: ${translation}`}
+            data-word-trigger="true"
+            className="interactive-text-word -mx-0.5 inline cursor-pointer rounded border-0 bg-transparent px-0.5 font-inherit text-inherit underline decoration-primary/25 decoration-1 underline-offset-4 transition-[color,background-color,text-decoration-color] duration-150 hover:decoration-primary focus-visible:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+            onClick={(event) => {
+              event.stopPropagation()
+              if (hasFinePointer) onPlaySegment()
+            }}
+          >
+            {token.surface}
+          </button>
+        )
+        const content = (
+          <WordTooltip
+            token={token}
+            adding={addingItemId === token.lexical?.itemId}
+            addError={addErrorItemId === token.lexical?.itemId}
+            onAdd={onAdd}
+          />
+        )
 
         return (
           <Fragment key={token.position}>
             {before}
-            <HoverCard closeDelay={100} openDelay={140}>
-              <HoverCardTrigger asChild>
-                <button
-                  type="button"
-                  aria-label={`${token.surface}: ${translation}`}
-                  className="-mx-0.5 inline cursor-help rounded border-0 bg-transparent px-0.5 font-inherit text-inherit underline decoration-primary/25 decoration-1 underline-offset-4 transition-[color,background-color,text-decoration-color] duration-150 hover:bg-accent hover:decoration-primary focus-visible:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+            {hasFinePointer ? (
+              <HoverCard closeDelay={100} openDelay={140}>
+                <HoverCardTrigger asChild>{trigger}</HoverCardTrigger>
+                <HoverCardContent
+                  align="start"
+                  className="w-[min(20rem,calc(100vw-2rem))] p-4"
+                  sideOffset={8}
                 >
-                  {token.surface}
-                </button>
-              </HoverCardTrigger>
-              <HoverCardContent
-                align="start"
-                className="w-[min(20rem,calc(100vw-2rem))] p-4"
-                sideOffset={8}
-              >
-                <WordTooltip
-                  token={token}
-                  adding={addingItemId === token.lexical?.itemId}
-                  addError={addErrorItemId === token.lexical?.itemId}
-                  onAdd={onAdd}
-                />
-              </HoverCardContent>
-            </HoverCard>
+                  {content}
+                </HoverCardContent>
+              </HoverCard>
+            ) : (
+              <Popover>
+                <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  className="w-[min(20rem,calc(100vw-2rem))] p-4"
+                  sideOffset={8}
+                >
+                  {content}
+                </PopoverContent>
+              </Popover>
+            )}
           </Fragment>
         )
       })}
       {body.slice(cursor, end)}
     </>
   )
+}
+
+function useFinePointer() {
+  const [hasFinePointer, setHasFinePointer] = useState(false)
+
+  useEffect(() => {
+    const media = window.matchMedia?.('(hover: hover) and (pointer: fine)')
+    if (!media) return
+
+    const update = () => setHasFinePointer(media.matches)
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  return hasFinePointer
+}
+
+function TextInteractionHint() {
+  const hasFinePointer = useFinePointer()
+
+  return hasFinePointer
+    ? 'Наведи на слово, чтобы увидеть перевод. Нажми на слово, чтобы озвучить его предложение.'
+    : 'Нажми на слово, чтобы увидеть перевод. Нажми на предложение вне слова, чтобы озвучить его.'
 }
 
 function WordTooltip({

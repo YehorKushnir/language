@@ -1,6 +1,7 @@
 export interface AudioPlayback {
   audio: HTMLAudioElement
   play: () => Promise<void>
+  pause: () => void
   stop: () => void
 }
 
@@ -31,6 +32,10 @@ export function createAudioPlayback(
     audio,
     play: async () => {
       await audio.play()
+    },
+    pause: () => {
+      if (stopped) return
+      audio.pause()
     },
     stop: () => {
       if (stopped) return

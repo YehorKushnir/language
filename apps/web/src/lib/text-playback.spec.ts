@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   getActiveTextPlaybackSegment,
+  getTextPlaybackSegmentStartTime,
   getTextPlaybackSegments,
 } from './text-playback'
 
@@ -31,5 +32,20 @@ describe('text playback', () => {
 
     expect(getActiveTextPlaybackSegment(segments, 0, 0)).toBeNull()
     expect(getActiveTextPlaybackSegment([], 0, 10)).toBeNull()
+  })
+
+  it('returns the same boundary used to activate a selected sentence', () => {
+    const segments = getTextPlaybackSegments(
+      'Ensimmäinen lause. Toinen lause on pidempi. Kolmas lause.',
+    )
+    const secondStart = getTextPlaybackSegmentStartTime(segments, 1, 30)
+    const thirdStart = getTextPlaybackSegmentStartTime(segments, 2, 30)
+
+    expect(getTextPlaybackSegmentStartTime(segments, 0, 30)).toBe(0)
+    expect(secondStart).not.toBeNull()
+    expect(thirdStart).not.toBeNull()
+    expect(getActiveTextPlaybackSegment(segments, secondStart!, 30)).toBe(1)
+    expect(getActiveTextPlaybackSegment(segments, thirdStart!, 30)).toBe(2)
+    expect(getTextPlaybackSegmentStartTime(segments, 3, 30)).toBeNull()
   })
 })

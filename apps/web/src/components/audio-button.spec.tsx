@@ -1,4 +1,4 @@
-import { act } from 'react'
+import { act, createRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   afterAll,
@@ -10,7 +10,7 @@ import {
   vi,
 } from 'vitest'
 
-import { AudioButton } from './audio-button'
+import { AudioButton, type AudioButtonHandle } from './audio-button'
 
 const reactActEnvironment = globalThis as {
   IS_REACT_ACT_ENVIRONMENT?: boolean
@@ -84,5 +84,55 @@ describe('AudioButton', () => {
       currentTime: 5,
       duration: 20,
     })
+
+    act(() => container?.querySelector('button')?.click())
+    expect(audio.pause).toHaveBeenCalledOnce()
+    expect(audio.currentTime).toBe(5)
+    expect(container?.textContent).toContain('Продолжить')
+
+    await act(async () => {
+      container?.querySelector('button')?.click()
+      await Promise.resolve()
+    })
+    expect(audio.play).toHaveBeenCalledTimes(2)
+    expect(audio.currentTime).toBe(5)
+  })
+
+  it('starts from a requested position in the shared audio file', async () => {
+    const audio = {
+      addEventListener: vi.fn(),
+      currentTime: 0,
+      duration: 100,
+      pause: vi.fn(),
+      play: vi.fn().mockResolvedValue(undefined),
+      playbackRate: 1,
+      preload: '',
+      src: '',
+    }
+    vi.stubGlobal(
+      'Audio',
+      vi.fn(() => audio),
+    )
+    const audioButtonRef = createRef<AudioButtonHandle>()
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+
+    await act(async () => {
+      root?.render(
+        <AudioButton
+          ref={audioButtonRef}
+          label="Обычная"
+          src="/api/v1/media/audio/text.mp3"
+        />,
+      )
+    })
+    await act(async () => {
+      audioButtonRef.current?.playFrom((duration) => duration * 0.4)
+      await Promise.resolve()
+    })
+
+    expect(audio.currentTime).toBe(40)
+    expect(audio.play).toHaveBeenCalledOnce()
   })
 })

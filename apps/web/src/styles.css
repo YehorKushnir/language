@@ -138,6 +138,14 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .interactive-text-sentence:has(.interactive-text-word:hover) {
+    background: color-mix(in oklab, var(--primary) 8%, transparent);
+  }
+
+  .interactive-text-word:hover {
+    background: var(--accent);
+  }
+
   .interactive-surface:hover {
     transform: translateY(-1px);
     box-shadow: 0 8px 24px -18px color-mix(in oklab, var(--primary) 45%, black);
