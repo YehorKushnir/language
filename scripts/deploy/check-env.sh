@@ -39,10 +39,48 @@ for key in \
   POSTGRES_PASSWORD \
   BETTER_AUTH_SECRET \
   SMTP_HOST \
-  MAIL_FROM
+  MAIL_FROM \
+  TTS_PROVIDER \
+  GOOGLE_TTS_PROJECT_ID \
+  GOOGLE_TTS_VOICE \
+  GOOGLE_TTS_CREDENTIALS_FILE \
+  AUDIO_STORAGE_PROVIDER
 do
   require_value "$key"
 done
+
+tts_provider=$(read_value TTS_PROVIDER)
+[ "$tts_provider" = "google" ] || fail "TTS_PROVIDER must be google"
+
+audio_storage_provider=$(read_value AUDIO_STORAGE_PROVIDER)
+case "$audio_storage_provider" in
+  local) ;;
+  r2)
+    require_value AUDIO_STORAGE_ENDPOINT
+    require_value AUDIO_STORAGE_BUCKET
+    require_value AUDIO_STORAGE_ACCESS_KEY
+    require_value AUDIO_STORAGE_SECRET_KEY
+    require_value AUDIO_PUBLIC_URL
+    ;;
+  s3)
+    require_value AUDIO_STORAGE_BUCKET
+    require_value AUDIO_STORAGE_ACCESS_KEY
+    require_value AUDIO_STORAGE_SECRET_KEY
+    require_value AUDIO_PUBLIC_URL
+    ;;
+  *) fail "AUDIO_STORAGE_PROVIDER must be local, r2 or s3 in production" ;;
+esac
+
+google_credentials_file=$(read_value GOOGLE_TTS_CREDENTIALS_FILE)
+[ -f "$google_credentials_file" ] || fail "GOOGLE_TTS_CREDENTIALS_FILE does not exist"
+
+if [ "$audio_storage_provider" != "local" ]; then
+  audio_public_url=$(read_value AUDIO_PUBLIC_URL)
+  case "$audio_public_url" in
+    https://*) ;;
+    *) fail "AUDIO_PUBLIC_URL must use HTTPS" ;;
+  esac
+fi
 
 domain=$(read_value APP_DOMAIN)
 case "$domain" in

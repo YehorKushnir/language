@@ -23,12 +23,14 @@ import {
   vocabularyStudySessionQuery,
 } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
+import { AudioButton } from '@/components/audio-button'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
+import { type AudioPlayback, playAudio } from '@/lib/audio-playback'
 import { localizedText } from '@/lib/localized-text'
 import {
   appendVocabularyAnswer,
@@ -55,6 +57,7 @@ function LessonVocabularyPage() {
   const { lessonId } = Route.useParams()
   const queryClient = useQueryClient()
   const answerInput = useRef<HTMLInputElement>(null)
+  const automaticPlayback = useRef<AudioPlayback | null>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
   const continueAfterSave = useRef(false)
   const [activeItemId, setActiveItemId] = useState<string | null>(null)
@@ -137,6 +140,13 @@ function LessonVocabularyPage() {
     if (!localFeedback) answerInput.current?.focus()
   }, [activeItemId, localFeedback])
 
+  useEffect(
+    () => () => {
+      automaticPlayback.current?.stop()
+    },
+    [],
+  )
+
   if (
     lesson.isPending ||
     vocabulary.isPending ||
@@ -203,6 +213,8 @@ function LessonVocabularyPage() {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (feedback) {
+      automaticPlayback.current?.stop()
+      automaticPlayback.current = null
       if (study.isPending) {
         continueAfterSave.current = true
         return
@@ -243,6 +255,8 @@ function LessonVocabularyPage() {
       ...optimistic,
     })
     setGaveUp(nextGaveUp)
+    const audioUrl = getLemmaAudioUrl(item)
+    if (audioUrl) automaticPlayback.current = playAudio(audioUrl)
     study.mutate({
       itemId: item.itemId,
       value: answer,
@@ -252,6 +266,8 @@ function LessonVocabularyPage() {
   }
 
   function continueStudy(result: LessonVocabularyAnswerResponse) {
+    automaticPlayback.current?.stop()
+    automaticPlayback.current = null
     if (
       result.session.totalItems > 0 &&
       result.session.completedItems === result.session.totalItems
@@ -436,6 +452,8 @@ function VocabularyFeedback({
   item: LessonVocabularyItemResponse
   result: LessonVocabularyAnswerResponse
 }) {
+  const audioUrl = getLemmaAudioUrl(item)
+
   return (
     <div
       className={`motion-feedback rounded-lg px-4 py-3 text-sm ${
@@ -474,9 +492,29 @@ function VocabularyFeedback({
               {localizedText(item.example.source)}
             </p>
           ) : null}
+          {audioUrl ? (
+            <AudioButton
+              className="mt-3"
+              label="Прослушать слово"
+              src={audioUrl}
+            />
+          ) : null}
         </div>
       </div>
     </div>
+  )
+}
+
+function getLemmaAudioUrl(
+  item: LessonVocabularyItemResponse | undefined,
+): string | null {
+  if (!item) return null
+  const normalizedLemma = normalizeExactAnswer(item.lemma)
+  return (
+    item.forms.find(
+      (form) =>
+        form.audioUrl && normalizeExactAnswer(form.surface) === normalizedLemma,
+    )?.audioUrl ?? null
   )
 }
 

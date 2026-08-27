@@ -2,8 +2,9 @@ import type {
   ReviewMemoryState,
   UserGrammarItemResponse,
   UserVocabularyItemResponse,
+  WordMemoryStatus,
 } from '@language/contracts'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   BookOpenIcon,
@@ -14,9 +15,11 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import { changeVocabularyMemoryStatus } from '@/api/language-api'
 import { courseQuery, userVocabularyQuery } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { LearningPageHeader } from '@/components/learning-page-header'
+import { AudioButton } from '@/components/audio-button'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Badge } from '@/components/ui/badge'
@@ -79,13 +82,14 @@ const stateLabels: Record<ReviewMemoryState, string> = {
 }
 
 const stateClasses: Record<ReviewMemoryState, string> = {
-  NEW: 'bg-background text-foreground',
-  LEARNING: 'bg-amber-400/15 text-amber-900 dark:text-amber-200',
-  REVIEW: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-200',
-  RELEARNING: 'bg-amber-400/15 text-amber-900 dark:text-amber-200',
+  NEW: 'border-border/70 bg-muted/55 text-muted-foreground',
+  LEARNING: 'border-primary/20 bg-primary/10 text-primary',
+  REVIEW: 'border-primary/20 bg-primary/12 text-primary',
+  RELEARNING: 'border-primary/20 bg-primary/10 text-primary',
 }
 
 function VocabularyPage() {
+  const queryClient = useQueryClient()
   const searchParams = Route.useSearch()
   const navigate = Route.useNavigate()
   const search = searchParams.q ?? ''
@@ -96,6 +100,19 @@ function VocabularyPage() {
   const vocabulary = useQuery({
     ...userVocabularyQuery(routeVersionId),
     enabled: Boolean(routeVersionId),
+  })
+  const statusChange = useMutation({
+    mutationFn: ({
+      itemId,
+      status,
+    }: {
+      itemId: string
+      status: WordMemoryStatus
+    }) => changeVocabularyMemoryStatus(routeVersionId, itemId, status),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: userVocabularyQuery(routeVersionId).queryKey,
+      }),
   })
   const visibleItems = useMemo(
     () =>
@@ -277,7 +294,18 @@ function VocabularyPage() {
           </p>
         </section>
       ) : section === 'words' ? (
-        <VocabularyList items={visibleItems} />
+        <VocabularyList
+          items={visibleItems}
+          changingItemId={
+            statusChange.isPending ? statusChange.variables?.itemId : undefined
+          }
+          statusErrorItemId={
+            statusChange.isError ? statusChange.variables?.itemId : undefined
+          }
+          onStatusChange={(itemId, status) =>
+            statusChange.mutate({ itemId, status })
+          }
+        />
       ) : (
         <GrammarList items={visibleGrammarItems} />
       )}
@@ -293,7 +321,17 @@ function isVocabularySection(value: unknown): value is VocabularySection {
   return value === 'words' || value === 'grammar'
 }
 
-function VocabularyList({ items }: { items: UserVocabularyItemResponse[] }) {
+function VocabularyList({
+  items,
+  changingItemId,
+  statusErrorItemId,
+  onStatusChange,
+}: {
+  items: UserVocabularyItemResponse[]
+  changingItemId?: string
+  statusErrorItemId?: string
+  onStatusChange: (itemId: string, status: WordMemoryStatus) => void
+}) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   function toggleItem(itemId: string) {
@@ -319,12 +357,21 @@ function VocabularyList({ items }: { items: UserVocabularyItemResponse[] }) {
           const detailsId = `vocabulary-details-${item.itemId.replaceAll('.', '-')}`
 
           return (
-            <li key={item.itemId} className="overflow-hidden rounded-md">
+            <li
+              key={item.itemId}
+              className={cn(
+                'overflow-hidden rounded-md',
+                expanded && 'ring-1 ring-border/70',
+              )}
+            >
               <button
                 type="button"
                 aria-controls={detailsId}
                 aria-expanded={expanded}
-                className="interactive-row grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto_1.25rem] sm:gap-5"
+                className={cn(
+                  'interactive-row grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left sm:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto_1.25rem] sm:gap-5',
+                  expanded && 'bg-foreground/[0.025]',
+                )}
                 onClick={() => toggleItem(item.itemId)}
               >
                 <span className="min-w-0 truncate text-sm font-semibold sm:text-base">
@@ -350,7 +397,15 @@ function VocabularyList({ items }: { items: UserVocabularyItemResponse[] }) {
               </button>
 
               {expanded ? (
-                <VocabularyDetails id={detailsId} item={item} />
+                <VocabularyDetails
+                  id={detailsId}
+                  item={item}
+                  changingStatus={changingItemId === item.itemId}
+                  statusError={statusErrorItemId === item.itemId}
+                  onStatusChange={(status) =>
+                    onStatusChange(item.itemId, status)
+                  }
+                />
               ) : null}
             </li>
           )
@@ -412,9 +467,15 @@ function GrammarList({ items }: { items: UserGrammarItemResponse[] }) {
 function VocabularyDetails({
   id,
   item,
+  changingStatus,
+  statusError,
+  onStatusChange,
 }: {
   id: string
   item: UserVocabularyItemResponse
+  changingStatus: boolean
+  statusError: boolean
+  onStatusChange: (status: WordMemoryStatus) => void
 }) {
   const [showAllForms, setShowAllForms] = useState(false)
   const [selections, setSelections] = useState<VocabularyFormSelections>({})
@@ -425,108 +486,182 @@ function VocabularyDetails({
     matchesVocabularyFormSelections(form, selections),
   )
   const hasSelections = Object.values(selections).some(Boolean)
+  const memoryStatus = toWordMemoryStatus(item.memory.state)
 
   return (
-    <div id={id} className="motion-feedback bg-muted/25 px-4 py-5 sm:px-5">
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <h3 className="text-lg font-semibold tracking-tight">{item.lemma}</h3>
-        <span className="text-sm text-muted-foreground">
-          — {localizedText(item.gloss)}
-        </span>
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-        <span className="font-medium">{morphology.partOfSpeechLabel}</span>
-        {morphology.typeLabel ? (
-          <>
-            <span aria-hidden="true" className="text-muted-foreground/60">
-              ·
-            </span>
-            <span className="font-medium">{morphology.typeLabel}</span>
-          </>
-        ) : null}
-      </div>
-
-      {morphology.stems.length > 0 || morphology.gradation ? (
-        <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-          {morphology.stems.length > 0 ? (
-            <div className="flex gap-1.5">
-              <dt className="text-muted-foreground">Основа:</dt>
-              <dd className="font-semibold">
-                {morphology.stems.map((stem) => `${stem}-`).join(' / ')}
-              </dd>
+    <div
+      id={id}
+      className="motion-feedback border-t border-border/70 bg-card px-4 py-5 sm:px-6 sm:py-6"
+    >
+      <section aria-label="Сведения о слове">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap gap-2">
+              <Badge
+                className="border-border/70 bg-transparent text-foreground"
+                variant="outline"
+              >
+                {morphology.partOfSpeechLabel}
+              </Badge>
+              {morphology.typeLabel ? (
+                <Badge
+                  className="border-border/70 bg-transparent text-foreground"
+                  variant="outline"
+                >
+                  {morphology.typeLabel}
+                </Badge>
+              ) : null}
             </div>
-          ) : null}
-          {morphology.gradation ? (
-            <div className="flex gap-1.5">
-              <dt className="text-muted-foreground">Чередование согласных:</dt>
-              <dd className="font-semibold">
-                {morphology.gradation.from} → {morphology.gradation.to}
-              </dd>
-            </div>
-          ) : null}
-        </dl>
-      ) : null}
-
-      {morphology.change ? (
-        <div className="mt-4 w-full rounded-md bg-background/80 px-3.5 py-3 text-sm shadow-xs">
-          <p className="font-medium">
-            <span className="font-semibold">{item.lemma}</span>
-            <span className="mx-2 text-muted-foreground">→</span>
-            <span className="font-semibold">{morphology.change.surface}</span>
-          </p>
-          {morphology.change.ending ? (
-            <p className="mt-1 font-mono text-xs text-muted-foreground">
-              {morphology.change.stem}
-              <span className="mx-1">+</span>
-              <span className="rounded bg-primary/10 px-1 py-0.5 font-semibold text-primary">
-                {morphology.change.ending}
-              </span>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Впервые встретилось: {localizedText(item.introducedIn.title)}
             </p>
-          ) : null}
-        </div>
-      ) : null}
+          </div>
 
-      <section className="mt-5" aria-label="Основные формы слова">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Основные формы
-        </h4>
-        <ul className="mt-2 grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <label className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                Статус
+              </span>
+              <select
+                aria-label={`Статус слова ${item.lemma}`}
+                aria-busy={changingStatus}
+                aria-invalid={statusError}
+                className="h-8 min-w-32 rounded-md border bg-card px-2.5 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20"
+                disabled={changingStatus}
+                value={memoryStatus}
+                onChange={(event) =>
+                  onStatusChange(event.target.value as WordMemoryStatus)
+                }
+              >
+                <option value="NEW">Новое</option>
+                <option value="LEARNING">Изучается</option>
+                <option value="KNOWN">Выучено</option>
+              </select>
+            </label>
+            {statusError ? (
+              <p className="text-xs text-destructive" role="alert">
+                Не удалось сохранить.
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        {morphology.change ||
+        morphology.stems.length > 0 ||
+        morphology.gradation ? (
+          <div className="mt-4 rounded-lg border border-border/70 bg-foreground/[0.025] p-4">
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Как меняется слово
+            </p>
+
+            {morphology.change ? (
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <p className="text-base font-semibold">
+                  {item.lemma}
+                  <span className="mx-2 font-normal text-muted-foreground">
+                    →
+                  </span>
+                  {morphology.change.surface}
+                </p>
+                {morphology.change.ending ? (
+                  <code className="rounded-md border border-primary/15 bg-primary/5 px-2 py-1 text-xs text-foreground">
+                    {morphology.change.stem}
+                    <span className="mx-1 text-muted-foreground">+</span>
+                    <span className="font-semibold text-primary">
+                      {morphology.change.ending}
+                    </span>
+                  </code>
+                ) : null}
+              </div>
+            ) : null}
+
+            {morphology.stems.length > 0 || morphology.gradation ? (
+              <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                {morphology.stems.length > 0 ? (
+                  <div>
+                    <dt className="text-xs text-muted-foreground">Основа</dt>
+                    <dd className="mt-0.5 font-semibold">
+                      {morphology.stems.map((stem) => `${stem}-`).join(' / ')}
+                    </dd>
+                  </div>
+                ) : null}
+                {morphology.gradation ? (
+                  <div>
+                    <dt className="text-xs text-muted-foreground">
+                      Чередование согласных
+                    </dt>
+                    <dd className="mt-0.5 font-semibold">
+                      {morphology.gradation.from} → {morphology.gradation.to}
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
+            ) : null}
+          </div>
+        ) : null}
+
+        {item.example ? (
+          <div className="mt-4 border-l-2 border-primary/30 pl-3">
+            <p className="text-sm font-medium">{item.example.target}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {localizedText(item.example.source)}
+            </p>
+          </div>
+        ) : null}
+      </section>
+
+      <section
+        className="mt-6 border-t border-border/70 pt-5"
+        aria-label="Основные формы слова"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h4 className="text-sm font-semibold">Ключевые формы</h4>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Формы, которые пригодятся чаще всего
+            </p>
+          </div>
+          <Button
+            aria-expanded={showAllForms}
+            size="sm"
+            type="button"
+            variant="outline"
+            onClick={() => setShowAllForms((current) => !current)}
+          >
+            {showAllForms ? 'Скрыть все' : `Все формы · ${allForms.length}`}
+            <ChevronDownIcon
+              className={cn(
+                'transition-transform duration-200',
+                showAllForms && 'rotate-180',
+              )}
+            />
+          </Button>
+        </div>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {morphology.keyForms.map(({ form, label }) => (
             <li
               key={form.id}
-              className="flex min-w-0 items-baseline justify-between gap-3 py-2"
+              className="min-w-0 rounded-lg border border-border/70 bg-foreground/[0.025] px-3.5 py-3"
             >
-              <span className="min-w-0 text-xs leading-5 text-muted-foreground">
+              <span className="block min-w-0 text-xs leading-4 text-muted-foreground">
                 {label}
               </span>
-              <span className="shrink-0 text-sm font-semibold">
-                {form.surface}
+              <span className="mt-1 flex items-center justify-between gap-2">
+                <span className="truncate text-base font-semibold">
+                  {form.surface}
+                </span>
+                <AudioButton compact label={form.surface} src={form.audioUrl} />
               </span>
             </li>
           ))}
         </ul>
       </section>
 
-      <Button
-        aria-expanded={showAllForms}
-        className="mt-4"
-        size="sm"
-        type="button"
-        variant="outline"
-        onClick={() => setShowAllForms((current) => !current)}
-      >
-        {showAllForms ? 'Скрыть формы' : 'Все формы'}
-        <ChevronDownIcon
-          className={cn(
-            'transition-transform duration-200',
-            showAllForms && 'rotate-180',
-          )}
-        />
-      </Button>
-
       {showAllForms ? (
-        <section className="motion-feedback mt-5" aria-label="Все формы слова">
+        <section
+          className="motion-feedback mt-5 border-t border-border/70 pt-5"
+          aria-label="Все формы слова"
+        >
           {dimensions.length > 0 ? (
             <div className="flex flex-wrap items-end gap-2">
               {dimensions.map((dimension) => (
@@ -535,7 +670,7 @@ function VocabularyDetails({
                     {dimension.label}
                   </span>
                   <select
-                    className="h-9 min-w-32 rounded-md border bg-background px-2.5 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    className="h-9 min-w-32 rounded-md border bg-card px-2.5 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                     value={selections[dimension.key] ?? ''}
                     onChange={(event) =>
                       setSelections((current) => ({
@@ -571,9 +706,16 @@ function VocabularyDetails({
               {visibleForms.map((form) => (
                 <li
                   key={form.id}
-                  className="rounded-md bg-background px-3 py-2 shadow-xs"
+                  className="rounded-md border border-border/70 bg-card px-3 py-2"
                 >
-                  <span className="text-sm font-semibold">{form.surface}</span>
+                  <span className="inline-flex items-center gap-2 text-sm font-semibold">
+                    {form.surface}
+                    <AudioButton
+                      compact
+                      label={form.surface}
+                      src={form.audioUrl}
+                    />
+                  </span>
                   <span className="ml-1.5 text-xs text-muted-foreground">
                     {getVocabularyFormLabel(form)}
                   </span>
@@ -589,6 +731,12 @@ function VocabularyDetails({
       ) : null}
     </div>
   )
+}
+
+function toWordMemoryStatus(state: ReviewMemoryState): WordMemoryStatus {
+  if (state === 'NEW') return 'NEW'
+  if (state === 'REVIEW') return 'KNOWN'
+  return 'LEARNING'
 }
 
 function formatWordCount(count: number) {

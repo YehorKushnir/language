@@ -14,7 +14,11 @@
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` и `MAIL_FROM` — SMTP-доставка писем восстановления пароля; `SMTP_USER` и `SMTP_PASSWORD` указываются вместе, если relay требует авторизацию;
 - `API_PORT` и `API_HOST`;
 - `TRUST_PROXY_HOPS` — число доверенных reverse-proxy между клиентом и API, обычно `1`; оставлять `0`, если API доступен напрямую;
-- `MEDIA_BASE_URL` — необязательный HTTPS-адрес CDN/S3.
+- `GOOGLE_TTS_PROJECT_ID`, `GOOGLE_TTS_VOICE` и смонтированный через
+  `GOOGLE_TTS_CREDENTIALS_FILE` service-account JSON;
+- `AUDIO_STORAGE_PROVIDER=local`; Compose монтирует постоянный VPS volume
+  `morpho-learning-audio-data` в `/app/.data`;
+- `MEDIA_BASE_URL` — необязательный HTTPS-адрес для прочих media assets.
 
 Секреты нельзя хранить в `.env` внутри образа или репозитория. Их нужно передавать через secret manager платформы.
 
@@ -32,6 +36,7 @@ pnpm build
 pnpm db:migrate:deploy
 NODE_ENV=production pnpm db:seed
 pnpm publication:validate
+pnpm audio:generate:words
 pnpm e2e
 pnpm api:smoke:production
 ```

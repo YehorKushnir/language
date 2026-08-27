@@ -24,12 +24,14 @@ import {
 } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { LessonWorkspaceHeader } from '@/components/lesson-workspace-header'
+import { AudioButton } from '@/components/audio-button'
 import { ExerciseReport } from '@/components/exercise-report'
 import { PageShell } from '@/components/page-shell'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
+import { type AudioPlayback, playAudio } from '@/lib/audio-playback'
 import { localizedText } from '@/lib/localized-text'
 import {
   combineAnswerIssues,
@@ -99,6 +101,7 @@ function LessonPracticePage() {
     string | null
   >(null)
   const answerInput = useRef<HTMLInputElement>(null)
+  const automaticPlayback = useRef<AudioPlayback | null>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
   const continueAfterSave = useRef(false)
   const openedAt = useRef(Date.now())
@@ -257,6 +260,13 @@ function LessonPracticePage() {
     if (!exercise.isFetching && !localResult) answerInput.current?.focus()
   }, [exercise.data?.id, exercise.isFetching, localResult])
 
+  useEffect(
+    () => () => {
+      automaticPlayback.current?.stop()
+    },
+    [],
+  )
+
   const recoveredCompletedSession = Boolean(
     practiceSession.data &&
     practiceIsReadyToComplete(practiceSession.data) &&
@@ -338,6 +348,8 @@ function LessonPracticePage() {
     if (!canSubmit) return
 
     if (localResult) {
+      automaticPlayback.current?.stop()
+      automaticPlayback.current = null
       if (attempt.isError) {
         continueAfterSave.current = true
         attempt.mutate()
@@ -372,6 +384,9 @@ function LessonPracticePage() {
       check.isCorrect,
     )
     setLocalResult(check)
+    if (activeExercise.audioUrl) {
+      automaticPlayback.current = playAudio(activeExercise.audioUrl)
+    }
     pendingSessionUpdate.current = optimisticSession
     void prefetchFollowup(optimisticSession)
     attempt.mutate()
@@ -401,6 +416,8 @@ function LessonPracticePage() {
     if (!nextSession) return
     const nextCorrection = getNextPracticeCorrection(nextSession)
 
+    automaticPlayback.current?.stop()
+    automaticPlayback.current = null
     setCompletedExerciseIds(nextSession.completedExerciseIds)
     setAttemptIds(nextSession.attemptIds)
     setCorrectAnswers(nextSession.correctAnswers)
@@ -544,32 +561,43 @@ function LessonPracticePage() {
 
           <div className="pt-3" aria-live="polite">
             {feedback && localResult ? (
-              <div
-                className={`motion-feedback flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-sm leading-6 ${
-                  localResult.isCorrect
-                    ? 'bg-primary/5 text-primary'
-                    : 'bg-destructive/5 text-destructive'
-                }`}
-              >
-                {localResult.isCorrect ? (
-                  <CheckCircle2Icon className="mt-1 size-4 shrink-0" />
-                ) : (
-                  <CircleXIcon className="mt-1 size-4 shrink-0" />
-                )}
-                <p>
-                  {feedback}{' '}
-                  <span className="text-muted-foreground">
-                    {attempt.isPending
-                      ? 'Сохраняем прогресс.'
-                      : attempt.isError
-                        ? 'Не удалось сохранить. Нажми Enter, чтобы повторить.'
-                        : willComplete && completion.isPending
-                          ? 'Сохраняем результат практики.'
-                          : `Нажми Enter, чтобы ${
-                              willComplete ? 'увидеть результат' : 'продолжить'
-                            }.`}
-                  </span>
-                </p>
+              <div className="motion-feedback grid gap-2">
+                <div
+                  className={`flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-sm leading-6 ${
+                    localResult.isCorrect
+                      ? 'bg-primary/5 text-primary'
+                      : 'bg-destructive/5 text-destructive'
+                  }`}
+                >
+                  {localResult.isCorrect ? (
+                    <CheckCircle2Icon className="mt-1 size-4 shrink-0" />
+                  ) : (
+                    <CircleXIcon className="mt-1 size-4 shrink-0" />
+                  )}
+                  <p>
+                    {feedback}{' '}
+                    <span className="text-muted-foreground">
+                      {attempt.isPending
+                        ? 'Сохраняем прогресс.'
+                        : attempt.isError
+                          ? 'Не удалось сохранить. Нажми Enter, чтобы повторить.'
+                          : willComplete && completion.isPending
+                            ? 'Сохраняем результат практики.'
+                            : `Нажми Enter, чтобы ${
+                                willComplete
+                                  ? 'увидеть результат'
+                                  : 'продолжить'
+                              }.`}
+                    </span>
+                  </p>
+                </div>
+                {activeExercise.audioUrl ? (
+                  <AudioButton
+                    className="w-fit"
+                    label="Прослушать ответ"
+                    src={activeExercise.audioUrl}
+                  />
+                ) : null}
               </div>
             ) : null}
             {attempt.isError ? (

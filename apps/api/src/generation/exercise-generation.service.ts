@@ -533,6 +533,7 @@ export class ExerciseGenerationService {
       sourceLanguage,
       targetLanguage: exercise.targetLanguage,
       prompt: prompt.text,
+      audioUrl: null,
       answerSpec: toPreparedAnswerSpec(exercise.answerSpec),
       checkerVersion: EXERCISE_CHECKER_VERSION,
       reviewItemIds: exercise.items

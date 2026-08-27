@@ -73,7 +73,7 @@ function createFixture() {
           lexicalEntry: {
             lemma: 'opiskelija',
             status: ContentStatus.CURATED,
-            forms: [{ surface: 'opiskelija', audioAssetId: null }],
+            forms: [{ surface: 'opiskelija', audioAssets: [] }],
           },
         },
       },
@@ -146,7 +146,7 @@ function createFixture() {
       {
         id: 'text.1',
         body: 'Opiskelija.',
-        audioAssetId: null,
+        audioAssets: [],
         knowledgeItems: [
           {
             itemId: wordItemId,

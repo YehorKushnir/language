@@ -17,6 +17,7 @@ import { toLocalizedText, toVocabularyExample } from '../common/content-mapper'
 import { createRouteMemoryScope } from '../common/route-memory-scope'
 import { PrismaService } from '../database/prisma.service'
 import { ExerciseGenerationService } from '../generation/exercise-generation.service'
+import { MediaUrlService } from '../media/media-url.service'
 
 @Injectable()
 export class ReviewQueueService {
@@ -24,6 +25,7 @@ export class ReviewQueueService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ExerciseGenerationService)
     private readonly generation: ExerciseGenerationService,
+    @Inject(MediaUrlService) private readonly media: MediaUrlService,
   ) {}
 
   async getQueue(
@@ -159,6 +161,11 @@ export class ReviewQueueService {
             },
           },
         },
+        audioAssets: {
+          where: { variant: 'standard' },
+          take: 1,
+          include: { audioAsset: true },
+        },
       },
     })
     const duePosition = new Map(
@@ -192,6 +199,7 @@ export class ReviewQueueService {
         sourceLanguage,
         targetLanguage: exercise.targetLanguage,
         prompt: prompt.text,
+        audioUrl: this.media.resolve(exercise.audioAssets?.[0]?.audioAsset.url),
         answerSpec: toPreparedAnswerSpec(exercise.answerSpec),
         checkerVersion: EXERCISE_CHECKER_VERSION,
         reviewItemIds: exercise.items.map((item) => item.itemId),

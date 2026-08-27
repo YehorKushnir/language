@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import {
   alignStructuredAnswerSlots,
+  changeWordMemoryStatus,
   checkExactAnswer,
   checkStructuredAnswer,
   checkStructuredAnswerItems,
+  createInitialMemory,
   isReviewDue,
   normalizeExactAnswer,
+  recordReview,
   scheduleReview,
   type UserMemory,
 } from './index.js'
@@ -556,6 +559,153 @@ describe('review scheduler', () => {
       dueAt: new Date('2026-08-24T12:10:00.000Z'),
       repetitions: 2,
       lapses: 1,
+    })
+  })
+
+  it('initializes first contact without recording a fake review', () => {
+    expect(createInitialMemory(reviewedAt)).toEqual({
+      difficulty: 0,
+      stability: 0,
+      state: 'NEW',
+      dueAt: new Date('2026-08-22T12:20:00.000Z'),
+      lastReviewAt: null,
+      elapsedDays: 0,
+      scheduledDays: 0,
+      learningSteps: 0,
+      repetitions: 0,
+      lapses: 0,
+    })
+  })
+
+  it('advances a due correct review exactly once', () => {
+    const initial = createInitialMemory(reviewedAt)
+    const first = recordReview(initial, 'SUCCESS', initial.dueAt)
+
+    expect(first.wasScheduledReview).toBe(true)
+    expect(first.memory.repetitions).toBe(1)
+    expect(first.memory.dueAt.getTime()).toBeGreaterThan(
+      initial.dueAt.getTime(),
+    )
+
+    const incidental = recordReview(
+      first.memory,
+      'SUCCESS',
+      new Date(initial.dueAt.getTime() + 2 * 60_000),
+    )
+    expect(incidental).toEqual({
+      memory: first.memory,
+      wasScheduledReview: false,
+    })
+  })
+
+  it('does not advance after ten correct incidental exposures', () => {
+    const initial = createInitialMemory(reviewedAt)
+    let memory = initial
+
+    for (let minute = 1; minute <= 10; minute += 1) {
+      const exposure = recordReview(
+        memory,
+        'SUCCESS',
+        new Date(reviewedAt.getTime() + minute * 60_000),
+      )
+      expect(exposure.wasScheduledReview).toBe(false)
+      memory = exposure.memory
+    }
+
+    expect(memory).toEqual(initial)
+    expect(memory.state).toBe('NEW')
+    expect(memory.repetitions).toBe(0)
+  })
+
+  it('brings a failed scheduled review back quickly without erasing history', () => {
+    const initial = createInitialMemory(reviewedAt)
+    const learned = recordReview(initial, 'SUCCESS', initial.dueAt).memory
+    const failed = recordReview(learned, 'FAILURE', learned.dueAt)
+
+    expect(failed.wasScheduledReview).toBe(true)
+    expect(failed.memory.state).toBe('RELEARNING')
+    expect(failed.memory.lapses).toBe(1)
+    expect(failed.memory.repetitions).toBe(2)
+    expect(failed.memory.dueAt.getTime() - learned.dueAt.getTime()).toBe(
+      10 * 60_000,
+    )
+  })
+
+  it('keeps repeated due failures in active short-interval learning', () => {
+    const initial = createInitialMemory(reviewedAt)
+    let memory = recordReview(initial, 'SUCCESS', initial.dueAt).memory
+
+    for (let failure = 0; failure < 3; failure += 1) {
+      const failed = recordReview(memory, 'FAILURE', memory.dueAt)
+      expect(failed.wasScheduledReview).toBe(true)
+      expect(
+        failed.memory.dueAt.getTime() - memory.dueAt.getTime(),
+      ).toBeLessThanOrEqual(10 * 60_000)
+      memory = failed.memory
+    }
+
+    expect(memory.state).not.toBe('REVIEW')
+    expect(memory.repetitions).toBe(4)
+  })
+
+  it('always schedules another review for a mature card', () => {
+    let memory = createInitialMemory(reviewedAt)
+
+    for (let success = 0; success < 12; success += 1) {
+      memory = recordReview(memory, 'SUCCESS', memory.dueAt).memory
+    }
+
+    expect(memory.state).toBe('REVIEW')
+    expect(memory.repetitions).toBe(12)
+    expect(Number.isFinite(memory.dueAt.getTime())).toBe(true)
+    expect(memory.dueAt.getTime()).toBeGreaterThan(
+      memory.lastReviewAt!.getTime(),
+    )
+    expect(memory.scheduledDays).toBeGreaterThan(0)
+  })
+
+  it('manually returns a known word to new and due now', () => {
+    const known = changeWordMemoryStatus(
+      createInitialMemory(reviewedAt),
+      'KNOWN',
+      reviewedAt,
+    )
+    const resetAt = new Date('2026-08-23T09:00:00.000Z')
+    const reset = changeWordMemoryStatus(known, 'NEW', resetAt)
+
+    expect(reset).toMatchObject({
+      state: 'NEW',
+      dueAt: resetAt,
+      repetitions: 0,
+      stability: 0,
+    })
+  })
+
+  it('manually marks a new word known but keeps a future review', () => {
+    const known = changeWordMemoryStatus(
+      createInitialMemory(reviewedAt),
+      'KNOWN',
+      reviewedAt,
+    )
+
+    expect(known).toMatchObject({
+      state: 'REVIEW',
+      dueAt: new Date('2026-10-21T12:00:00.000Z'),
+      scheduledDays: 60,
+    })
+    expect(known.dueAt).not.toBeNull()
+  })
+
+  it('manually marks a word learning with a short scheduled step', () => {
+    const learning = changeWordMemoryStatus(
+      createInitialMemory(reviewedAt),
+      'LEARNING',
+      reviewedAt,
+    )
+
+    expect(learning).toMatchObject({
+      state: 'LEARNING',
+      dueAt: new Date('2026-08-22T12:10:00.000Z'),
     })
   })
 })

@@ -8,6 +8,7 @@ import { AdminModule } from './admin/admin.module'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './auth/auth.module'
+import { AudioModule } from './audio/audio.module'
 import { CoursesModule } from './courses/courses.module'
 import { DatabaseModule } from './database/database.module'
 import { HealthController } from './health.controller'
@@ -39,6 +40,7 @@ import { validateEnvironment } from './environment'
     AdminModule,
     AccountModule,
     AuthModule,
+    AudioModule,
     MediaModule,
     MorphologyModule,
     CoursesModule,

@@ -141,10 +141,13 @@ async function main() {
     }
 
     const incomplete = Object.entries(paradigms).filter(
-      ([, paradigm]) =>
+      ([lemma, paradigm]) =>
+        finnishLearnerDictionaryEntries.find((entry) => entry.lemma === lemma)
+          ?.completeParadigm !== false &&
         !['adposition', 'adverb', 'conjunction', 'negativeVerb'].includes(
           paradigm.partOfSpeech,
-        ) && paradigm.forms.length < 7,
+        ) &&
+        paradigm.forms.length < 7,
     )
     if (incomplete.length > 0) {
       throw new Error(

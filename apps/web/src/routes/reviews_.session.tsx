@@ -23,6 +23,7 @@ import {
 } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
 import { PageShell } from '@/components/page-shell'
+import { AudioButton } from '@/components/audio-button'
 import { ExerciseReport } from '@/components/exercise-report'
 import { PageLoading, QueryError } from '@/components/query-state'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -311,6 +312,14 @@ function ReviewSessionPage() {
           className="motion-feedback mt-3"
           exerciseId={exercise.id}
           attemptId={result.attemptId}
+        />
+      ) : null}
+
+      {result && exercise.audioUrl ? (
+        <AudioButton
+          className="mt-3"
+          label="Прослушать ответ"
+          src={exercise.audioUrl}
         />
       ) : null}
 

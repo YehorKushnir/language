@@ -15,6 +15,7 @@
     "lint": "turbo lint && eslint e2e playwright.config.ts",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
+    "test:integration": "pnpm --filter @language/api test:integration",
     "e2e": "playwright test",
     "e2e:local": "pnpm dev:setup && pnpm build && pnpm e2e",
     "content:validate": "pnpm --filter @language/database content:validate",
@@ -30,6 +31,10 @@
     "db:seed": "pnpm --filter @language/database db:seed",
     "db:studio": "pnpm --filter @language/database db:studio",
     "user:set-role": "pnpm --filter @language/database user:set-role",
+    "audio:generate": "pnpm --filter @language/database build && pnpm --filter @language/api audio:generate",
+    "audio:generate:words": "pnpm --filter @language/database build && pnpm --filter @language/api audio:generate:words",
+    "audio:generate:sentences": "pnpm --filter @language/database build && pnpm --filter @language/api audio:generate:sentences",
+    "audio:generate:texts": "pnpm --filter @language/database build && pnpm --filter @language/api audio:generate:texts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

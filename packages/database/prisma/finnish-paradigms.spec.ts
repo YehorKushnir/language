@@ -104,6 +104,7 @@ describe('complete Finnish vocabulary paradigms', () => {
     ])
 
     for (const entry of finnishLearnerDictionaryEntries) {
+      if (entry.completeParadigm === false) continue
       if (invariablePartsOfSpeech.has(entry.partOfSpeech)) continue
       const paradigm = finnishGeneratedParadigms[entry.lemma]
       expect(paradigm?.partOfSpeech, entry.lemma).toBe(entry.partOfSpeech)

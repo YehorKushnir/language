@@ -45,12 +45,6 @@ enum LexicalFormSource {
   CURATED
 }
 
-enum AudioAssetKind {
-  WORD
-  TEXT
-  EXERCISE
-}
-
 enum MemoryState {
   NEW
   LEARNING
@@ -276,13 +270,11 @@ model LexicalForm {
   surface        String
   features       Json
   source         LexicalFormSource @default(GENERATED)
-  audioAssetId   String?
 
-  lexicalEntry LexicalEntry @relation(fields: [lexicalEntryId], references: [id], onDelete: Cascade)
-  audioAsset   AudioAsset?  @relation(fields: [audioAssetId], references: [id], onDelete: SetNull)
+  lexicalEntry LexicalEntry            @relation(fields: [lexicalEntryId], references: [id], onDelete: Cascade)
+  audioAssets  LexicalFormAudioAsset[]
 
   @@index([lexicalEntryId, surface])
-  @@index([audioAssetId])
 }
 
 model LessonKnowledgeItem {
@@ -335,6 +327,7 @@ model Exercise {
   attempts    UserAttempt[]
   userHistory UserExerciseHistory[]
   reports     ExerciseReport[]
+  audioAssets ExerciseAudioAsset[]
 
   @@index([courseId, kind, status])
   @@index([lessonId])
@@ -628,24 +621,22 @@ model ExerciseReport {
 }
 
 model Text {
-  id           String        @id
-  courseId     String
-  title        Json
-  level        String
-  topics       String[]
-  body         String
-  status       ContentStatus @default(DRAFT)
-  audioAssetId String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id        String        @id
+  courseId  String
+  title     Json
+  level     String
+  topics    String[]
+  body      String
+  status    ContentStatus @default(DRAFT)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   course         Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  audioAsset     AudioAsset?         @relation(fields: [audioAssetId], references: [id], onDelete: SetNull)
+  audioAssets    TextAudioAsset[]
   tokens         TextToken[]
   knowledgeItems TextKnowledgeItem[]
 
   @@index([courseId, level, status])
-  @@index([audioAssetId])
 }
 
 model TextToken {
@@ -680,16 +671,69 @@ model TextKnowledgeItem {
 }
 
 model AudioAsset {
-  id         String         @id
-  kind       AudioAssetKind
-  storageKey String         @unique
-  mimeType   String
-  durationMs Int?
-  checksum   String
-  status     ContentStatus  @default(DRAFT)
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id                String   @id @default(cuid())
+  provider          String
+  language          String
+  voice             String
+  textHash          String
+  sourceText        String?
+  speakingRate      Float?
+  generationVersion String
+  cacheKey          String   @unique
+  storageKey        String   @unique
+  url               String
+  contentType       String
+  durationMs        Int?
+  checksum          String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  lexicalForms LexicalForm[]
-  texts        Text[]
+  lexicalForms LexicalFormAudioAsset[]
+  texts        TextAudioAsset[]
+  exercises    ExerciseAudioAsset[]
+
+  @@index([provider, language, voice])
+  @@index([textHash])
+}
+
+model LexicalFormAudioAsset {
+  lexicalFormId String
+  audioAssetId  String
+  variant       String   @default("standard")
+  createdAt     DateTime @default(now())
+
+  lexicalForm LexicalForm @relation(fields: [lexicalFormId], references: [id], onDelete: Cascade)
+  audioAsset  AudioAsset  @relation(fields: [audioAssetId], references: [id], onDelete: Cascade)
+
+  @@id([lexicalFormId, audioAssetId, variant])
+  @@unique([lexicalFormId, variant])
+  @@index([audioAssetId])
+}
+
+model TextAudioAsset {
+  textId       String
+  audioAssetId String
+  variant      String   @default("normal")
+  createdAt    DateTime @default(now())
+
+  text       Text       @relation(fields: [textId], references: [id], onDelete: Cascade)
+  audioAsset AudioAsset @relation(fields: [audioAssetId], references: [id], onDelete: Cascade)
+
+  @@id([textId, audioAssetId, variant])
+  @@unique([textId, variant])
+  @@index([audioAssetId])
+}
+
+model ExerciseAudioAsset {
+  exerciseId   String
+  audioAssetId String
+  variant      String   @default("standard")
+  createdAt    DateTime @default(now())
+
+  exercise   Exercise   @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  audioAsset AudioAsset @relation(fields: [audioAssetId], references: [id], onDelete: Cascade)
+
+  @@id([exerciseId, audioAssetId, variant])
+  @@unique([exerciseId, variant])
+  @@index([audioAssetId])
 }

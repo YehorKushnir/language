@@ -11,9 +11,8 @@ import {
   ContentStatus,
   ExerciseKind,
   KnowledgeItemKind,
-  MemoryState,
 } from '@language/database'
-import { normalizeExactAnswer, scheduleReview } from '@language/domain'
+import { normalizeExactAnswer } from '@language/domain'
 import {
   BadRequestException,
   Inject,
@@ -24,6 +23,7 @@ import {
 import { PrismaService } from '../database/prisma.service'
 import { assertLessonAvailable } from '../common/lesson-access'
 import { createRouteMemoryScope } from '../common/route-memory-scope'
+import { initialUserMemoryData } from '../common/user-memory'
 
 const PRACTICE_EXERCISE_COUNT = 60
 const PRACTICE_REQUIRED_CORRECT = PRACTICE_EXERCISE_COUNT
@@ -418,16 +418,29 @@ export class CourseProgressService {
     )
     const now = new Date()
 
-    await this.prisma.userCourseProgress.upsert({
-      where: { userId_routeVersionId: { userId, routeVersionId } },
-      update: { currentLessonId: lessonId, lastActivityAt: now },
-      create: {
-        userId,
-        routeVersionId,
-        currentLessonId: lessonId,
-        lastActivityAt: now,
-      },
-    })
+    await Promise.all([
+      this.prisma.userCourseProgress.upsert({
+        where: { userId_routeVersionId: { userId, routeVersionId } },
+        update: { currentLessonId: lessonId, lastActivityAt: now },
+        create: {
+          userId,
+          routeVersionId,
+          currentLessonId: lessonId,
+          lastActivityAt: now,
+        },
+      }),
+      ...vocabularyItems.map(({ itemId }) =>
+        this.prisma.userMemory.upsert({
+          where: { userId_itemId: { userId, itemId } },
+          update: {},
+          create: {
+            userId,
+            itemId,
+            ...initialUserMemoryData(now),
+          },
+        }),
+      ),
+    ])
 
     const progress = await this.prisma.userLessonVocabularyProgress.findMany({
       where: { userId, routeVersionId, lessonId },
@@ -528,6 +541,16 @@ export class CourseProgressService {
       normalizeExactAnswer(answer) === normalizeExactAnswer(expectedAnswer)
     const now = new Date()
     const itemProgress = await this.prisma.$transaction(async (transaction) => {
+      await transaction.userMemory.upsert({
+        where: { userId_itemId: { userId, itemId } },
+        update: {},
+        create: {
+          userId,
+          itemId,
+          ...initialUserMemoryData(now),
+        },
+      })
+
       await transaction.userLessonVocabularyProgress.upsert({
         where: {
           userId_routeVersionId_lessonId_itemId: {
@@ -589,41 +612,6 @@ export class CourseProgressService {
             },
           },
           data: { completedAt: now },
-        })
-
-        const schedule = scheduleReview(null, 'SUCCESS', now)
-        await transaction.userMemory.upsert({
-          where: { userId_itemId: { userId, itemId } },
-          update: {},
-          create: {
-            userId,
-            itemId,
-            difficulty: schedule.difficulty,
-            stability: schedule.stability,
-            state: MemoryState[schedule.state],
-            dueAt: schedule.dueAt,
-            lastReviewAt: schedule.lastReviewAt,
-            elapsedDays: schedule.elapsedDays,
-            scheduledDays: schedule.scheduledDays,
-            learningSteps: schedule.learningSteps,
-            repetitions: schedule.repetitions,
-            lapses: schedule.lapses,
-          },
-        })
-      }
-
-      if (gaveUp) {
-        await transaction.userMemory.upsert({
-          where: { userId_itemId: { userId, itemId } },
-          update: {},
-          create: {
-            userId,
-            itemId,
-            difficulty: 0,
-            stability: 0,
-            state: MemoryState.NEW,
-            dueAt: now,
-          },
         })
       }
 

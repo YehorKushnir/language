@@ -28,6 +28,24 @@ x-api-environment: &api-environment
   SMTP_PASSWORD: ${SMTP_PASSWORD:-}
   MAIL_FROM: ${MAIL_FROM:?MAIL_FROM is required}
   MEDIA_BASE_URL: ${MEDIA_BASE_URL:-}
+  TTS_PROVIDER: ${TTS_PROVIDER:-google}
+  GOOGLE_TTS_AUTH_MODE: adc
+  GOOGLE_TTS_PROJECT_ID: ${GOOGLE_TTS_PROJECT_ID:?GOOGLE_TTS_PROJECT_ID is required}
+  GOOGLE_TTS_VOICE: ${GOOGLE_TTS_VOICE:?GOOGLE_TTS_VOICE is required}
+  GOOGLE_TTS_LANGUAGE: ${GOOGLE_TTS_LANGUAGE:-fi-FI}
+  GOOGLE_TTS_CHIRP3_MIN_INTERVAL_MS: ${GOOGLE_TTS_CHIRP3_MIN_INTERVAL_MS:-310}
+  GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/google-tts
+  AUDIO_NORMAL_SPEAKING_RATE: ${AUDIO_NORMAL_SPEAKING_RATE:-1}
+  AUDIO_GENERATION_VERSION: ${AUDIO_GENERATION_VERSION:-v1}
+  AUDIO_GENERATION_CONCURRENCY: ${AUDIO_GENERATION_CONCURRENCY:-4}
+  AUDIO_STORAGE_PROVIDER: ${AUDIO_STORAGE_PROVIDER:-local}
+  AUDIO_LOCAL_DIRECTORY: /app/.data
+  AUDIO_STORAGE_BUCKET: ${AUDIO_STORAGE_BUCKET:-}
+  AUDIO_STORAGE_ENDPOINT: ${AUDIO_STORAGE_ENDPOINT:-}
+  AUDIO_STORAGE_REGION: ${AUDIO_STORAGE_REGION:-auto}
+  AUDIO_STORAGE_ACCESS_KEY: ${AUDIO_STORAGE_ACCESS_KEY:-}
+  AUDIO_STORAGE_SECRET_KEY: ${AUDIO_STORAGE_SECRET_KEY:-}
+  AUDIO_PUBLIC_URL: ${AUDIO_PUBLIC_URL:-}
 
 services:
   postgres:
@@ -90,6 +108,10 @@ services:
     tmpfs:
       - /tmp:size=64m,mode=1777
     init: true
+    secrets:
+      - google-tts
+    volumes:
+      - audio-data:/app/.data
     stop_grace_period: 30s
     pids_limit: 256
     cap_drop:
@@ -128,6 +150,8 @@ services:
 volumes:
   postgres-data:
     name: morpho-learning-postgres-data
+  audio-data:
+    name: morpho-learning-audio-data
 
 networks:
   proxy:
@@ -135,3 +159,7 @@ networks:
     name: ${EDGE_NETWORK:-framed_default}
   database:
     internal: true
+
+secrets:
+  google-tts:
+    file: ${GOOGLE_TTS_CREDENTIALS_FILE:?GOOGLE_TTS_CREDENTIALS_FILE is required}

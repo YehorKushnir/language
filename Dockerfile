@@ -28,6 +28,7 @@ FROM node-base AS api
 ENV NODE_ENV=production
 
 COPY --from=build --chown=node:node /app /app
+RUN mkdir -p /app/.data && chown node:node /app/.data
 
 USER node
 

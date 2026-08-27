@@ -20,6 +20,19 @@ export interface ReviewSchedule extends ReviewMemorySnapshot {
   lastReviewAt: Date
 }
 
+export type WordMemoryStatus = 'NEW' | 'LEARNING' | 'KNOWN'
+
+export interface RecordedReview {
+  memory: ReviewMemorySnapshot
+  wasScheduledReview: boolean
+}
+
+const MINUTE_MS = 60_000
+const DAY_MS = 24 * 60 * MINUTE_MS
+
+export const INITIAL_REVIEW_DELAY_MINUTES = 20
+export const KNOWN_REVIEW_INTERVAL_DAYS = 60
+
 const scheduler = fsrs({
   request_retention: 0.9,
   maximum_interval: 3_650,
@@ -49,6 +62,75 @@ export function scheduleReview(
     learningSteps: nextCard.learning_steps,
     repetitions: nextCard.reps,
     lapses: nextCard.lapses,
+  }
+}
+
+export function createInitialMemory(encounteredAt: Date): ReviewMemorySnapshot {
+  return {
+    difficulty: 0,
+    stability: 0,
+    state: 'NEW',
+    dueAt: new Date(
+      encounteredAt.getTime() + INITIAL_REVIEW_DELAY_MINUTES * MINUTE_MS,
+    ),
+    lastReviewAt: null,
+    elapsedDays: 0,
+    scheduledDays: 0,
+    learningSteps: 0,
+    repetitions: 0,
+    lapses: 0,
+  }
+}
+
+/**
+ * Records only reviews that were already due when the evidence was produced.
+ * Exercise answers before dueAt remain useful incidental exposure, but cannot
+ * advance or reset the spaced-repetition card.
+ */
+export function recordReview(
+  memory: ReviewMemorySnapshot,
+  result: ReviewEvidenceResult,
+  reviewedAt: Date,
+): RecordedReview {
+  if (reviewedAt.getTime() < memory.dueAt.getTime()) {
+    return { memory, wasScheduledReview: false }
+  }
+
+  return {
+    memory: scheduleReview(memory, result, reviewedAt),
+    wasScheduledReview: true,
+  }
+}
+
+export function changeWordMemoryStatus(
+  memory: ReviewMemorySnapshot,
+  status: WordMemoryStatus,
+  changedAt: Date,
+): ReviewMemorySnapshot {
+  if (status === 'NEW') {
+    return {
+      ...createInitialMemory(changedAt),
+      // An explicit "don't know" choice should return the word to the front
+      // of practice immediately, unlike a first passive encounter.
+      dueAt: changedAt,
+    }
+  }
+
+  if (status === 'LEARNING') {
+    return scheduleReview(null, 'FAILURE', changedAt)
+  }
+
+  return {
+    difficulty: memory.difficulty > 0 ? memory.difficulty : 5,
+    stability: Math.max(memory.stability, KNOWN_REVIEW_INTERVAL_DAYS),
+    state: 'REVIEW',
+    dueAt: new Date(changedAt.getTime() + KNOWN_REVIEW_INTERVAL_DAYS * DAY_MS),
+    lastReviewAt: changedAt,
+    elapsedDays: 0,
+    scheduledDays: KNOWN_REVIEW_INTERVAL_DAYS,
+    learningSteps: 0,
+    repetitions: Math.max(memory.repetitions, 1),
+    lapses: memory.lapses,
   }
 }
 

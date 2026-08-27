@@ -31,6 +31,7 @@ export default defineConfig({
         `API_PORT=${apiPort}`,
         `WEB_ORIGIN=${webOrigin}`,
         `BETTER_AUTH_URL=http://127.0.0.1:${apiPort}`,
+        'AUDIO_LOCAL_DIRECTORY=apps/api/.data',
         'node apps/api/dist/main.js',
       ].join(' '),
       url: `http://127.0.0.1:${apiPort}/api/v1/health`,

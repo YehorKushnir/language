@@ -13,13 +13,12 @@ import {
   ExerciseItemRole,
   ExerciseKind,
   KnowledgeItemKind,
-  MemoryState,
   Prisma,
 } from '@language/database'
 import {
   alignStructuredAnswerSlots,
   checkStructuredAnswer,
-  scheduleReview,
+  recordReview,
   type StructuredAnswerDiagnostic,
   type StructuredAnswerSlot,
 } from '@language/domain'
@@ -41,7 +40,13 @@ import {
   EXERCISE_CHECKER_VERSION,
   toPreparedAnswerSpec,
 } from '../common/answer-spec'
+import {
+  initialUserMemoryData,
+  toReviewMemorySnapshot,
+  toUserMemoryData,
+} from '../common/user-memory'
 import { FinnishMorphologyService } from '../morphology/finnish-morphology.service'
+import { MediaUrlService } from '../media/media-url.service'
 
 interface StoredAnswerSpec {
   acceptedVariants: string[]
@@ -67,6 +72,7 @@ export class ExercisesService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(FinnishMorphologyService)
     private readonly morphology: FinnishMorphologyService,
+    @Inject(MediaUrlService) private readonly media: MediaUrlService,
   ) {}
 
   async getNextExercise(
@@ -93,9 +99,47 @@ export class ExercisesService {
       include: {
         prompts: { where: { sourceLanguage }, take: 1 },
         userHistory: { where: { userId }, take: 1 },
+        items: {
+          where: { role: { not: ExerciseItemRole.CONTEXT } },
+          select: {
+            itemId: true,
+            item: { select: { kind: true } },
+          },
+        },
+        audioAssets: {
+          where: { variant: 'standard' },
+          take: 1,
+          include: { audioAsset: true },
+        },
       },
     })
-    const exercise = candidates.sort(compareExerciseCandidates)[0]
+    const candidateItemIds = [
+      ...new Set(
+        candidates.flatMap((candidate) =>
+          candidate.items.map((item) => item.itemId),
+        ),
+      ),
+    ]
+    const dueMemories =
+      candidateItemIds.length > 0
+        ? await this.prisma.userMemory.findMany({
+            where: {
+              userId,
+              itemId: { in: candidateItemIds },
+              dueAt: { lte: new Date() },
+            },
+            orderBy: { dueAt: 'asc' },
+            select: { itemId: true },
+          })
+        : []
+    const duePosition = new Map(
+      dueMemories.map((memory, index) => [memory.itemId, index]),
+    )
+    const exercise = candidates.sort(
+      (left, right) =>
+        compareDueCoverage(left, right, duePosition) ||
+        compareExerciseCandidates(left, right),
+    )[0]
 
     const prompt = exercise?.prompts[0]
     if (!exercise || !prompt) {
@@ -104,12 +148,15 @@ export class ExercisesService {
       )
     }
 
+    await this.ensureExerciseMemories(userId, exercise.items)
+
     return {
       id: exercise.id,
       lessonId,
       sourceLanguage,
       targetLanguage: exercise.targetLanguage,
       prompt: prompt.text,
+      audioUrl: this.media.resolve(exercise.audioAssets?.[0]?.audioAsset.url),
       answerSpec: toPreparedAnswerSpec(exercise.answerSpec),
       checkerVersion: EXERCISE_CHECKER_VERSION,
     }
@@ -136,6 +183,18 @@ export class ExercisesService {
       },
       include: {
         prompts: { where: { sourceLanguage }, take: 1 },
+        items: {
+          where: { role: { not: ExerciseItemRole.CONTEXT } },
+          select: {
+            itemId: true,
+            item: { select: { kind: true } },
+          },
+        },
+        audioAssets: {
+          where: { variant: 'standard' },
+          take: 1,
+          include: { audioAsset: true },
+        },
       },
     })
     const prompt = exercise?.prompts[0]
@@ -145,12 +204,15 @@ export class ExercisesService {
       )
     }
 
+    await this.ensureExerciseMemories(userId, exercise.items)
+
     return {
       id: exercise.id,
       lessonId,
       sourceLanguage,
       targetLanguage: exercise.targetLanguage,
       prompt: prompt.text,
+      audioUrl: this.media.resolve(exercise.audioAssets?.[0]?.audioAsset.url),
       answerSpec: toPreparedAnswerSpec(exercise.answerSpec),
       checkerVersion: EXERCISE_CHECKER_VERSION,
     }
@@ -275,6 +337,7 @@ export class ExercisesService {
               ? null
               : 0,
     }))
+    await this.ensureExerciseMemories(userId, exercise.items)
     const now = new Date()
 
     try {
@@ -293,10 +356,13 @@ export class ExercisesService {
             generatorVersion: exercise.generated?.generatorVersion,
             durationMs: request.durationMs,
             answeredAt: now,
-            evidence: { create: evidence },
           },
-          include: { evidence: true },
         })
+        for (const itemEvidence of evidence) {
+          await transaction.userAttemptEvidence.create({
+            data: { attemptId: created.id, ...itemEvidence },
+          })
+        }
 
         for (const itemEvidence of evidence) {
           if (itemEvidence.result === EvidenceResult.IGNORED) {
@@ -308,48 +374,40 @@ export class ExercisesService {
               userId_itemId: { userId, itemId: itemEvidence.itemId },
             },
           })
-          const schedule = scheduleReview(
-            memory
-              ? {
-                  difficulty: memory.difficulty,
-                  stability: memory.stability,
-                  state: memory.state,
-                  dueAt: memory.dueAt,
-                  lastReviewAt: memory.lastReviewAt,
-                  elapsedDays: memory.elapsedDays,
-                  scheduledDays: memory.scheduledDays,
-                  learningSteps: memory.learningSteps,
-                  repetitions: memory.repetitions,
-                  lapses: memory.lapses,
-                }
-              : null,
+
+          if (!memory) {
+            await transaction.userMemory.upsert({
+              where: {
+                userId_itemId: { userId, itemId: itemEvidence.itemId },
+              },
+              update: {},
+              create: {
+                userId,
+                itemId: itemEvidence.itemId,
+                ...initialUserMemoryData(now),
+              },
+            })
+            continue
+          }
+
+          const review = recordReview(
+            toReviewMemorySnapshot(memory),
             itemEvidence.result === EvidenceResult.SUCCESS
               ? 'SUCCESS'
               : 'FAILURE',
             now,
           )
-          const memoryData = {
-            difficulty: schedule.difficulty,
-            stability: schedule.stability,
-            state: MemoryState[schedule.state],
-            dueAt: schedule.dueAt,
-            lastReviewAt: schedule.lastReviewAt,
-            elapsedDays: schedule.elapsedDays,
-            scheduledDays: schedule.scheduledDays,
-            learningSteps: schedule.learningSteps,
-            repetitions: schedule.repetitions,
-            lapses: schedule.lapses,
-          }
+          if (!review.wasScheduledReview) continue
 
           await transaction.userMemory.upsert({
             where: {
               userId_itemId: { userId, itemId: itemEvidence.itemId },
             },
-            update: memoryData,
+            update: toUserMemoryData(review.memory),
             create: {
               userId,
               itemId: itemEvidence.itemId,
-              ...memoryData,
+              ...toUserMemoryData(review.memory),
             },
           })
         }
@@ -370,7 +428,7 @@ export class ExercisesService {
           },
         })
 
-        return created as StoredAttempt
+        return { ...created, evidence } as StoredAttempt
       })
 
       return toAttemptResponse(attempt)
@@ -451,6 +509,21 @@ export class ExercisesService {
     }
 
     return toAttemptResponse(attempt)
+  }
+
+  private async ensureExerciseMemories(
+    userId: string,
+    items: Array<{ itemId: string; item: { kind: KnowledgeItemKind } }>,
+  ): Promise<void> {
+    const encounteredAt = new Date()
+    await this.prisma.userMemory.createMany({
+      data: items.map(({ itemId }) => ({
+        userId,
+        itemId,
+        ...initialUserMemoryData(encounteredAt),
+      })),
+      skipDuplicates: true,
+    })
   }
 }
 
@@ -801,6 +874,21 @@ function compareExerciseCandidates(
   }
 
   return left.id.localeCompare(right.id)
+}
+
+function compareDueCoverage(
+  left: { items: Array<{ itemId: string }> },
+  right: { items: Array<{ itemId: string }> },
+  duePosition: Map<string, number>,
+): number {
+  const position = (candidate: { items: Array<{ itemId: string }> }) =>
+    Math.min(
+      ...candidate.items.map(
+        (item) => duePosition.get(item.itemId) ?? Number.MAX_SAFE_INTEGER,
+      ),
+    )
+
+  return position(left) - position(right)
 }
 
 function getSelectionOrder(value: unknown): number {
