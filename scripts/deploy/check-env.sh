@@ -29,9 +29,20 @@ require_value() {
   esac
 }
 
+require_values() {
+  missing_keys=
+  for key in "$@"; do
+    value=$(read_value "$key")
+    case "$value" in
+      "" | CHANGE_ME*) missing_keys="${missing_keys}${missing_keys:+, }$key" ;;
+    esac
+  done
+  [ -z "$missing_keys" ] || fail "missing or placeholder values: $missing_keys"
+}
+
 [ -f "$ENV_FILE" ] || fail "$ENV_FILE does not exist"
 
-for key in \
+require_values \
   APP_DOMAIN \
   IMAGE_REPO \
   IMAGE_TAG \
@@ -39,13 +50,7 @@ for key in \
   POSTGRES_PASSWORD \
   BETTER_AUTH_SECRET \
   SMTP_HOST \
-  MAIL_FROM \
-  GOOGLE_TTS_PROJECT_ID \
-  GOOGLE_TTS_VOICE \
-  GOOGLE_TTS_CREDENTIALS_FILE
-do
-  require_value "$key"
-done
+  MAIL_FROM
 
 tts_provider=$(read_value TTS_PROVIDER)
 tts_provider=${tts_provider:-google}
@@ -70,9 +75,6 @@ case "$audio_storage_provider" in
     ;;
   *) fail "AUDIO_STORAGE_PROVIDER must be local, r2 or s3 in production" ;;
 esac
-
-google_credentials_file=$(read_value GOOGLE_TTS_CREDENTIALS_FILE)
-[ -f "$google_credentials_file" ] || fail "GOOGLE_TTS_CREDENTIALS_FILE does not exist"
 
 if [ "$audio_storage_provider" != "local" ]; then
   audio_public_url=$(read_value AUDIO_PUBLIC_URL)

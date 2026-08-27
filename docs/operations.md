@@ -14,8 +14,9 @@
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` и `MAIL_FROM` — SMTP-доставка писем восстановления пароля; `SMTP_USER` и `SMTP_PASSWORD` указываются вместе, если relay требует авторизацию;
 - `API_PORT` и `API_HOST`;
 - `TRUST_PROXY_HOPS` — число доверенных reverse-proxy между клиентом и API, обычно `1`; оставлять `0`, если API доступен напрямую;
-- `GOOGLE_TTS_PROJECT_ID`, `GOOGLE_TTS_VOICE` и смонтированный через
-  `GOOGLE_TTS_CREDENTIALS_FILE` service-account JSON;
+- `GOOGLE_TTS_PROJECT_ID`, `GOOGLE_TTS_VOICE` и доступный через
+  `GOOGLE_TTS_CREDENTIALS_FILE` service-account JSON для одноразовых запусков
+  `scripts/deploy/generate-audio.sh`;
 - `AUDIO_STORAGE_PROVIDER=local`; Compose монтирует постоянный VPS volume
   `morpho-learning-audio-data` в `/app/.data`;
 - `MEDIA_BASE_URL` — необязательный HTTPS-адрес для прочих media assets.
