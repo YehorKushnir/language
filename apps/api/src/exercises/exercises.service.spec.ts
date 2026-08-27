@@ -15,6 +15,7 @@ import { ExercisesService } from './exercises.service'
 describe('ExercisesService morphology diagnostics', () => {
   const transaction = {
     userAttempt: { create: vi.fn() },
+    userAttemptEvidence: { create: vi.fn() },
     userMemory: { findUnique: vi.fn(), upsert: vi.fn() },
     userExerciseHistory: { upsert: vi.fn() },
   }
@@ -23,7 +24,7 @@ describe('ExercisesService morphology diagnostics', () => {
     userLessonProgress: { count: vi.fn() },
     userAttempt: { findUnique: vi.fn(), findFirst: vi.fn() },
     exercise: { findFirst: vi.fn(), findMany: vi.fn() },
-    userMemory: { findMany: vi.fn(), upsert: vi.fn() },
+    userMemory: { createMany: vi.fn(), findMany: vi.fn() },
     exerciseReport: { upsert: vi.fn() },
     courseRouteEntry: { findFirst: vi.fn() },
     $transaction: vi.fn(
@@ -44,7 +45,7 @@ describe('ExercisesService morphology diagnostics', () => {
     prisma.courseRouteDependency.findMany.mockResolvedValue([])
     prisma.userAttempt.findUnique.mockResolvedValue(null)
     prisma.userMemory.findMany.mockResolvedValue([])
-    prisma.userMemory.upsert.mockResolvedValue({})
+    prisma.userMemory.createMany.mockResolvedValue({ count: 0 })
     prisma.exercise.findFirst.mockResolvedValue({
       id: 'exercise.1',
       lessonId: 'lesson.1',
@@ -87,25 +88,16 @@ describe('ExercisesService morphology diagnostics', () => {
     })
     transaction.userMemory.findUnique.mockResolvedValue(null)
     transaction.userMemory.upsert.mockResolvedValue({})
+    transaction.userAttemptEvidence.create.mockResolvedValue({})
     transaction.userExerciseHistory.upsert.mockResolvedValue({})
     transaction.userAttempt.create.mockImplementation(
       ({ data }: { data: Record<string, unknown> }) => {
-        const evidence = (
-          data.evidence as {
-            create: Array<{
-              itemId: string
-              role: ExerciseItemRole
-              result: EvidenceResult
-            }>
-          }
-        ).create
         return {
           id: 'attempt.1',
           exerciseId: 'exercise.1',
           outcome: data.outcome as AttemptOutcome,
           normalizedAnswerText: data.normalizedAnswerText as string,
           diagnostics: data.diagnostics,
-          evidence,
         }
       },
     )
@@ -378,17 +370,16 @@ describe('ExercisesService morphology diagnostics', () => {
       },
       checkerVersion: 'structured-v5-split-lexical-grammar-evidence-voikko',
     })
-    expect(prisma.userMemory.upsert).toHaveBeenCalledWith({
-      where: {
-        userId_itemId: { userId: 'user.1', itemId: 'word.fi.first' },
-      },
-      update: {},
-      create: expect.objectContaining({
-        userId: 'user.1',
-        itemId: 'word.fi.first',
-        state: 'NEW',
-        dueAt: expect.any(Date),
-      }),
+    expect(prisma.userMemory.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          userId: 'user.1',
+          itemId: 'word.fi.first',
+          state: 'NEW',
+          dueAt: expect.any(Date),
+        }),
+      ],
+      skipDuplicates: true,
     })
   })
 
@@ -478,24 +469,20 @@ describe('ExercisesService morphology diagnostics', () => {
       }),
     ])
     expect(result.diagnostics[0]?.message.ru).not.toContain('minä')
-    expect(transaction.userAttempt.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          evidence: {
-            create: [
-              expect.objectContaining({
-                itemId: 'grammar.fi.olla',
-                result: EvidenceResult.FAILURE,
-              }),
-              expect.objectContaining({
-                itemId: 'word.fi.opiskelija',
-                result: EvidenceResult.SUCCESS,
-              }),
-            ],
-          },
-        }),
+    expect(transaction.userAttemptEvidence.create).toHaveBeenNthCalledWith(1, {
+      data: expect.objectContaining({
+        attemptId: 'attempt.1',
+        itemId: 'grammar.fi.olla',
+        result: EvidenceResult.FAILURE,
       }),
-    )
+    })
+    expect(transaction.userAttemptEvidence.create).toHaveBeenNthCalledWith(2, {
+      data: expect.objectContaining({
+        attemptId: 'attempt.1',
+        itemId: 'word.fi.opiskelija',
+        result: EvidenceResult.SUCCESS,
+      }),
+    })
   })
 
   it('accepts the correct olla form without the optional subject', async () => {

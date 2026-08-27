@@ -337,6 +337,7 @@ export class ExercisesService {
               ? null
               : 0,
     }))
+    await this.ensureExerciseMemories(userId, exercise.items)
     const now = new Date()
 
     try {
@@ -355,10 +356,13 @@ export class ExercisesService {
             generatorVersion: exercise.generated?.generatorVersion,
             durationMs: request.durationMs,
             answeredAt: now,
-            evidence: { create: evidence },
           },
-          include: { evidence: true },
         })
+        for (const itemEvidence of evidence) {
+          await transaction.userAttemptEvidence.create({
+            data: { attemptId: created.id, ...itemEvidence },
+          })
+        }
 
         for (const itemEvidence of evidence) {
           if (itemEvidence.result === EvidenceResult.IGNORED) {
@@ -424,7 +428,7 @@ export class ExercisesService {
           },
         })
 
-        return created as StoredAttempt
+        return { ...created, evidence } as StoredAttempt
       })
 
       return toAttemptResponse(attempt)
@@ -512,19 +516,14 @@ export class ExercisesService {
     items: Array<{ itemId: string; item: { kind: KnowledgeItemKind } }>,
   ): Promise<void> {
     const encounteredAt = new Date()
-    await Promise.all(
-      items.map(({ itemId }) =>
-        this.prisma.userMemory.upsert({
-          where: { userId_itemId: { userId, itemId } },
-          update: {},
-          create: {
-            userId,
-            itemId,
-            ...initialUserMemoryData(encounteredAt),
-          },
-        }),
-      ),
-    )
+    await this.prisma.userMemory.createMany({
+      data: items.map(({ itemId }) => ({
+        userId,
+        itemId,
+        ...initialUserMemoryData(encounteredAt),
+      })),
+      skipDuplicates: true,
+    })
   }
 }
 

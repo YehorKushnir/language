@@ -665,7 +665,9 @@ test('learner can move through the first lesson with keyboard controls', async (
     }),
   )
   const textTokens = textDetails.flatMap((text) => text.tokens)
-  expect(textTokens).toHaveLength(215)
+  expect(textTokens).toHaveLength(
+    textCatalog.items.reduce((total, text) => total + text.wordCount, 0),
+  )
   expect(
     textTokens.filter(
       (token) =>
@@ -688,21 +690,23 @@ test('learner can move through the first lesson with keyboard controls', async (
     )
   }
 
-  await page.getByRole('link', { name: 'Открыть Учебный день' }).click()
-  const analyzedWord = page.getByLabel('Aamulla: утром')
+  await page
+    .getByRole('link', { name: 'Открыть Первый день на курсах' })
+    .click()
+  const analyzedWord = page.getByLabel('Tänään: сегодня')
   await expect(analyzedWord).toBeVisible()
   await analyzedWord.hover()
   const hoverCard = page.locator('[data-slot="hover-card-content"]')
   await expect(hoverCard).toBeVisible()
-  await expect(hoverCard.getByText('утром', { exact: true })).toBeVisible()
-  await expect(hoverCard.getByText('Начальная форма: aamu')).toBeVisible()
+  await expect(hoverCard.getByText('сегодня', { exact: true })).toBeVisible()
+  await expect(hoverCard.getByText('Начальная форма: tänään')).toBeVisible()
   await expect(hoverCard.getByText('Форма в тексте')).toHaveCount(0)
   await expect(hoverCard.getByText('Формы слова')).toHaveCount(0)
   await expect(
     hoverCard.getByRole('button', { name: 'Добавить в изучаемое' }),
   ).toBeEnabled()
 
-  const verb = page.getByLabel('olen: я есть; я являюсь')
+  const verb = page.getByLabel('olen: я есть; я являюсь').first()
   await verb.hover()
   const verbHoverCard = page
     .locator('[data-slot="hover-card-content"]')
@@ -739,15 +743,32 @@ test('learner can move through the first lesson with keyboard controls', async (
 test('text-only vocabulary enters review as a flashcard', async ({ page }) => {
   await signUpLearner(page, 'Text word learner')
   await page.goto('/texts')
-  await page.getByRole('link', { name: 'Открыть Учебный день' }).click()
+  await page.getByRole('link', { name: 'Открыть Ужин-сюрприз' }).click()
 
   const textWord = page.getByLabel('Aamulla: утром')
-  await textWord.click()
+  await textWord.hover()
   const wordCard = page
     .locator('[data-slot="hover-card-content"]:visible')
     .last()
   await expect(wordCard.getByText('Начальная форма: aamu')).toBeVisible()
+  const addResponsePromise = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PUT' &&
+      /\/api\/v1\/me\/vocabulary\/[^/]+\/[^/]+$/u.test(
+        new URL(response.url()).pathname,
+      ),
+  )
   await wordCard.getByRole('button', { name: 'Добавить в изучаемое' }).click()
+  const addResponse = await addResponsePromise
+  expect(addResponse.ok()).toBe(true)
+  const added = (await addResponse.json()) as { itemId: string }
+  const courseResponse = await page.request.get('/api/v1/courses/course.ru-fi')
+  const course = (await courseResponse.json()) as { route: { id: string } }
+  const dueResponse = await page.request.put(
+    `/api/v1/me/vocabulary/${course.route.id}/${added.itemId}/status`,
+    { data: { status: 'NEW' } },
+  )
+  expect(dueResponse.ok()).toBe(true)
 
   await page.goto('/vocabulary')
   await expect(
