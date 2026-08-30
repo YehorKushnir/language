@@ -7,6 +7,7 @@ import {
   checkStructuredAnswer,
   checkStructuredAnswerItems,
   createInitialMemory,
+  isMemoryLearned,
   isReviewDue,
   normalizeExactAnswer,
   recordReview,
@@ -664,23 +665,6 @@ describe('review scheduler', () => {
     expect(memory.scheduledDays).toBeGreaterThan(0)
   })
 
-  it('manually returns a known word to new and due now', () => {
-    const known = changeWordMemoryStatus(
-      createInitialMemory(reviewedAt),
-      'KNOWN',
-      reviewedAt,
-    )
-    const resetAt = new Date('2026-08-23T09:00:00.000Z')
-    const reset = changeWordMemoryStatus(known, 'NEW', resetAt)
-
-    expect(reset).toMatchObject({
-      state: 'NEW',
-      dueAt: resetAt,
-      repetitions: 0,
-      stability: 0,
-    })
-  })
-
   it('manually marks a new word known but keeps a future review', () => {
     const known = changeWordMemoryStatus(
       createInitialMemory(reviewedAt),
@@ -694,6 +678,32 @@ describe('review scheduler', () => {
       scheduledDays: 60,
     })
     expect(known.dueAt).not.toBeNull()
+    expect(isMemoryLearned(known)).toBe(false)
+  })
+
+  it('presents an item as learned only after a successful 60-day review', () => {
+    const known = changeWordMemoryStatus(
+      createInitialMemory(reviewedAt),
+      'KNOWN',
+      reviewedAt,
+    )
+    const confirmed = recordReview(known, 'SUCCESS', known.dueAt)
+
+    expect(confirmed.wasScheduledReview).toBe(true)
+    expect(confirmed.memory.elapsedDays).toBe(60)
+    expect(isMemoryLearned(confirmed.memory)).toBe(true)
+  })
+
+  it('does not present an item as learned after a failed 60-day review', () => {
+    const known = changeWordMemoryStatus(
+      createInitialMemory(reviewedAt),
+      'KNOWN',
+      reviewedAt,
+    )
+    const failed = recordReview(known, 'FAILURE', known.dueAt)
+
+    expect(failed.wasScheduledReview).toBe(true)
+    expect(isMemoryLearned(failed.memory)).toBe(false)
   })
 
   it('manually marks a word learning with a short scheduled step', () => {

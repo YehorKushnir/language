@@ -44,7 +44,7 @@ export class VocabularyController {
   @Put(':routeVersionId/:itemId')
   @HttpCode(200)
   @ApiOperation({ summary: 'Добавить значение слова в очередь изучения' })
-  @ApiOkResponse({ description: 'Новое или существующее состояние памяти' })
+  @ApiOkResponse({ description: 'Созданное или существующее состояние памяти' })
   addToLearning(
     @CurrentUserId() userId: string,
     @Param('routeVersionId') routeVersionId: string,

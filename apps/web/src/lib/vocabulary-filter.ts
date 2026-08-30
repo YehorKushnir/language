@@ -5,7 +5,7 @@ import type {
 
 import { localizedText } from './localized-text'
 
-export type VocabularyFilter = 'all' | 'due' | 'new' | 'learning' | 'review'
+export type VocabularyFilter = 'all' | 'learning' | 'learned'
 
 export function matchesVocabularySearch(
   item: UserVocabularyItemResponse,
@@ -38,8 +38,5 @@ export function matchesVocabularyFilter(
   filter: VocabularyFilter,
 ) {
   if (filter === 'all') return true
-  if (filter === 'due') return item.memory.isDue
-  if (filter === 'new') return item.memory.state === 'NEW'
-  if (filter === 'review') return item.memory.state === 'REVIEW'
-  return item.memory.state === 'LEARNING' || item.memory.state === 'RELEARNING'
+  return item.memory.status === (filter === 'learned' ? 'LEARNED' : 'LEARNING')
 }

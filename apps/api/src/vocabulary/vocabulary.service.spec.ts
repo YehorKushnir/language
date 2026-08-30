@@ -49,6 +49,12 @@ describe('VocabularyService', () => {
         itemId: 'word.fi.opiskelija',
         state: MemoryState.REVIEW,
         dueAt: new Date('2020-01-01T00:00:00.000Z'),
+        lastReviewAt: new Date('2026-08-01T00:00:00.000Z'),
+        elapsedDays: 60,
+        scheduledDays: 120,
+        difficulty: 5,
+        stability: 120,
+        learningSteps: 0,
         repetitions: 2,
         lapses: 1,
         item: {
@@ -106,7 +112,7 @@ describe('VocabularyService', () => {
       routeVersionId: 'route.1',
       totalCount: 1,
       dueCount: 1,
-      counts: { all: 1, due: 1, new: 0, learning: 0, review: 1 },
+      counts: { all: 1, due: 1, learning: 0, learned: 1 },
       items: [
         {
           itemId: 'word.fi.opiskelija',
@@ -146,6 +152,7 @@ describe('VocabularyService', () => {
           },
           memory: {
             state: MemoryState.REVIEW,
+            status: 'LEARNED',
             dueAt: '2020-01-01T00:00:00.000Z',
             isDue: true,
             repetitions: 2,
@@ -153,7 +160,7 @@ describe('VocabularyService', () => {
           },
         },
       ],
-      grammarCounts: { all: 0, due: 0, new: 0, learning: 0, review: 0 },
+      grammarCounts: { all: 0, due: 0, learning: 0, learned: 0 },
       grammarItems: [],
     })
     expect(prisma.userMemory.findMany).toHaveBeenCalledWith(
@@ -174,9 +181,9 @@ describe('VocabularyService', () => {
       routeVersionId: 'route.1',
       totalCount: 0,
       dueCount: 0,
-      counts: { all: 0, due: 0, new: 0, learning: 0, review: 0 },
+      counts: { all: 0, due: 0, learning: 0, learned: 0 },
       items: [],
-      grammarCounts: { all: 0, due: 0, new: 0, learning: 0, review: 0 },
+      grammarCounts: { all: 0, due: 0, learning: 0, learned: 0 },
       grammarItems: [],
     })
   })
@@ -191,6 +198,12 @@ describe('VocabularyService', () => {
         itemId: 'grammar.fi.present.common',
         state: MemoryState.RELEARNING,
         dueAt: new Date('2020-01-01T00:00:00.000Z'),
+        lastReviewAt: new Date('2026-08-01T00:00:00.000Z'),
+        elapsedDays: 60,
+        scheduledDays: 0,
+        difficulty: 5,
+        stability: 1,
+        learningSteps: 1,
         repetitions: 3,
         lapses: 2,
         item: {
@@ -221,9 +234,9 @@ describe('VocabularyService', () => {
       routeVersionId: 'route.1',
       totalCount: 1,
       dueCount: 1,
-      counts: { all: 0, due: 0, new: 0, learning: 0, review: 0 },
+      counts: { all: 0, due: 0, learning: 0, learned: 0 },
       items: [],
-      grammarCounts: { all: 1, due: 1, new: 0, learning: 1, review: 0 },
+      grammarCounts: { all: 1, due: 1, learning: 1, learned: 0 },
       grammarItems: [
         {
           itemId: 'grammar.fi.present.common',
@@ -239,6 +252,7 @@ describe('VocabularyService', () => {
           },
           memory: {
             state: MemoryState.RELEARNING,
+            status: 'LEARNING',
             dueAt: '2020-01-01T00:00:00.000Z',
             isDue: true,
             repetitions: 3,
@@ -391,7 +405,7 @@ describe('VocabularyService', () => {
     expect(prisma.userMemory.update).not.toHaveBeenCalled()
   })
 
-  it('manually returns a mature word to new and due practice', async () => {
+  it('manually returns a mature word to active learning', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-08-26T12:00:00.000Z'))
     prisma.knowledgeItem.findFirst.mockResolvedValue({
@@ -420,21 +434,21 @@ describe('VocabularyService', () => {
         'user.1',
         'route.1',
         'word.fi.opiskelija',
-        'NEW',
+        'LEARNING',
       ),
     ).resolves.toEqual({
       itemId: 'word.fi.opiskelija',
-      state: MemoryState.NEW,
-      dueAt: '2026-08-26T12:00:00.000Z',
-      repetitions: 0,
+      state: MemoryState.LEARNING,
+      dueAt: '2026-08-26T12:10:00.000Z',
+      repetitions: 1,
       lapses: 0,
     })
     expect(prisma.userMemory.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         update: expect.objectContaining({
-          state: MemoryState.NEW,
-          dueAt: new Date('2026-08-26T12:00:00.000Z'),
-          repetitions: 0,
+          state: MemoryState.LEARNING,
+          dueAt: new Date('2026-08-26T12:10:00.000Z'),
+          repetitions: 1,
         }),
       }),
     )

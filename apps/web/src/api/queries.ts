@@ -129,9 +129,19 @@ export function preparedTextQuery(routeVersionId: string, textId: string) {
 export function nextReviewQuery(
   routeVersionId: string,
   excludedExerciseIds: string[] = [],
+  sequence = 0,
 ) {
   return queryOptions({
-    queryKey: ['next-review', routeVersionId, 'ru', excludedExerciseIds],
+    queryKey: [
+      'next-review',
+      routeVersionId,
+      'ru',
+      excludedExerciseIds,
+      sequence,
+    ],
     queryFn: () => getNextReview(routeVersionId, 'ru', excludedExerciseIds),
+    // A prefetched step gets its own sequence key. Keep it fresh long enough
+    // for the user to read the feedback and continue without a second request.
+    staleTime: sequence > 0 ? 30_000 : 0,
   })
 }

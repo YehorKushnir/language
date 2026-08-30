@@ -33,6 +33,7 @@ const item: UserVocabularyItemResponse = {
   },
   memory: {
     state: 'RELEARNING',
+    status: 'LEARNING',
     dueAt: '2026-08-23T00:00:00.000Z',
     isDue: true,
     repetitions: 2,
@@ -52,6 +53,7 @@ const grammarItem: UserGrammarItemResponse = {
   },
   memory: {
     state: 'RELEARNING',
+    status: 'LEARNING',
     dueAt: '2026-08-23T00:00:00.000Z',
     isDue: true,
     repetitions: 1,
@@ -67,10 +69,9 @@ describe('vocabulary filters', () => {
     expect(matchesVocabularySearch(item, 'учится')).toBe(false)
   })
 
-  it('groups relearning words under learning and due independently', () => {
+  it('groups every unconfirmed word under learning', () => {
     expect(matchesVocabularyFilter(item, 'learning')).toBe(true)
-    expect(matchesVocabularyFilter(item, 'due')).toBe(true)
-    expect(matchesVocabularyFilter(item, 'review')).toBe(false)
+    expect(matchesVocabularyFilter(item, 'learned')).toBe(false)
   })
 
   it('searches grammar by its name, description, and lesson', () => {

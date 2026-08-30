@@ -11,6 +11,7 @@ import {
 import {
   changeWordMemoryStatus,
   createInitialMemory,
+  isMemoryLearned,
   recordReview,
 } from '@language/domain'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
@@ -177,6 +178,9 @@ export class VocabularyService {
                 },
             memory: {
               state: memory.state,
+              status: isMemoryLearned(toReviewMemorySnapshot(memory))
+                ? 'LEARNED'
+                : 'LEARNING',
               dueAt: memory.dueAt.toISOString(),
               isDue: memory.dueAt <= now,
               repetitions: memory.repetitions,
@@ -219,6 +223,9 @@ export class VocabularyService {
               },
           memory: {
             state: memory.state,
+            status: isMemoryLearned(toReviewMemorySnapshot(memory))
+              ? 'LEARNED'
+              : 'LEARNING',
             dueAt: memory.dueAt.toISOString(),
             isDue: memory.dueAt <= now,
             repetitions: memory.repetitions,
@@ -403,20 +410,17 @@ function toStudyResponse(memory: {
 
 function createMemoryCounts(
   items: Array<{
-    memory: { state: MemoryState; isDue: boolean }
+    memory: {
+      status: UserVocabularyResponse['items'][number]['memory']['status']
+      isDue: boolean
+    }
   }>,
 ) {
   return {
     all: items.length,
     due: items.filter((item) => item.memory.isDue).length,
-    new: items.filter((item) => item.memory.state === MemoryState.NEW).length,
-    learning: items.filter(
-      (item) =>
-        item.memory.state === MemoryState.LEARNING ||
-        item.memory.state === MemoryState.RELEARNING,
-    ).length,
-    review: items.filter((item) => item.memory.state === MemoryState.REVIEW)
-      .length,
+    learning: items.filter((item) => item.memory.status === 'LEARNING').length,
+    learned: items.filter((item) => item.memory.status === 'LEARNED').length,
   }
 }
 

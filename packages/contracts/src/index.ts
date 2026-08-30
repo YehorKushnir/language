@@ -258,6 +258,7 @@ export interface LessonVocabularyAnswerResponse {
 }
 
 export type ReviewMemoryState = 'NEW' | 'LEARNING' | 'REVIEW' | 'RELEARNING'
+export type VocabularyKnowledgeStatus = 'LEARNING' | 'LEARNED'
 
 export interface ReviewQueueItemResponse {
   itemId: string
@@ -322,6 +323,7 @@ export interface UserVocabularyItemResponse extends LessonVocabularyItemResponse
       }
   memory: {
     state: ReviewMemoryState
+    status: VocabularyKnowledgeStatus
     dueAt: string | null
     isDue: boolean
     repetitions: number
@@ -347,6 +349,7 @@ export interface UserGrammarItemResponse {
       }
   memory: {
     state: ReviewMemoryState
+    status: VocabularyKnowledgeStatus
     dueAt: string | null
     isDue: boolean
     repetitions: number
@@ -361,17 +364,15 @@ export interface UserVocabularyResponse {
   counts: {
     all: number
     due: number
-    new: number
     learning: number
-    review: number
+    learned: number
   }
   items: UserVocabularyItemResponse[]
   grammarCounts: {
     all: number
     due: number
-    new: number
     learning: number
-    review: number
+    learned: number
   }
   grammarItems: UserGrammarItemResponse[]
 }
@@ -594,7 +595,7 @@ export interface VocabularyStudyRequest {
   result: VocabularyStudyResult
 }
 
-export type WordMemoryStatus = 'NEW' | 'LEARNING' | 'KNOWN'
+export type WordMemoryStatus = 'LEARNING' | 'KNOWN'
 
 export interface ChangeWordMemoryStatusRequest {
   status: WordMemoryStatus

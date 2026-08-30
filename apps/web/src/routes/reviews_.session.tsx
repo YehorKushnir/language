@@ -49,13 +49,16 @@ function ReviewSessionPage() {
   const [answer, setAnswer] = useState('')
   const [completedExerciseIds, setCompletedExerciseIds] = useState<string[]>([])
   const [completedItemCount, setCompletedItemCount] = useState(0)
+  const [reviewSequence, setReviewSequence] = useState(0)
+  const [isAdvancing, setIsAdvancing] = useState(false)
   const [flashcardRevealed, setFlashcardRevealed] = useState(false)
   const answerInput = useRef<HTMLInputElement>(null)
   const initialDueCount = useRef<number | null>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
   const openedAt = useRef(Date.now())
+  const nextReviewPrefetch = useRef<Promise<void> | null>(null)
   const review = useQuery({
-    ...nextReviewQuery(routeVersionId, completedExerciseIds),
+    ...nextReviewQuery(routeVersionId, completedExerciseIds, reviewSequence),
     enabled: Boolean(routeVersionId),
   })
   const attempt = useMutation({
@@ -72,7 +75,17 @@ function ReviewSessionPage() {
         durationMs: Date.now() - openedAt.current,
       })
     },
-    onSuccess: async () => {
+    onSuccess: async (result) => {
+      const exercise = review.data?.exercise
+      if (result.isCorrect && exercise) {
+        nextReviewPrefetch.current = queryClient.prefetchQuery(
+          nextReviewQuery(
+            routeVersionId,
+            [...completedExerciseIds, exercise.id],
+            reviewSequence + 1,
+          ),
+        )
+      }
       idempotencyKey.current = crypto.randomUUID()
       openedAt.current = Date.now()
       await Promise.all([
@@ -92,6 +105,13 @@ function ReviewSessionPage() {
       return reviewVocabularyItem(routeVersionId, flashcard.itemId, { result })
     },
     onSuccess: async () => {
+      nextReviewPrefetch.current = queryClient.prefetchQuery(
+        nextReviewQuery(
+          routeVersionId,
+          completedExerciseIds,
+          reviewSequence + 1,
+        ),
+      )
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: courseProgressQuery(routeVersionId).queryKey,
@@ -148,23 +168,43 @@ function ReviewSessionPage() {
     attempt.reset()
   }
 
-  function nextExercise() {
+  async function nextExercise() {
     if (!exercise) return
-    setCompletedExerciseIds((ids) => [...ids, exercise.id])
+    const nextCompletedExerciseIds = [...completedExerciseIds, exercise.id]
+    setIsAdvancing(true)
+    nextReviewPrefetch.current ??= queryClient.prefetchQuery(
+      nextReviewQuery(
+        routeVersionId,
+        nextCompletedExerciseIds,
+        reviewSequence + 1,
+      ),
+    )
+    await nextReviewPrefetch.current
+    nextReviewPrefetch.current = null
+    setCompletedExerciseIds(nextCompletedExerciseIds)
     setCompletedItemCount(
       (count) => count + Math.max(1, exercise.reviewItemIds.length),
     )
+    setReviewSequence((sequence) => sequence + 1)
     setAnswer('')
     attempt.reset()
     idempotencyKey.current = crypto.randomUUID()
     openedAt.current = Date.now()
+    setIsAdvancing(false)
   }
 
   async function nextFlashcard() {
+    setIsAdvancing(true)
+    nextReviewPrefetch.current ??= queryClient.prefetchQuery(
+      nextReviewQuery(routeVersionId, completedExerciseIds, reviewSequence + 1),
+    )
+    await nextReviewPrefetch.current
+    nextReviewPrefetch.current = null
     setCompletedItemCount((count) => count + 1)
+    setReviewSequence((sequence) => sequence + 1)
     setFlashcardRevealed(false)
     flashcardReview.reset()
-    await review.refetch()
+    setIsAdvancing(false)
   }
 
   if (flashcard) {
@@ -173,6 +213,7 @@ function ReviewSessionPage() {
         completed={completed}
         error={flashcardReview.error?.message}
         flashcard={flashcard}
+        advancing={isAdvancing}
         pending={flashcardReview.isPending}
         result={flashcardReview.data ? flashcardReview.variables : undefined}
         revealed={flashcardRevealed}
@@ -337,8 +378,17 @@ function ReviewSessionPage() {
             </Button>
           ) : null}
           {exerciseCompleted ? (
-            <Button autoFocus onClick={nextExercise}>
-              Продолжить <ArrowRightIcon />
+            <Button
+              autoFocus
+              disabled={isAdvancing}
+              onClick={() => void nextExercise()}
+            >
+              {isAdvancing ? (
+                <LoaderCircleIcon className="animate-spin" />
+              ) : (
+                <ArrowRightIcon />
+              )}
+              Продолжить
             </Button>
           ) : null}
         </div>
@@ -348,6 +398,7 @@ function ReviewSessionPage() {
 }
 
 function ReviewFlashcard({
+  advancing,
   completed,
   error,
   flashcard,
@@ -359,6 +410,7 @@ function ReviewFlashcard({
   onRate,
   onReveal,
 }: {
+  advancing: boolean
   completed: number
   error?: string
   flashcard: PreparedReviewFlashcardResponse
@@ -444,9 +496,15 @@ function ReviewFlashcard({
             <Button
               ref={continueButton}
               className="col-span-2"
+              disabled={advancing}
               onClick={onContinue}
             >
-              Продолжить <ArrowRightIcon />
+              {advancing ? (
+                <LoaderCircleIcon className="animate-spin" />
+              ) : (
+                <ArrowRightIcon />
+              )}
+              Продолжить
             </Button>
           ) : (
             <>

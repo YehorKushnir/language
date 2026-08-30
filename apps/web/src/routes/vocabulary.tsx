@@ -1,7 +1,7 @@
 import type {
-  ReviewMemoryState,
   UserGrammarItemResponse,
   UserVocabularyItemResponse,
+  VocabularyKnowledgeStatus,
   WordMemoryStatus,
 } from '@language/contracts'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -60,10 +60,8 @@ export const Route = createFileRoute('/vocabulary')({
 
 const filters: Array<{ id: VocabularyFilter; label: string }> = [
   { id: 'all', label: 'Все' },
-  { id: 'due', label: 'Пора повторить' },
-  { id: 'new', label: 'Новые' },
   { id: 'learning', label: 'Изучаются' },
-  { id: 'review', label: 'Выучены' },
+  { id: 'learned', label: 'Выучены' },
 ]
 
 interface VocabularySearch {
@@ -74,18 +72,14 @@ interface VocabularySearch {
 
 type VocabularySection = 'words' | 'grammar'
 
-const stateLabels: Record<ReviewMemoryState, string> = {
-  NEW: 'Новое',
+const stateLabels: Record<VocabularyKnowledgeStatus, string> = {
   LEARNING: 'Изучается',
-  REVIEW: 'Выучено',
-  RELEARNING: 'Изучается',
+  LEARNED: 'Выучено',
 }
 
-const stateClasses: Record<ReviewMemoryState, string> = {
-  NEW: 'border-border/70 bg-muted/55 text-muted-foreground',
+const stateClasses: Record<VocabularyKnowledgeStatus, string> = {
   LEARNING: 'border-primary/20 bg-primary/10 text-primary',
-  REVIEW: 'border-primary/20 bg-primary/12 text-primary',
-  RELEARNING: 'border-primary/20 bg-primary/10 text-primary',
+  LEARNED: 'border-primary/20 bg-primary/12 text-primary',
 }
 
 function VocabularyPage() {
@@ -382,10 +376,10 @@ function VocabularyList({
                 </span>
                 <span className="flex items-center justify-end">
                   <Badge
-                    className={stateClasses[item.memory.state]}
+                    className={stateClasses[item.memory.status]}
                     variant="outline"
                   >
-                    {stateLabels[item.memory.state]}
+                    {stateLabels[item.memory.status]}
                   </Badge>
                 </span>
                 <ChevronDownIcon
@@ -451,10 +445,10 @@ function GrammarList({ items }: { items: UserGrammarItemResponse[] }) {
             </p>
             <span className="flex items-center justify-end">
               <Badge
-                className={stateClasses[item.memory.state]}
+                className={stateClasses[item.memory.status]}
                 variant="outline"
               >
-                {stateLabels[item.memory.state]}
+                {stateLabels[item.memory.status]}
               </Badge>
             </span>
           </li>
@@ -486,7 +480,7 @@ function VocabularyDetails({
     matchesVocabularyFormSelections(form, selections),
   )
   const hasSelections = Object.values(selections).some(Boolean)
-  const memoryStatus = toWordMemoryStatus(item.memory.state)
+  const memoryStatus = toWordMemoryStatus(item.memory.status)
 
   return (
     <div
@@ -533,7 +527,6 @@ function VocabularyDetails({
                   onStatusChange(event.target.value as WordMemoryStatus)
                 }
               >
-                <option value="NEW">Новое</option>
                 <option value="LEARNING">Изучается</option>
                 <option value="KNOWN">Выучено</option>
               </select>
@@ -733,10 +726,10 @@ function VocabularyDetails({
   )
 }
 
-function toWordMemoryStatus(state: ReviewMemoryState): WordMemoryStatus {
-  if (state === 'NEW') return 'NEW'
-  if (state === 'REVIEW') return 'KNOWN'
-  return 'LEARNING'
+function toWordMemoryStatus(
+  status: VocabularyKnowledgeStatus,
+): WordMemoryStatus {
+  return status === 'LEARNED' ? 'KNOWN' : 'LEARNING'
 }
 
 function formatWordCount(count: number) {

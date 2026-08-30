@@ -20,7 +20,7 @@ export interface ReviewSchedule extends ReviewMemorySnapshot {
   lastReviewAt: Date
 }
 
-export type WordMemoryStatus = 'NEW' | 'LEARNING' | 'KNOWN'
+export type WordMemoryStatus = 'LEARNING' | 'KNOWN'
 
 export interface RecordedReview {
   memory: ReviewMemorySnapshot
@@ -102,20 +102,25 @@ export function recordReview(
   }
 }
 
+/**
+ * A knowledge item is only presented as learned after the user has retained it
+ * across an interval of at least 60 days and then answered the scheduled review
+ * correctly. The scheduler's internal states remain independent from this
+ * user-facing status.
+ */
+export function isMemoryLearned(memory: ReviewMemorySnapshot): boolean {
+  return (
+    memory.state === 'REVIEW' &&
+    memory.lastReviewAt !== null &&
+    memory.elapsedDays >= KNOWN_REVIEW_INTERVAL_DAYS
+  )
+}
+
 export function changeWordMemoryStatus(
   memory: ReviewMemorySnapshot,
   status: WordMemoryStatus,
   changedAt: Date,
 ): ReviewMemorySnapshot {
-  if (status === 'NEW') {
-    return {
-      ...createInitialMemory(changedAt),
-      // An explicit "don't know" choice should return the word to the front
-      // of practice immediately, unlike a first passive encounter.
-      dueAt: changedAt,
-    }
-  }
-
   if (status === 'LEARNING') {
     return scheduleReview(null, 'FAILURE', changedAt)
   }
