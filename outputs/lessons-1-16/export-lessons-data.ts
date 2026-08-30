@@ -1,4 +1,5 @@
 import { writeFile } from 'node:fs/promises'
+import { format, resolveConfig } from 'prettier'
 
 import { moduleOneLessons } from '../../content/courses/ru-fi/module-one.js'
 
@@ -16,9 +17,14 @@ const lessons = moduleOneLessons.map((lesson) => ({
 }))
 
 async function main() {
+  const prettierConfig = await resolveConfig(process.cwd())
+
   await writeFile(
     'outputs/lessons-1-16/lessons-data.json',
-    JSON.stringify(lessons, null, 2),
+    await format(JSON.stringify(lessons), {
+      ...prettierConfig,
+      parser: 'json',
+    }),
     'utf8',
   )
 }
