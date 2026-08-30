@@ -27,6 +27,8 @@ describe('TextsService', () => {
     level: 'A1',
     topics: ['знакомство'],
     body: 'Minä olen opiskelija.',
+    audioTimingChecksum: null,
+    audioSegments: null,
     status: ContentStatus.CURATED,
     audioAssets: [],
     knowledgeItems: [
@@ -183,6 +185,7 @@ describe('TextsService', () => {
 
     const result = await service.getText('user.1', 'route.1', 'text.fi.test')
 
+    expect(result.audioSegments).toEqual([])
     expect(result.tokens[0]).toMatchObject({
       surface: 'Minä',
       lemma: 'minä',
@@ -227,6 +230,53 @@ describe('TextsService', () => {
         memory: { state: MemoryState.REVIEW, repetitions: 2 },
       },
     })
+  })
+
+  it('returns exact sentence timing only for the matching audio file', async () => {
+    const audioSegments = [
+      {
+        charStart: 0,
+        charEnd: preparedText.body.length,
+        audioStartMs: 0,
+        audioEndMs: 2100,
+      },
+    ]
+    prisma.text.findFirst.mockResolvedValue({
+      ...preparedText,
+      audioTimingChecksum: 'matching-checksum',
+      audioSegments,
+      audioAssets: [
+        {
+          variant: 'normal',
+          audioAsset: {
+            url: '/audio/text.mp3',
+            checksum: 'matching-checksum',
+          },
+        },
+      ],
+    })
+
+    await expect(
+      service.getText('user.1', 'route.1', 'text.fi.test'),
+    ).resolves.toMatchObject({ audioSegments })
+
+    prisma.text.findFirst.mockResolvedValue({
+      ...preparedText,
+      audioTimingChecksum: 'old-checksum',
+      audioSegments,
+      audioAssets: [
+        {
+          variant: 'normal',
+          audioAsset: {
+            url: '/audio/text.mp3',
+            checksum: 'new-checksum',
+          },
+        },
+      ],
+    })
+    await expect(
+      service.getText('user.1', 'route.1', 'text.fi.test'),
+    ).resolves.toMatchObject({ audioSegments: [] })
   })
 
   it('rejects an unknown route before querying texts', async () => {

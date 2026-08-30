@@ -432,8 +432,16 @@ export interface PreparedTextTokenResponse {
   lexical: PreparedTextTokenLexicalResponse | null
 }
 
+export interface PreparedTextAudioSegmentResponse {
+  charStart: number
+  charEnd: number
+  audioStartMs: number
+  audioEndMs: number
+}
+
 export interface PreparedTextDetailResponse extends PreparedTextSummaryResponse {
   body: string
+  audioSegments: PreparedTextAudioSegmentResponse[]
   tokens: PreparedTextTokenResponse[]
 }
 

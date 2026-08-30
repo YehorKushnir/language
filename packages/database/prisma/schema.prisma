@@ -621,15 +621,17 @@ model ExerciseReport {
 }
 
 model Text {
-  id        String        @id
-  courseId  String
-  title     Json
-  level     String
-  topics    String[]
-  body      String
-  status    ContentStatus @default(DRAFT)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id                  String        @id
+  courseId            String
+  title               Json
+  level               String
+  topics              String[]
+  body                String
+  audioTimingChecksum String?
+  audioSegments       Json?
+  status              ContentStatus @default(DRAFT)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   course         Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
   audioAssets    TextAudioAsset[]

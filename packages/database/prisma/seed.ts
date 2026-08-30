@@ -656,6 +656,8 @@ async function seedTexts() {
         level: text.level,
         topics: text.topics,
         body: text.body,
+        audioTimingChecksum: text.audioTimingChecksum,
+        audioSegments: text.audioSegments as unknown as Prisma.InputJsonValue,
         status: ContentStatus.CURATED,
       },
       create: {
@@ -665,6 +667,8 @@ async function seedTexts() {
         level: text.level,
         topics: text.topics,
         body: text.body,
+        audioTimingChecksum: text.audioTimingChecksum,
+        audioSegments: text.audioSegments as unknown as Prisma.InputJsonValue,
         status: ContentStatus.CURATED,
       },
     })

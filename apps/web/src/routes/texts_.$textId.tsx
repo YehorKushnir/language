@@ -85,8 +85,9 @@ function PreparedTextPage() {
   >(null)
   const normalAudioRef = useRef<AudioButtonHandle>(null)
   const playbackSegments = useMemo(
-    () => getTextPlaybackSegments(text.data?.body ?? ''),
-    [text.data?.body],
+    () =>
+      getTextPlaybackSegments(text.data?.body ?? '', text.data?.audioSegments),
+    [text.data?.audioSegments, text.data?.body],
   )
 
   useEffect(() => {
@@ -114,13 +115,18 @@ function PreparedTextPage() {
   }
   const playSentence = (segmentIndex: number) => {
     if (!textData.audioUrl) return
+    const exactStartTime = getTextPlaybackSegmentStartTime(
+      playbackSegments,
+      segmentIndex,
+    )
     normalAudioRef.current?.playFrom(
-      (duration) =>
-        getTextPlaybackSegmentStartTime(
-          playbackSegments,
-          segmentIndex,
-          duration,
-        ) ?? 0,
+      exactStartTime ??
+        ((duration) =>
+          getTextPlaybackSegmentStartTime(
+            playbackSegments,
+            segmentIndex,
+            duration,
+          ) ?? 0),
     )
     setRequestedPlaybackSegment(segmentIndex)
   }

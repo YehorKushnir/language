@@ -1,5 +1,6 @@
 import type {
   FinnishWordAnalysisResponse,
+  PreparedTextAudioSegmentResponse,
   PreparedTextCatalogResponse,
   PreparedTextDetailResponse,
   PreparedTextSummaryResponse,
@@ -28,9 +29,11 @@ interface TextWithTokens {
   level: string
   topics: string[]
   body: string
+  audioTimingChecksum: string | null
+  audioSegments: unknown
   audioAssets: Array<{
     variant: string
-    audioAsset: { url: string }
+    audioAsset: { url: string; checksum: string }
   }>
   knowledgeItems: Array<{
     itemId: string
@@ -75,7 +78,10 @@ interface TextWithTokens {
 const textInclude = (userId: string) => ({
   audioAssets: {
     where: { variant: 'normal' },
-    select: { variant: true, audioAsset: { select: { url: true } } },
+    select: {
+      variant: true,
+      audioAsset: { select: { url: true, checksum: true } },
+    },
   },
   knowledgeItems: {
     include: { item: { include: { skill: true } } },
@@ -201,6 +207,9 @@ export class TextsService {
       ),
     )
     const morphology = await this.morphology.analyzeText(value.body)
+    const normalAudio = value.audioAssets.find(
+      (audio) => audio.variant === 'normal',
+    )?.audioAsset
     const analysesByRange = new Map(
       morphology.tokens.map((token) => [
         `${token.charStart}:${token.charEnd}`,
@@ -210,6 +219,10 @@ export class TextsService {
     return {
       ...this.toSummary(value, isTextGrammarReady(value, unlockedItemIds)),
       body: value.body,
+      audioSegments:
+        normalAudio?.checksum === value.audioTimingChecksum
+          ? toPreparedTextAudioSegments(value.audioSegments, value.body)
+          : [],
       tokens: value.tokens.map((token) =>
         this.toToken(
           token,
@@ -246,7 +259,7 @@ export class TextsService {
     ).length
     const normalAudio = text.audioAssets.find(
       (audio) => audio.variant === 'normal',
-    )?.audioAsset.url
+    )?.audioAsset
     return {
       id: text.id,
       title: toLocalizedText(text.title),
@@ -265,7 +278,7 @@ export class TextsService {
           ? 0
           : Math.round((knownWordCount / text.tokens.length) * 100),
       isGrammarReady,
-      audioUrl: this.media.resolve(normalAudio),
+      audioUrl: this.media.resolve(normalAudio?.url),
     }
   }
 
@@ -434,6 +447,56 @@ function toAnalysis(value: unknown): Record<string, string> {
       typeof item === 'string' ? [[key, item]] : [],
     ),
   )
+}
+
+function toPreparedTextAudioSegments(
+  value: unknown,
+  body: string,
+): PreparedTextAudioSegmentResponse[] {
+  if (!Array.isArray(value) || value.length === 0) return []
+
+  const segments: PreparedTextAudioSegmentResponse[] = []
+  for (const item of value) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return []
+    const candidate = item as Record<string, unknown>
+    const segment = {
+      charStart: candidate.charStart,
+      charEnd: candidate.charEnd,
+      audioStartMs: candidate.audioStartMs,
+      audioEndMs: candidate.audioEndMs,
+    }
+    if (
+      !Number.isInteger(segment.charStart) ||
+      !Number.isInteger(segment.charEnd) ||
+      !Number.isInteger(segment.audioStartMs) ||
+      !Number.isInteger(segment.audioEndMs)
+    ) {
+      return []
+    }
+
+    const prepared = segment as PreparedTextAudioSegmentResponse
+    const previous = segments.at(-1)
+    if (
+      prepared.charStart < 0 ||
+      prepared.charEnd <= prepared.charStart ||
+      prepared.charEnd > body.length ||
+      prepared.audioStartMs < 0 ||
+      prepared.audioEndMs <= prepared.audioStartMs ||
+      body.slice(prepared.charStart, prepared.charEnd).trim().length === 0 ||
+      (previous
+        ? previous.charEnd > prepared.charStart ||
+          previous.audioEndMs !== prepared.audioStartMs ||
+          body.slice(previous.charEnd, prepared.charStart).trim().length > 0
+        : prepared.audioStartMs !== 0 ||
+          body.slice(0, prepared.charStart).trim().length > 0)
+    ) {
+      return []
+    }
+    segments.push(prepared)
+  }
+
+  const last = segments.at(-1)
+  return last && body.slice(last.charEnd).trim().length === 0 ? segments : []
 }
 
 function selectRecommendedText(

@@ -4,6 +4,10 @@ import {
   finnishLearnerDictionaryItemId,
   getFinnishLearnerDictionaryEntry,
 } from '../../../../packages/language-fi/src/learner-dictionary.js'
+import {
+  preparedTextAudioTimings,
+  type PreparedTextAudioSegment,
+} from './fi.olla.introductions.audio.js'
 
 interface TokenReference {
   lemma: string
@@ -18,6 +22,8 @@ interface PreparedTextSeed {
   level: string
   topics: string[]
   body: string
+  audioTimingChecksum: string
+  audioSegments: PreparedTextAudioSegment[]
   knowledgeItemIds: string[]
   tokens: Array<{
     position: number
@@ -373,6 +379,14 @@ function tokenize(body: string): PreparedTextSeed['tokens'] {
 
 function createText(definition: TextDefinition): PreparedTextSeed {
   const tokens = tokenize(definition.body)
+  const audioTiming = preparedTextAudioTimings[definition.id]
+  if (!audioTiming) {
+    throw new Error(
+      `Audio timing is missing for prepared text ${definition.id}`,
+    )
+  }
+  validateAudioTiming(definition.id, definition.body, audioTiming.segments)
+
   return {
     id: definition.id,
     courseId: 'course.ru-fi',
@@ -380,6 +394,8 @@ function createText(definition: TextDefinition): PreparedTextSeed {
     level: definition.level,
     topics: definition.topics,
     body: definition.body,
+    audioTimingChecksum: audioTiming.checksum,
+    audioSegments: audioTiming.segments,
     tokens,
     knowledgeItemIds: [
       ...new Set([
@@ -390,6 +406,69 @@ function createText(definition: TextDefinition): PreparedTextSeed {
       ]),
     ],
   }
+}
+
+function validateAudioTiming(
+  textId: string,
+  body: string,
+  audioSegments: PreparedTextAudioSegment[],
+): void {
+  const sentenceRanges = getSentenceRanges(body)
+  if (sentenceRanges.length !== audioSegments.length) {
+    throw new Error(
+      `Audio timing for ${textId} has ${audioSegments.length} segments, expected ${sentenceRanges.length}`,
+    )
+  }
+
+  for (const [index, segment] of audioSegments.entries()) {
+    const range = sentenceRanges[index]
+    const next = audioSegments[index + 1]
+    if (
+      !range ||
+      segment.charStart !== range.charStart ||
+      segment.charEnd !== range.charEnd ||
+      segment.audioStartMs < 0 ||
+      segment.audioEndMs <= segment.audioStartMs ||
+      (next && segment.audioEndMs !== next.audioStartMs)
+    ) {
+      throw new Error(`Audio timing segment ${index} is invalid for ${textId}`)
+    }
+  }
+}
+
+function getSentenceRanges(
+  body: string,
+): Array<{ charStart: number; charEnd: number }> {
+  const sentenceEndings = new Set(['.', '!', '?'])
+  const closingPunctuation = new Set(['"', "'", '»', '”', '’', ')', ']'])
+  const ranges: Array<{ charStart: number; charEnd: number }> = []
+  let charStart = skipWhitespace(body, 0)
+
+  for (let index = charStart; index < body.length; index += 1) {
+    if (!sentenceEndings.has(body[index] ?? '')) continue
+
+    let charEnd = index + 1
+    while (
+      charEnd < body.length &&
+      closingPunctuation.has(body[charEnd] ?? '')
+    ) {
+      charEnd += 1
+    }
+    if (charEnd < body.length && !/\s/u.test(body[charEnd] ?? '')) continue
+
+    ranges.push({ charStart, charEnd })
+    charStart = skipWhitespace(body, charEnd)
+    index = charStart - 1
+  }
+
+  if (charStart < body.length) ranges.push({ charStart, charEnd: body.length })
+  return ranges
+}
+
+function skipWhitespace(value: string, start: number): number {
+  let index = start
+  while (index < value.length && /\s/u.test(value[index] ?? '')) index += 1
+  return index
 }
 
 function skillItemIdsForLessons(from: number, to: number): string[] {
