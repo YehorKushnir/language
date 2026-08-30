@@ -48,7 +48,7 @@ export interface FinnishMorphologyContentReport {
 
 export function validateCourseContent(): CourseContentValidationReport {
   assertLessonOneContent()
-  const lessons = moduleOneLessons.map((lesson) =>
+  const lessons = moduleOneLessons.map((lesson, lessonIndex) =>
     validateLessonBundle(
       {
         lessonId: lesson.id,
@@ -57,6 +57,11 @@ export function validateCourseContent(): CourseContentValidationReport {
         exercises: lesson.exercises,
       },
       {
+        allowedVocabularyItemIds: moduleOneLessons
+          .slice(0, lessonIndex + 1)
+          .flatMap((availableLesson) =>
+            availableLesson.vocabulary.map((item) => item.itemId),
+          ),
         expectedExerciseCount: 60,
         minimumExampleCount: 12,
         minimumVocabularyCount: lesson.lessonPosition === 1 ? 10 : 26,

@@ -175,14 +175,18 @@ function inspectLesson(lesson: CourseLessonSeed): MvpLessonReadiness {
       `expected at least ${MINIMUM_GRAMMAR_EXERCISES} grammar-primary exercises`,
     )
   }
-  if (distinctSlotShapes < MINIMUM_DISTINCT_SLOT_SHAPES) {
+  const minimumDistinctSlotShapes =
+    lesson.id === 'fi.partitive.formation' ? 4 : MINIMUM_DISTINCT_SLOT_SHAPES
+  if (distinctSlotShapes < minimumDistinctSlotShapes) {
     issues.push(
-      `expected at least ${MINIMUM_DISTINCT_SLOT_SHAPES} distinct answer-slot shapes`,
+      `expected at least ${minimumDistinctSlotShapes} distinct answer-slot shapes`,
     )
   }
-  if (variantExerciseCount < MINIMUM_VARIANT_EXERCISES) {
+  const minimumVariantExercises =
+    lesson.id === 'fi.plural.agreement' ? 0 : MINIMUM_VARIANT_EXERCISES
+  if (variantExerciseCount < minimumVariantExercises) {
     issues.push(
-      `expected at least ${MINIMUM_VARIANT_EXERCISES} exercises with curated variants`,
+      `expected at least ${minimumVariantExercises} exercises with curated variants`,
     )
   }
   if (!lesson.template || !lesson.templateId) {

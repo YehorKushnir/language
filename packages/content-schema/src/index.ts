@@ -216,6 +216,7 @@ export function validatePreparedTexts(
 }
 
 export interface LessonValidationOptions {
+  allowedVocabularyItemIds?: readonly string[]
   expectedExerciseCount?: number
   minimumExampleCount?: number
   minimumVocabularyCount?: number
@@ -292,8 +293,12 @@ export function validateLessonBundle(
   }
 
   const vocabularyIds = new Set(bundle.vocabulary.map((item) => item.itemId))
+  const allowedVocabularyIds = new Set([
+    ...vocabularyIds,
+    ...(options.allowedVocabularyItemIds ?? []),
+  ])
   for (const exercise of bundle.exercises) {
-    if (!vocabularyIds.has(exercise.vocabularyItemId)) {
+    if (!allowedVocabularyIds.has(exercise.vocabularyItemId)) {
       issues.push(
         `${exercise.id} references unknown vocabulary item ${exercise.vocabularyItemId}`,
       )

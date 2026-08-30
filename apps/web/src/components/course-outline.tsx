@@ -17,6 +17,7 @@ import {
 import { useEffect, useState } from 'react'
 
 import { Progress } from '@/components/ui/progress'
+import { authClient } from '@/lib/auth-client'
 import { localizedText } from '@/lib/localized-text'
 import { cn } from '@/lib/utils'
 
@@ -61,6 +62,9 @@ export function CourseOutline({
   selectedLessonId,
 }: CourseOutlineProps) {
   const router = useRouter()
+  const session = authClient.useSession()
+  const isAdmin =
+    (session.data?.user as { role?: string } | undefined)?.role === 'ADMIN'
   const routeLessons = course.route?.lessons ?? []
   const defaultLessonId =
     selectedLessonId ?? progress?.currentLessonId ?? routeLessons[0]?.id ?? null
@@ -133,10 +137,11 @@ export function CourseOutline({
                   lesson.lessonPosition
                 const lessonProgress = progressByLesson.get(lesson.id)
                 const isExpanded = lesson.id === expandedLessonId
-                const isAvailable = lesson.prerequisiteLessonIds.every(
-                  (prerequisiteLessonId) =>
+                const isAvailable =
+                  isAdmin ||
+                  lesson.prerequisiteLessonIds.every((prerequisiteLessonId) =>
                     completedLessonIds.has(prerequisiteLessonId),
-                )
+                  )
                 const title = localizedText(lesson.title)
 
                 return (

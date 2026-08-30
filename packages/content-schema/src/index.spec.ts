@@ -108,6 +108,24 @@ describe('validateLessonBundle', () => {
     )
   })
 
+  it('allows an exercise to reuse vocabulary declared by an earlier lesson', () => {
+    const cumulativeBundle = structuredClone(validBundle)
+    const earlierExercise = structuredClone(validBundle.exercises[0]!)
+    earlierExercise.id = 'exercise.fi.test.002'
+    earlierExercise.selectionOrder = 2
+    earlierExercise.vocabularyItemId = 'word.fi.earlier'
+    earlierExercise.slots[2]!.accepted = ['sana']
+    earlierExercise.slots[2]!.itemIds = ['word.fi.earlier']
+    cumulativeBundle.exercises.push(earlierExercise)
+
+    expect(
+      validateLessonBundle(cumulativeBundle, {
+        allowedVocabularyItemIds: ['word.fi.earlier'],
+        expectedExerciseCount: 2,
+      }),
+    ).toMatchObject({ exerciseCount: 2 })
+  })
+
   it('rejects service fields inside a lesson explanation', () => {
     const invalidBundle = structuredClone(validBundle)
     const screen = invalidBundle.content.explanationScreens[0]!

@@ -13,6 +13,12 @@ export async function assertLessonAvailable(
   })
   if (dependencies.length === 0) return
 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  })
+  if (user?.role === 'ADMIN') return
+
   const prerequisiteIds = dependencies.map(
     (dependency) => dependency.prerequisiteLessonId,
   )

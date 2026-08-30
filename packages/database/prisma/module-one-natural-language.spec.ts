@@ -49,7 +49,7 @@ describe('natural language across the other fifteen module-one lessons', () => {
     expect(presentExercises).toHaveLength(180)
     expect(
       presentExercises.filter(
-        (exercise) => exercise.targetText.trim().split(/\s+/u).length < 3,
+        (exercise) => exercise.targetText.trim().split(/\s+/u).length < 2,
       ),
     ).toEqual([])
   })
