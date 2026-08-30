@@ -192,6 +192,28 @@ async function seedKnowledge() {
 }
 
 async function seedVocabulary() {
+  const activeModuleFormIds = new Set(
+    moduleOneLessons.flatMap((lesson) =>
+      lesson.vocabulary.flatMap((vocabulary) =>
+        vocabulary.forms.map((form) => form.id),
+      ),
+    ),
+  )
+  const obsoleteScaffoldFormIds = moduleOneLessons
+    .flatMap((lesson) => lesson.vocabulary)
+    .map((vocabulary) =>
+      vocabulary.itemId.replace(/^word\./u, 'form.').concat('.lemma'),
+    )
+    .filter((id) => !activeModuleFormIds.has(id))
+  const removedScaffoldForms = await prisma.lexicalForm.deleteMany({
+    where: { id: { in: obsoleteScaffoldFormIds } },
+  })
+  if (removedScaffoldForms.count > 0) {
+    process.stdout.write(
+      `Removed ${removedScaffoldForms.count} obsolete scaffold lexical forms\n`,
+    )
+  }
+
   await prisma.lexicalForm.deleteMany({
     where: {
       id: {

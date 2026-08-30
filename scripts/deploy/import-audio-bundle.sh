@@ -70,6 +70,9 @@ printf 'Creating a pre-import database backup...\n'
 ENV_FILE="$ENV_FILE" COMPOSE_FILE="$COMPOSE_FILE" BACKUP_DIR="$BACKUP_DIR" \
   "$SCRIPT_DIR/backup.sh"
 
+printf 'Synchronizing production content metadata...\n'
+compose run --rm --no-deps migrate
+
 compose run --rm --no-deps \
   --volume "$staging_directory:/import:ro" \
   api \

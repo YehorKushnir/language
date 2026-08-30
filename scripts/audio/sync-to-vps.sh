@@ -115,6 +115,9 @@ timestamp=$(date -u +%Y%m%dT%H%M%SZ)
 archive_name=audio-bundle-$timestamp.tar.gz
 archive=$work_directory/$archive_name
 
+printf 'Synchronizing local content metadata...\n'
+pnpm db:seed
+
 printf 'Validating local audio and exporting metadata...\n'
 pnpm --filter @language/api audio:bundle:export -- \
   --output="$manifest" \
