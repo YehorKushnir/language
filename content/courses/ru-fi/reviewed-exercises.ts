@@ -27,6 +27,11 @@ interface ExerciseDraft {
   vocabulary: LessonVocabularySeed | undefined
 }
 
+interface ReviewedExerciseApplicationOptions {
+  previousLessons?: readonly CourseLessonSeed[]
+  reviewLessonOffset?: number
+}
+
 const SUBJECT_FORMS = new Set([
   'he',
   'hän',
@@ -57,26 +62,31 @@ const NEGATIVE_VERB_FORMS = new Set([
 
 export function applyReviewedExercises(
   lessons: readonly CourseLessonSeed[],
+  options: ReviewedExerciseApplicationOptions = {},
 ): CourseLessonSeed[] {
   const review = parseReview()
+  const previousLessons = options.previousLessons ?? []
+  const reviewLessonOffset = options.reviewLessonOffset ?? 0
+  const courseLessons = [...previousLessons, ...lessons]
   const vocabularyLessonById = new Map(
-    lessons.flatMap((lesson) =>
+    courseLessons.flatMap((lesson, courseLessonIndex) =>
       lesson.vocabulary.map(
-        (item) => [item.itemId, lesson.lessonPosition] as const,
+        (item) => [item.itemId, courseLessonIndex + 1] as const,
       ),
     ),
   )
 
   return lessons.map((lesson, lessonIndex) => {
-    const reviewed = review[lessonIndex]
+    const reviewLessonNumber = reviewLessonOffset + lessonIndex + 1
+    const reviewed = review.get(reviewLessonNumber)
     if (!reviewed) {
       throw new Error(
-        `Missing reviewed exercises for lesson ${lesson.lessonPosition}`,
+        `Missing reviewed exercises for course lesson ${reviewLessonNumber}`,
       )
     }
 
-    const availableVocabulary = lessons
-      .slice(0, lessonIndex + 1)
+    const availableVocabulary = courseLessons
+      .slice(0, previousLessons.length + lessonIndex + 1)
       .flatMap((candidate) =>
         candidate.vocabulary.map((item) => ({
           item,
@@ -307,6 +317,29 @@ function inferSpecificSkillIds(
   return lesson.skills.flatMap((skill) => {
     if (skill.id.endsWith('.negative') && isNegative) return [skill.id]
     if (skill.id.endsWith('.question') && isQuestion) return [skill.id]
+    if (
+      skill.id.endsWith('.partitive') &&
+      reviewed.id.includes('.partitive.')
+    ) {
+      return [skill.id]
+    }
+    if (skill.id.endsWith('.total') && reviewed.id.includes('.total.')) {
+      return [skill.id]
+    }
+    if (skill.id.endsWith('.singular') && reviewed.id.includes('.singular.')) {
+      return [skill.id]
+    }
+    if (skill.id.endsWith('.plural') && reviewed.id.includes('.plural.')) {
+      return [skill.id]
+    }
+    if (skill.id.endsWith('.contrast')) {
+      if (
+        reviewed.id.includes('.contrast.') ||
+        reviewed.id.includes('.negative.')
+      ) {
+        return [skill.id]
+      }
+    }
     return []
   })
 }
@@ -315,23 +348,57 @@ function assignUncoveredVocabulary(
   drafts: ExerciseDraft[],
   lesson: CourseLessonSeed,
 ) {
-  if (lesson.lessonPosition === 1) return
+  const currentVocabularyIds = new Set(
+    lesson.vocabulary.map((item) => item.itemId),
+  )
+  const assignmentCounts = new Map<string, number>()
 
-  const assignedIds = new Set(
-    drafts.flatMap((draft) =>
-      draft.vocabulary ? [draft.vocabulary.itemId] : [],
-    ),
-  )
+  for (const draft of drafts) {
+    const itemId = draft.vocabulary?.itemId
+    if (!itemId || !currentVocabularyIds.has(itemId)) continue
+    assignmentCounts.set(itemId, (assignmentCounts.get(itemId) ?? 0) + 1)
+  }
+
   const uncovered = lesson.vocabulary.filter(
-    (item) => !assignedIds.has(item.itemId),
+    (item) => !assignmentCounts.has(item.itemId),
   )
-  const unassigned = drafts.filter((draft) => !draft.vocabulary)
+  const remainingUncovered: LessonVocabularySeed[] = []
 
   for (const item of uncovered) {
+    const draft = drafts.find((candidate) => {
+      if (
+        !candidate.matches.some((match) => match.item.itemId === item.itemId)
+      ) {
+        return false
+      }
+      const assignedItemId = candidate.vocabulary?.itemId
+      if (!assignedItemId) return false
+      return (
+        !currentVocabularyIds.has(assignedItemId) ||
+        (assignmentCounts.get(assignedItemId) ?? 0) > 1
+      )
+    })
+    if (!draft) {
+      remainingUncovered.push(item)
+      continue
+    }
+
+    const previousItemId = draft.vocabulary?.itemId
+    if (previousItemId && currentVocabularyIds.has(previousItemId)) {
+      assignmentCounts.set(
+        previousItemId,
+        (assignmentCounts.get(previousItemId) ?? 1) - 1,
+      )
+    }
+    draft.vocabulary = item
+    assignmentCounts.set(item.itemId, 1)
+  }
+
+  const unassigned = drafts.filter((draft) => !draft.vocabulary)
+  for (const item of remainingUncovered) {
     const draft = unassigned.shift()
     if (!draft) break
     draft.vocabulary = item
-    assignedIds.add(item.itemId)
   }
 
   for (const draft of unassigned) {
@@ -427,13 +494,14 @@ function createVocabularySurfaceIndex(
   return index
 }
 
-function parseReview(): ReviewedExerciseSentence[][] {
+function parseReview(): Map<number, ReviewedExerciseSentence[]> {
   if (!Array.isArray(reviewedLessonSentences)) {
     throw new Error('Reviewed lesson sentences must be an array')
   }
 
   const globalIds = new Set<string>()
-  return reviewedLessonSentences.map((entry, lessonIndex) => {
+  const review = new Map<number, ReviewedExerciseSentence[]>()
+  reviewedLessonSentences.forEach((entry, lessonIndex) => {
     const lessonNumber = String(lessonIndex + 1)
     if (!isRecord(entry) || Object.keys(entry).join(',') !== lessonNumber) {
       throw new Error(`Reviewed lesson ${lessonNumber} has an invalid wrapper`)
@@ -445,7 +513,7 @@ function parseReview(): ReviewedExerciseSentence[][] {
       )
     }
 
-    return exercises.map((exercise, exerciseIndex) => {
+    const parsed = exercises.map((exercise, exerciseIndex) => {
       if (
         !isRecord(exercise) ||
         exercise.order !== exerciseIndex + 1 ||
@@ -468,7 +536,9 @@ function parseReview(): ReviewedExerciseSentence[][] {
       globalIds.add(exercise.id)
       return exercise as unknown as ReviewedExerciseSentence
     })
+    review.set(lessonIndex + 1, parsed)
   })
+  return review
 }
 
 function tokenize(value: string) {

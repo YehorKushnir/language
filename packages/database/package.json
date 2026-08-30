@@ -26,6 +26,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
+    "e2e:make-memory-due": "tsx prisma/e2e-make-memory-due.ts",
     "user:set-role": "tsx prisma/set-user-role.ts"
   },
   "dependencies": {

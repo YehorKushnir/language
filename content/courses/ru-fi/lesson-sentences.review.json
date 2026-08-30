@@ -7133,5 +7133,994 @@
         "acceptedVariants": ["Hymyilikö hän minulle eilen?"]
       }
     ]
+  },
+  {
+    "17": [
+      {
+        "order": 1,
+        "id": "exercise.fi.object.boundedness.total.prepare-breakfast",
+        "prompt": "Я приготовлю завтрак сегодня.",
+        "targetText": "Valmistan aamiaisen tänään.",
+        "acceptedVariants": ["Valmistan aamiaisen tänään."]
+      },
+      {
+        "order": 2,
+        "id": "exercise.fi.object.boundedness.partitive.write-report",
+        "prompt": "Вчера я писал отчёт.",
+        "targetText": "Kirjoitin raporttia eilen.",
+        "acceptedVariants": ["Kirjoitin raporttia eilen."]
+      },
+      {
+        "order": 3,
+        "id": "exercise.fi.object.boundedness.total.start-project-question",
+        "prompt": "Он начал проект вчера?",
+        "targetText": "Aloittiko hän projektin eilen?",
+        "acceptedVariants": ["Aloittiko hän projektin eilen?"]
+      },
+      {
+        "order": 4,
+        "id": "exercise.fi.object.boundedness.negative.reserve-room",
+        "prompt": "Мы не забронируем номер в отеле.",
+        "targetText": "Me emme varaa hotellihuonetta.",
+        "acceptedVariants": [
+          "Me emme varaa hotellihuonetta.",
+          "Emme varaa hotellihuonetta."
+        ]
+      },
+      {
+        "order": 5,
+        "id": "exercise.fi.object.boundedness.total.fill-application",
+        "prompt": "Ты заполнишь заявление сегодня.",
+        "targetText": "Sinä täytät hakemuksen tänään.",
+        "acceptedVariants": [
+          "Sinä täytät hakemuksen tänään.",
+          "Täytät hakemuksen tänään."
+        ]
+      },
+      {
+        "order": 6,
+        "id": "exercise.fi.object.boundedness.total.open-package",
+        "prompt": "Я открыл посылку вчера.",
+        "targetText": "Avasin paketin eilen.",
+        "acceptedVariants": ["Avasin paketin eilen."]
+      },
+      {
+        "order": 7,
+        "id": "exercise.fi.object.boundedness.partitive.read-now",
+        "prompt": "Я сейчас читаю книгу.",
+        "targetText": "Luen nyt kirjaa.",
+        "acceptedVariants": ["Luen nyt kirjaa."]
+      },
+      {
+        "order": 8,
+        "id": "exercise.fi.object.boundedness.total.start-project",
+        "prompt": "Он начал проект вчера.",
+        "targetText": "Hän aloitti projektin eilen.",
+        "acceptedVariants": ["Hän aloitti projektin eilen."]
+      },
+      {
+        "order": 9,
+        "id": "exercise.fi.object.boundedness.negative.prepare-breakfast",
+        "prompt": "Я не приготовлю завтрак.",
+        "targetText": "En valmista aamiaista.",
+        "acceptedVariants": ["En valmista aamiaista."]
+      },
+      {
+        "order": 10,
+        "id": "exercise.fi.object.boundedness.total.reserve-room-question",
+        "prompt": "Мы забронируем номер в отеле сегодня?",
+        "targetText": "Varaammeko me hotellihuoneen tänään?",
+        "acceptedVariants": [
+          "Varaammeko me hotellihuoneen tänään?",
+          "Varaammeko hotellihuoneen tänään?"
+        ]
+      },
+      {
+        "order": 11,
+        "id": "exercise.fi.object.boundedness.total.reserve-room",
+        "prompt": "Мы забронируем номер в отеле сегодня.",
+        "targetText": "Me varaamme hotellihuoneen tänään.",
+        "acceptedVariants": [
+          "Me varaamme hotellihuoneen tänään.",
+          "Varaamme hotellihuoneen tänään."
+        ]
+      },
+      {
+        "order": 12,
+        "id": "exercise.fi.object.boundedness.partitive.write-application",
+        "prompt": "Вчера ты писал заявление.",
+        "targetText": "Sinä kirjoitit hakemusta eilen.",
+        "acceptedVariants": [
+          "Sinä kirjoitit hakemusta eilen.",
+          "Kirjoitit hakemusta eilen."
+        ]
+      },
+      {
+        "order": 13,
+        "id": "exercise.fi.object.boundedness.total.unpack-package",
+        "prompt": "Я распаковал посылку вчера.",
+        "targetText": "Purin paketin eilen.",
+        "acceptedVariants": ["Purin paketin eilen."]
+      },
+      {
+        "order": 14,
+        "id": "exercise.fi.object.boundedness.negative.arrange-dinner",
+        "prompt": "Я не организую вечерний ужин.",
+        "targetText": "En järjestä illallista.",
+        "acceptedVariants": ["En järjestä illallista."]
+      },
+      {
+        "order": 15,
+        "id": "exercise.fi.object.boundedness.total.read-today",
+        "prompt": "Я прочитаю книгу сегодня.",
+        "targetText": "Luen kirjan tänään.",
+        "acceptedVariants": ["Luen kirjan tänään."]
+      },
+      {
+        "order": 16,
+        "id": "exercise.fi.object.boundedness.total.arrange-dinner",
+        "prompt": "Они организуют вечерний ужин сегодня.",
+        "targetText": "He järjestävät illallisen tänään.",
+        "acceptedVariants": ["He järjestävät illallisen tänään."]
+      },
+      {
+        "order": 17,
+        "id": "exercise.fi.object.boundedness.partitive.fill-application-question",
+        "prompt": "Ты сейчас заполняешь заявление?",
+        "targetText": "Täytätkö sinä hakemusta nyt?",
+        "acceptedVariants": [
+          "Täytätkö sinä hakemusta nyt?",
+          "Täytätkö hakemusta nyt?"
+        ]
+      },
+      {
+        "order": 18,
+        "id": "exercise.fi.object.boundedness.total.eat-breakfast",
+        "prompt": "Я съел завтрак вчера.",
+        "targetText": "Söin aamiaisen eilen.",
+        "acceptedVariants": ["Söin aamiaisen eilen."]
+      },
+      {
+        "order": 19,
+        "id": "exercise.fi.object.boundedness.negative.fill-application",
+        "prompt": "Ты не заполняешь заявление.",
+        "targetText": "Sinä et täytä hakemusta.",
+        "acceptedVariants": ["Sinä et täytä hakemusta.", "Et täytä hakemusta."]
+      },
+      {
+        "order": 20,
+        "id": "exercise.fi.object.boundedness.total.finish-report",
+        "prompt": "Ты закончишь отчёт сегодня.",
+        "targetText": "Sinä viimeistelet raportin tänään.",
+        "acceptedVariants": [
+          "Sinä viimeistelet raportin tänään.",
+          "Viimeistelet raportin tänään."
+        ]
+      },
+      {
+        "order": 21,
+        "id": "exercise.fi.object.boundedness.total.arrange-dinner-question",
+        "prompt": "Они организуют вечерний ужин сегодня?",
+        "targetText": "Järjestävätkö he illallisen tänään?",
+        "acceptedVariants": ["Järjestävätkö he illallisen tänään?"]
+      },
+      {
+        "order": 22,
+        "id": "exercise.fi.object.boundedness.partitive.read-form",
+        "prompt": "Вчера она читала форму.",
+        "targetText": "Hän luki lomaketta eilen.",
+        "acceptedVariants": ["Hän luki lomaketta eilen."]
+      },
+      {
+        "order": 23,
+        "id": "exercise.fi.object.boundedness.total.print-form",
+        "prompt": "Я распечатал форму вчера.",
+        "targetText": "Tulostin lomakkeen eilen.",
+        "acceptedVariants": ["Tulostin lomakkeen eilen."]
+      },
+      {
+        "order": 24,
+        "id": "exercise.fi.object.boundedness.negative.start-project",
+        "prompt": "Он не начал проект.",
+        "targetText": "Hän ei aloittanut projektia.",
+        "acceptedVariants": ["Hän ei aloittanut projektia."]
+      },
+      {
+        "order": 25,
+        "id": "exercise.fi.object.boundedness.total.read-completely",
+        "prompt": "Я прочитал книгу полностью.",
+        "targetText": "Luin kirjan kokonaan.",
+        "acceptedVariants": ["Luin kirjan kokonaan."]
+      },
+      {
+        "order": 26,
+        "id": "exercise.fi.object.boundedness.total.sign-contract",
+        "prompt": "Он подпишет договор сегодня.",
+        "targetText": "Hän allekirjoittaa sopimuksen tänään.",
+        "acceptedVariants": ["Hän allekirjoittaa sopimuksen tänään."]
+      },
+      {
+        "order": 27,
+        "id": "exercise.fi.object.boundedness.partitive.plan-project",
+        "prompt": "Вчера мы планировали проект.",
+        "targetText": "Me suunnittelimme projektia eilen.",
+        "acceptedVariants": [
+          "Me suunnittelimme projektia eilen.",
+          "Suunnittelimme projektia eilen."
+        ]
+      },
+      {
+        "order": 28,
+        "id": "exercise.fi.object.boundedness.total.finish-report-question",
+        "prompt": "Ты закончил отчёт вчера?",
+        "targetText": "Viimeistelitkö sinä raportin eilen?",
+        "acceptedVariants": [
+          "Viimeistelitkö sinä raportin eilen?",
+          "Viimeistelitkö raportin eilen?"
+        ]
+      },
+      {
+        "order": 29,
+        "id": "exercise.fi.object.boundedness.negative.unpack-package",
+        "prompt": "Они не распаковывают посылку.",
+        "targetText": "He eivät pura pakettia.",
+        "acceptedVariants": ["He eivät pura pakettia."]
+      },
+      {
+        "order": 30,
+        "id": "exercise.fi.object.boundedness.total.return-document",
+        "prompt": "Мы вернули документ вчера.",
+        "targetText": "Me palautimme asiakirjan eilen.",
+        "acceptedVariants": [
+          "Me palautimme asiakirjan eilen.",
+          "Palautimme asiakirjan eilen."
+        ]
+      },
+      {
+        "order": 31,
+        "id": "exercise.fi.object.boundedness.total.eat-dinner",
+        "prompt": "Она съела ужин вчера.",
+        "targetText": "Hän söi päivällisen eilen.",
+        "acceptedVariants": ["Hän söi päivällisen eilen."]
+      },
+      {
+        "order": 32,
+        "id": "exercise.fi.object.boundedness.partitive.write-current-email",
+        "prompt": "Я в данный момент пишу электронное письмо.",
+        "targetText": "Kirjoitan parhaillaan sähköpostia.",
+        "acceptedVariants": ["Kirjoitan parhaillaan sähköpostia."]
+      },
+      {
+        "order": 33,
+        "id": "exercise.fi.object.boundedness.total.prepare-lunch-infinitive",
+        "prompt": "Я хочу приготовить обед.",
+        "targetText": "Haluan valmistaa lounaan.",
+        "acceptedVariants": ["Haluan valmistaa lounaan."]
+      },
+      {
+        "order": 34,
+        "id": "exercise.fi.object.boundedness.negative.finish-report",
+        "prompt": "Ты не закончил отчёт.",
+        "targetText": "Sinä et viimeistellyt raporttia.",
+        "acceptedVariants": [
+          "Sinä et viimeistellyt raporttia.",
+          "Et viimeistellyt raporttia."
+        ]
+      },
+      {
+        "order": 35,
+        "id": "exercise.fi.object.boundedness.total.sign-contract-question",
+        "prompt": "Мы подпишем договор сегодня?",
+        "targetText": "Allekirjoitammeko me sopimuksen tänään?",
+        "acceptedVariants": [
+          "Allekirjoitammeko me sopimuksen tänään?",
+          "Allekirjoitammeko sopimuksen tänään?"
+        ]
+      },
+      {
+        "order": 36,
+        "id": "exercise.fi.object.boundedness.total.fill-form-infinitive",
+        "prompt": "Ты можешь заполнить форму.",
+        "targetText": "Sinä voit täyttää lomakkeen.",
+        "acceptedVariants": [
+          "Sinä voit täyttää lomakkeen.",
+          "Voit täyttää lomakkeen."
+        ]
+      },
+      {
+        "order": 37,
+        "id": "exercise.fi.object.boundedness.partitive.eat-lunch",
+        "prompt": "Вчера мы обедали.",
+        "targetText": "Me söimme lounasta eilen.",
+        "acceptedVariants": [
+          "Me söimme lounasta eilen.",
+          "Söimme lounasta eilen."
+        ]
+      },
+      {
+        "order": 38,
+        "id": "exercise.fi.object.boundedness.total.start-renovation-infinitive",
+        "prompt": "Мы хотим начать ремонт.",
+        "targetText": "Me haluamme aloittaa remontin.",
+        "acceptedVariants": [
+          "Me haluamme aloittaa remontin.",
+          "Haluamme aloittaa remontin."
+        ]
+      },
+      {
+        "order": 39,
+        "id": "exercise.fi.object.boundedness.negative.print-form",
+        "prompt": "Она не распечатывает форму.",
+        "targetText": "Hän ei tulosta lomaketta.",
+        "acceptedVariants": ["Hän ei tulosta lomaketta."]
+      },
+      {
+        "order": 40,
+        "id": "exercise.fi.object.boundedness.total.read-contract",
+        "prompt": "Я прочитал договор вчера.",
+        "targetText": "Luin sopimuksen eilen.",
+        "acceptedVariants": ["Luin sopimuksen eilen."]
+      },
+      {
+        "order": 41,
+        "id": "exercise.fi.object.boundedness.total.reserve-room-infinitive",
+        "prompt": "Она может забронировать номер в отеле.",
+        "targetText": "Hän voi varata hotellihuoneen.",
+        "acceptedVariants": ["Hän voi varata hotellihuoneen."]
+      },
+      {
+        "order": 42,
+        "id": "exercise.fi.object.boundedness.partitive.unpack-package-question",
+        "prompt": "Вы сейчас распаковываете посылку?",
+        "targetText": "Puratteko te pakettia nyt?",
+        "acceptedVariants": [
+          "Puratteko te pakettia nyt?",
+          "Puratteko pakettia nyt?"
+        ]
+      },
+      {
+        "order": 43,
+        "id": "exercise.fi.object.boundedness.total.unpack-package-infinitive",
+        "prompt": "Я хочу распаковать посылку.",
+        "targetText": "Haluan purkaa paketin.",
+        "acceptedVariants": ["Haluan purkaa paketin."]
+      },
+      {
+        "order": 44,
+        "id": "exercise.fi.object.boundedness.negative.sign-contract",
+        "prompt": "Мы не подпишем договор.",
+        "targetText": "Me emme allekirjoita sopimusta.",
+        "acceptedVariants": [
+          "Me emme allekirjoita sopimusta.",
+          "Emme allekirjoita sopimusta."
+        ]
+      },
+      {
+        "order": 45,
+        "id": "exercise.fi.object.boundedness.total.return-document-question",
+        "prompt": "Ты вернул документ вчера?",
+        "targetText": "Palautitko sinä asiakirjan eilen?",
+        "acceptedVariants": [
+          "Palautitko sinä asiakirjan eilen?",
+          "Palautitko asiakirjan eilen?"
+        ]
+      },
+      {
+        "order": 46,
+        "id": "exercise.fi.object.boundedness.total.arrange-lunch-infinitive",
+        "prompt": "Они хотят организовать обед.",
+        "targetText": "He haluavat järjestää lounaan.",
+        "acceptedVariants": ["He haluavat järjestää lounaan."]
+      },
+      {
+        "order": 47,
+        "id": "exercise.fi.object.boundedness.partitive.eat-evening-meal",
+        "prompt": "Вчера они ужинали.",
+        "targetText": "He söivät illallista eilen.",
+        "acceptedVariants": ["He söivät illallista eilen."]
+      },
+      {
+        "order": 48,
+        "id": "exercise.fi.object.boundedness.total.finish-project-infinitive",
+        "prompt": "Мы можем закончить проект.",
+        "targetText": "Voimme viimeistellä projektin.",
+        "acceptedVariants": ["Voimme viimeistellä projektin."]
+      },
+      {
+        "order": 49,
+        "id": "exercise.fi.object.boundedness.negative.return-document",
+        "prompt": "Они не вернули документ.",
+        "targetText": "He eivät palauttaneet asiakirjaa.",
+        "acceptedVariants": ["He eivät palauttaneet asiakirjaa."]
+      },
+      {
+        "order": 50,
+        "id": "exercise.fi.object.boundedness.total.plan-renovation",
+        "prompt": "Ты спланировал ремонт вчера.",
+        "targetText": "Sinä suunnittelit remontin eilen.",
+        "acceptedVariants": [
+          "Sinä suunnittelit remontin eilen.",
+          "Suunnittelit remontin eilen."
+        ]
+      },
+      {
+        "order": 51,
+        "id": "exercise.fi.object.boundedness.total.print-application-infinitive",
+        "prompt": "Ты хочешь распечатать заявление.",
+        "targetText": "Haluat tulostaa hakemuksen.",
+        "acceptedVariants": ["Haluat tulostaa hakemuksen."]
+      },
+      {
+        "order": 52,
+        "id": "exercise.fi.object.boundedness.partitive.write-document",
+        "prompt": "Вчера мы писали документ.",
+        "targetText": "Me kirjoitimme asiakirjaa eilen.",
+        "acceptedVariants": [
+          "Me kirjoitimme asiakirjaa eilen.",
+          "Kirjoitimme asiakirjaa eilen."
+        ]
+      },
+      {
+        "order": 53,
+        "id": "exercise.fi.object.boundedness.total.sign-document-infinitive",
+        "prompt": "Я могу подписать документ.",
+        "targetText": "Voin allekirjoittaa asiakirjan.",
+        "acceptedVariants": ["Voin allekirjoittaa asiakirjan."]
+      },
+      {
+        "order": 54,
+        "id": "exercise.fi.object.boundedness.negative.read-report",
+        "prompt": "Я не прочитал отчёт.",
+        "targetText": "En lukenut raporttia.",
+        "acceptedVariants": ["En lukenut raporttia."]
+      },
+      {
+        "order": 55,
+        "id": "exercise.fi.object.boundedness.total.prepare-breakfast-question",
+        "prompt": "Ты приготовишь завтрак сегодня?",
+        "targetText": "Valmistatko sinä aamiaisen tänään?",
+        "acceptedVariants": [
+          "Valmistatko sinä aamiaisen tänään?",
+          "Valmistatko aamiaisen tänään?"
+        ]
+      },
+      {
+        "order": 56,
+        "id": "exercise.fi.object.boundedness.partitive.write-report-current",
+        "prompt": "Я в данный момент пишу отчёт.",
+        "targetText": "Kirjoitan parhaillaan raporttia.",
+        "acceptedVariants": ["Kirjoitan parhaillaan raporttia."]
+      },
+      {
+        "order": 57,
+        "id": "exercise.fi.object.boundedness.total.return-form-infinitive",
+        "prompt": "Она хочет сдать форму.",
+        "targetText": "Hän haluaa palauttaa lomakkeen.",
+        "acceptedVariants": ["Hän haluaa palauttaa lomakkeen."]
+      },
+      {
+        "order": 58,
+        "id": "exercise.fi.object.boundedness.negative.eat-lunch",
+        "prompt": "Мы не съели обед.",
+        "targetText": "Me emme syöneet lounasta.",
+        "acceptedVariants": [
+          "Me emme syöneet lounasta.",
+          "Emme syöneet lounasta."
+        ]
+      },
+      {
+        "order": 59,
+        "id": "exercise.fi.object.boundedness.total.write-report",
+        "prompt": "Я напишу отчёт сегодня.",
+        "targetText": "Kirjoitan raportin tänään.",
+        "acceptedVariants": ["Kirjoitan raportin tänään."]
+      },
+      {
+        "order": 60,
+        "id": "exercise.fi.object.boundedness.partitive.print-form-question",
+        "prompt": "Она сейчас распечатывает форму?",
+        "targetText": "Tulostaako hän lomaketta nyt?",
+        "acceptedVariants": ["Tulostaako hän lomaketta nyt?"]
+      }
+    ]
+  },
+  {
+    "18": [
+      {
+        "order": 1,
+        "id": "exercise.fi.object.total.forms.singular.plan",
+        "prompt": "Я составлю план завтра.",
+        "targetText": "Laadin suunnitelman huomenna.",
+        "acceptedVariants": ["Laadin suunnitelman huomenna."]
+      },
+      {
+        "order": 2,
+        "id": "exercise.fi.object.total.forms.plural.reject-offers",
+        "prompt": "Они отклонили предложения вчера.",
+        "targetText": "He hylkäsivät tarjoukset eilen.",
+        "acceptedVariants": ["He hylkäsivät tarjoukset eilen."]
+      },
+      {
+        "order": 3,
+        "id": "exercise.fi.object.total.forms.singular.save-file-question",
+        "prompt": "Ты сохранишь файл сразу?",
+        "targetText": "Tallennatko sinä tiedoston heti?",
+        "acceptedVariants": [
+          "Tallennatko sinä tiedoston heti?",
+          "Tallennatko tiedoston heti?"
+        ]
+      },
+      {
+        "order": 4,
+        "id": "exercise.fi.object.total.forms.contrast.build-bridge-process",
+        "prompt": "Мы сейчас строим мост.",
+        "targetText": "Me rakennamme parhaillaan siltaa.",
+        "acceptedVariants": [
+          "Me rakennamme parhaillaan siltaa.",
+          "Rakennamme parhaillaan siltaa."
+        ]
+      },
+      {
+        "order": 5,
+        "id": "exercise.fi.object.total.forms.plural.pay-bills",
+        "prompt": "Мы оплатим счета завтра.",
+        "targetText": "Me maksamme laskut huomenna.",
+        "acceptedVariants": [
+          "Me maksamme laskut huomenna.",
+          "Maksamme laskut huomenna."
+        ]
+      },
+      {
+        "order": 6,
+        "id": "exercise.fi.object.total.forms.singular.approve-decision",
+        "prompt": "Она утвердила решение вчера.",
+        "targetText": "Hän hyväksyi päätöksen eilen.",
+        "acceptedVariants": ["Hän hyväksyi päätöksen eilen."]
+      },
+      {
+        "order": 7,
+        "id": "exercise.fi.object.total.forms.negative.deliver-order",
+        "prompt": "Я не доставлю заказ.",
+        "targetText": "En toimita tilausta.",
+        "acceptedVariants": ["En toimita tilausta."]
+      },
+      {
+        "order": 8,
+        "id": "exercise.fi.object.total.forms.plural.print-certificates",
+        "prompt": "Я распечатаю справки сразу.",
+        "targetText": "Tulostan todistukset heti.",
+        "acceptedVariants": ["Tulostan todistukset heti."]
+      },
+      {
+        "order": 9,
+        "id": "exercise.fi.object.total.forms.singular.solve-problem",
+        "prompt": "Мы решим проблему сегодня.",
+        "targetText": "Me ratkaisemme ongelman tänään.",
+        "acceptedVariants": [
+          "Me ratkaisemme ongelman tänään.",
+          "Ratkaisemme ongelman tänään."
+        ]
+      },
+      {
+        "order": 10,
+        "id": "exercise.fi.object.total.forms.plural.copy-folders",
+        "prompt": "Ты скопируешь папки сегодня.",
+        "targetText": "Sinä kopioit kansiot tänään.",
+        "acceptedVariants": [
+          "Sinä kopioit kansiot tänään.",
+          "Kopioit kansiot tänään."
+        ]
+      },
+      {
+        "order": 11,
+        "id": "exercise.fi.object.total.forms.singular.deliver-order",
+        "prompt": "Они доставят заказ завтра.",
+        "targetText": "He toimittavat tilauksen huomenna.",
+        "acceptedVariants": ["He toimittavat tilauksen huomenna."]
+      },
+      {
+        "order": 12,
+        "id": "exercise.fi.object.total.forms.contrast.write-list-process",
+        "prompt": "Я сейчас составляю список.",
+        "targetText": "Laadin nyt listaa.",
+        "acceptedVariants": ["Laadin nyt listaa."]
+      },
+      {
+        "order": 13,
+        "id": "exercise.fi.object.total.forms.plural.publish-results",
+        "prompt": "Мы скоро опубликуем результаты.",
+        "targetText": "Me julkaisemme tulokset pian.",
+        "acceptedVariants": [
+          "Me julkaisemme tulokset pian.",
+          "Julkaisemme tulokset pian."
+        ]
+      },
+      {
+        "order": 14,
+        "id": "exercise.fi.object.total.forms.singular.complete-task",
+        "prompt": "Ты выполнишь задание завтра.",
+        "targetText": "Sinä suoritat tehtävän huomenna.",
+        "acceptedVariants": [
+          "Sinä suoritat tehtävän huomenna.",
+          "Suoritat tehtävän huomenna."
+        ]
+      },
+      {
+        "order": 15,
+        "id": "exercise.fi.object.total.forms.negative.reject-offer",
+        "prompt": "Она не отклонила предложение.",
+        "targetText": "Hän ei hylännyt tarjousta.",
+        "acceptedVariants": ["Hän ei hylännyt tarjousta."]
+      },
+      {
+        "order": 16,
+        "id": "exercise.fi.object.total.forms.plural.build-bridges",
+        "prompt": "Они построили мосты вчера.",
+        "targetText": "He rakensivat sillat eilen.",
+        "acceptedVariants": ["He rakensivat sillat eilen."]
+      },
+      {
+        "order": 17,
+        "id": "exercise.fi.object.total.forms.singular.reserve-meeting",
+        "prompt": "Я назначу встречу завтра.",
+        "targetText": "Varaan tapaamisen huomenna.",
+        "acceptedVariants": ["Varaan tapaamisen huomenna."]
+      },
+      {
+        "order": 18,
+        "id": "exercise.fi.object.total.forms.plural.save-files",
+        "prompt": "Мы сохраним файлы сразу.",
+        "targetText": "Me tallennamme tiedostot heti.",
+        "acceptedVariants": [
+          "Me tallennamme tiedostot heti.",
+          "Tallennamme tiedostot heti."
+        ]
+      },
+      {
+        "order": 19,
+        "id": "exercise.fi.object.total.forms.singular.publish-report",
+        "prompt": "Он опубликует отчёт завтра.",
+        "targetText": "Hän julkaisee raportin huomenna.",
+        "acceptedVariants": ["Hän julkaisee raportin huomenna."]
+      },
+      {
+        "order": 20,
+        "id": "exercise.fi.object.total.forms.contrast.solve-problem-process",
+        "prompt": "Они сейчас решают проблему.",
+        "targetText": "He ratkaisevat nyt ongelmaa.",
+        "acceptedVariants": ["He ratkaisevat nyt ongelmaa."]
+      },
+      {
+        "order": 21,
+        "id": "exercise.fi.object.total.forms.plural.complete-tasks-question",
+        "prompt": "Вы выполните задания?",
+        "targetText": "Suoritatteko te tehtävät?",
+        "acceptedVariants": [
+          "Suoritatteko te tehtävät?",
+          "Suoritatteko tehtävät?"
+        ]
+      },
+      {
+        "order": 22,
+        "id": "exercise.fi.object.total.forms.singular.write-schedule",
+        "prompt": "Мы составим расписание завтра.",
+        "targetText": "Me laadimme aikataulun huomenna.",
+        "acceptedVariants": [
+          "Me laadimme aikataulun huomenna.",
+          "Laadimme aikataulun huomenna."
+        ]
+      },
+      {
+        "order": 23,
+        "id": "exercise.fi.object.total.forms.negative.save-file",
+        "prompt": "Ты не сохранил файл.",
+        "targetText": "Sinä et tallentanut tiedostoa.",
+        "acceptedVariants": [
+          "Sinä et tallentanut tiedostoa.",
+          "Et tallentanut tiedostoa."
+        ]
+      },
+      {
+        "order": 24,
+        "id": "exercise.fi.object.total.forms.plural.send-invitations",
+        "prompt": "Они отправят приглашения сегодня.",
+        "targetText": "He lähettävät kutsut tänään.",
+        "acceptedVariants": ["He lähettävät kutsut tänään."]
+      },
+      {
+        "order": 25,
+        "id": "exercise.fi.object.total.forms.singular.pay-bill",
+        "prompt": "Я оплачу счёт сразу.",
+        "targetText": "Maksan laskun heti.",
+        "acceptedVariants": ["Maksan laskun heti."]
+      },
+      {
+        "order": 26,
+        "id": "exercise.fi.object.total.forms.plural.approve-plans",
+        "prompt": "Она утвердит планы завтра.",
+        "targetText": "Hän hyväksyy suunnitelmat huomenna.",
+        "acceptedVariants": ["Hän hyväksyy suunnitelmat huomenna."]
+      },
+      {
+        "order": 27,
+        "id": "exercise.fi.object.total.forms.singular.copy-document-question",
+        "prompt": "Ты скопируешь документ сегодня?",
+        "targetText": "Kopioitko sinä asiakirjan tänään?",
+        "acceptedVariants": [
+          "Kopioitko sinä asiakirjan tänään?",
+          "Kopioitko asiakirjan tänään?"
+        ]
+      },
+      {
+        "order": 28,
+        "id": "exercise.fi.object.total.forms.contrast.read-offer-process",
+        "prompt": "Я сейчас читаю предложение.",
+        "targetText": "Luen parhaillaan tarjousta.",
+        "acceptedVariants": ["Luen parhaillaan tarjousta."]
+      },
+      {
+        "order": 29,
+        "id": "exercise.fi.object.total.forms.plural.write-lists",
+        "prompt": "Мы составим списки завтра.",
+        "targetText": "Me laadimme listat huomenna.",
+        "acceptedVariants": [
+          "Me laadimme listat huomenna.",
+          "Laadimme listat huomenna."
+        ]
+      },
+      {
+        "order": 30,
+        "id": "exercise.fi.object.total.forms.singular.reject-application",
+        "prompt": "Они отклонят заявление сегодня.",
+        "targetText": "He hylkäävät hakemuksen tänään.",
+        "acceptedVariants": ["He hylkäävät hakemuksen tänään."]
+      },
+      {
+        "order": 31,
+        "id": "exercise.fi.object.total.forms.negative.publish-result",
+        "prompt": "Мы не опубликуем результат.",
+        "targetText": "Me emme julkaise tulosta.",
+        "acceptedVariants": [
+          "Me emme julkaise tulosta.",
+          "Emme julkaise tulosta."
+        ]
+      },
+      {
+        "order": 32,
+        "id": "exercise.fi.object.total.forms.plural.save-folders",
+        "prompt": "Я сохраню папки сразу.",
+        "targetText": "Tallennan kansiot heti.",
+        "acceptedVariants": ["Tallennan kansiot heti."]
+      },
+      {
+        "order": 33,
+        "id": "exercise.fi.object.total.forms.singular.build-bridge",
+        "prompt": "Он построил мост вчера.",
+        "targetText": "Hän rakensi sillan eilen.",
+        "acceptedVariants": ["Hän rakensi sillan eilen."]
+      },
+      {
+        "order": 34,
+        "id": "exercise.fi.object.total.forms.plural.deliver-orders",
+        "prompt": "Ты доставишь заказы завтра.",
+        "targetText": "Sinä toimitat tilaukset huomenna.",
+        "acceptedVariants": [
+          "Sinä toimitat tilaukset huomenna.",
+          "Toimitat tilaukset huomenna."
+        ]
+      },
+      {
+        "order": 35,
+        "id": "exercise.fi.object.total.forms.singular.solve-finally",
+        "prompt": "Мы наконец решили проблему.",
+        "targetText": "Me ratkaisimme ongelman vihdoin.",
+        "acceptedVariants": [
+          "Me ratkaisimme ongelman vihdoin.",
+          "Ratkaisimme ongelman vihdoin."
+        ]
+      },
+      {
+        "order": 36,
+        "id": "exercise.fi.object.total.forms.contrast.copy-document-process",
+        "prompt": "Она сейчас копирует документ.",
+        "targetText": "Hän kopioi parhaillaan asiakirjaa.",
+        "acceptedVariants": ["Hän kopioi parhaillaan asiakirjaa."]
+      },
+      {
+        "order": 37,
+        "id": "exercise.fi.object.total.forms.plural.print-forms",
+        "prompt": "Они распечатали формы вчера.",
+        "targetText": "He tulostivat lomakkeet eilen.",
+        "acceptedVariants": ["He tulostivat lomakkeet eilen."]
+      },
+      {
+        "order": 38,
+        "id": "exercise.fi.object.total.forms.singular.write-invitation",
+        "prompt": "Я составлю приглашение завтра.",
+        "targetText": "Laadin kutsun huomenna.",
+        "acceptedVariants": ["Laadin kutsun huomenna."]
+      },
+      {
+        "order": 39,
+        "id": "exercise.fi.object.total.forms.negative.approve-decision",
+        "prompt": "Они не утвердили решение.",
+        "targetText": "He eivät hyväksyneet päätöstä.",
+        "acceptedVariants": ["He eivät hyväksyneet päätöstä."]
+      },
+      {
+        "order": 40,
+        "id": "exercise.fi.object.total.forms.plural.reserve-meetings",
+        "prompt": "Мы назначим встречи завтра.",
+        "targetText": "Me varaamme tapaamiset huomenna.",
+        "acceptedVariants": [
+          "Me varaamme tapaamiset huomenna.",
+          "Varaamme tapaamiset huomenna."
+        ]
+      },
+      {
+        "order": 41,
+        "id": "exercise.fi.object.total.forms.singular.save-file-now",
+        "prompt": "Она сохранит файл сейчас.",
+        "targetText": "Hän tallentaa tiedoston nyt.",
+        "acceptedVariants": ["Hän tallentaa tiedoston nyt."]
+      },
+      {
+        "order": 42,
+        "id": "exercise.fi.object.total.forms.plural.publish-reports-question",
+        "prompt": "Вы скоро опубликуете отчёты?",
+        "targetText": "Julkaisetteko te raportit pian?",
+        "acceptedVariants": [
+          "Julkaisetteko te raportit pian?",
+          "Julkaisetteko raportit pian?"
+        ]
+      },
+      {
+        "order": 43,
+        "id": "exercise.fi.object.total.forms.singular.print-certificate",
+        "prompt": "Я распечатаю свидетельство сразу.",
+        "targetText": "Tulostan todistuksen heti.",
+        "acceptedVariants": ["Tulostan todistuksen heti."]
+      },
+      {
+        "order": 44,
+        "id": "exercise.fi.object.total.forms.contrast.write-plan-process",
+        "prompt": "Мы сейчас составляем план.",
+        "targetText": "Me laadimme parhaillaan suunnitelmaa.",
+        "acceptedVariants": [
+          "Me laadimme parhaillaan suunnitelmaa.",
+          "Laadimme parhaillaan suunnitelmaa."
+        ]
+      },
+      {
+        "order": 45,
+        "id": "exercise.fi.object.total.forms.plural.copy-documents",
+        "prompt": "Они скопируют документы сегодня.",
+        "targetText": "He kopioivat asiakirjat tänään.",
+        "acceptedVariants": ["He kopioivat asiakirjat tänään."]
+      },
+      {
+        "order": 46,
+        "id": "exercise.fi.object.total.forms.singular.approve-offer",
+        "prompt": "Ты утвердишь предложение завтра.",
+        "targetText": "Sinä hyväksyt tarjouksen huomenna.",
+        "acceptedVariants": [
+          "Sinä hyväksyt tarjouksen huomenna.",
+          "Hyväksyt tarjouksen huomenna."
+        ]
+      },
+      {
+        "order": 47,
+        "id": "exercise.fi.object.total.forms.negative.complete-task",
+        "prompt": "Я не выполню задание.",
+        "targetText": "En suorita tehtävää.",
+        "acceptedVariants": ["En suorita tehtävää."]
+      },
+      {
+        "order": 48,
+        "id": "exercise.fi.object.total.forms.plural.solve-problems",
+        "prompt": "Мы решим проблемы сегодня.",
+        "targetText": "Me ratkaisemme ongelmat tänään.",
+        "acceptedVariants": [
+          "Me ratkaisemme ongelmat tänään.",
+          "Ratkaisemme ongelmat tänään."
+        ]
+      },
+      {
+        "order": 49,
+        "id": "exercise.fi.object.total.forms.singular.delivered-order",
+        "prompt": "Он доставил заказ вчера.",
+        "targetText": "Hän toimitti tilauksen eilen.",
+        "acceptedVariants": ["Hän toimitti tilauksen eilen."]
+      },
+      {
+        "order": 50,
+        "id": "exercise.fi.object.total.forms.plural.write-schedules",
+        "prompt": "Я составлю расписания завтра.",
+        "targetText": "Laadin aikataulut huomenna.",
+        "acceptedVariants": ["Laadin aikataulut huomenna."]
+      },
+      {
+        "order": 51,
+        "id": "exercise.fi.object.total.forms.singular.finish-project",
+        "prompt": "Они закончат проект скоро.",
+        "targetText": "He viimeistelevät projektin pian.",
+        "acceptedVariants": ["He viimeistelevät projektin pian."]
+      },
+      {
+        "order": 52,
+        "id": "exercise.fi.object.total.forms.contrast.save-file-process-question",
+        "prompt": "Ты сейчас сохраняешь файл?",
+        "targetText": "Tallennatko sinä tiedostoa nyt?",
+        "acceptedVariants": [
+          "Tallennatko sinä tiedostoa nyt?",
+          "Tallennatko tiedostoa nyt?"
+        ]
+      },
+      {
+        "order": 53,
+        "id": "exercise.fi.object.total.forms.plural.reject-applications",
+        "prompt": "Она отклонила заявления вчера.",
+        "targetText": "Hän hylkäsi hakemukset eilen.",
+        "acceptedVariants": ["Hän hylkäsi hakemukset eilen."]
+      },
+      {
+        "order": 54,
+        "id": "exercise.fi.object.total.forms.singular.publish-list",
+        "prompt": "Мы опубликуем список завтра.",
+        "targetText": "Me julkaisemme listan huomenna.",
+        "acceptedVariants": [
+          "Me julkaisemme listan huomenna.",
+          "Julkaisemme listan huomenna."
+        ]
+      },
+      {
+        "order": 55,
+        "id": "exercise.fi.object.total.forms.negative.pay-bill",
+        "prompt": "Он не оплатил счёт.",
+        "targetText": "Hän ei maksanut laskua.",
+        "acceptedVariants": ["Hän ei maksanut laskua."]
+      },
+      {
+        "order": 56,
+        "id": "exercise.fi.object.total.forms.plural.deliver-packages",
+        "prompt": "Они доставят посылки завтра.",
+        "targetText": "He toimittavat paketit huomenna.",
+        "acceptedVariants": ["He toimittavat paketit huomenna."]
+      },
+      {
+        "order": 57,
+        "id": "exercise.fi.object.total.forms.singular.make-decision",
+        "prompt": "Я приму решение завтра.",
+        "targetText": "Teen päätöksen huomenna.",
+        "acceptedVariants": ["Teen päätöksen huomenna."]
+      },
+      {
+        "order": 58,
+        "id": "exercise.fi.object.total.forms.plural.save-files-question",
+        "prompt": "Ты сохранишь файлы сразу?",
+        "targetText": "Tallennatko sinä tiedostot heti?",
+        "acceptedVariants": [
+          "Tallennatko sinä tiedostot heti?",
+          "Tallennatko tiedostot heti?"
+        ]
+      },
+      {
+        "order": 59,
+        "id": "exercise.fi.object.total.forms.singular.approve-plan-finally",
+        "prompt": "Они наконец утвердили план.",
+        "targetText": "He hyväksyivät suunnitelman vihdoin.",
+        "acceptedVariants": ["He hyväksyivät suunnitelman vihdoin."]
+      },
+      {
+        "order": 60,
+        "id": "exercise.fi.object.total.forms.plural.print-invitations",
+        "prompt": "Мы распечатаем приглашения сегодня.",
+        "targetText": "Me tulostamme kutsut tänään.",
+        "acceptedVariants": [
+          "Me tulostamme kutsut tänään.",
+          "Tulostamme kutsut tänään."
+        ]
+      }
+    ]
   }
 ]

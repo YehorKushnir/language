@@ -11,7 +11,7 @@ describe('reviewed exercise application', () => {
       const lessonNumber = String(lesson.lessonPosition)
       const wrapper = reviewedLessonSentences[
         lesson.lessonPosition - 1
-      ] as Record<
+      ] as unknown as Record<
         string,
         Array<{
           order: number

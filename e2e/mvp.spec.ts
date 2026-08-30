@@ -741,7 +741,7 @@ test('learner can move through the first lesson with keyboard controls', async (
 })
 
 test('text-only vocabulary enters review as a flashcard', async ({ page }) => {
-  await signUpLearner(page, 'Text word learner')
+  const email = await signUpLearner(page, 'Text word learner')
   await page.goto('/texts')
   await page.getByRole('link', { name: 'Открыть Ужин-сюрприз' }).click()
 
@@ -762,13 +762,7 @@ test('text-only vocabulary enters review as a flashcard', async ({ page }) => {
   const addResponse = await addResponsePromise
   expect(addResponse.ok()).toBe(true)
   const added = (await addResponse.json()) as { itemId: string }
-  const courseResponse = await page.request.get('/api/v1/courses/course.ru-fi')
-  const course = (await courseResponse.json()) as { route: { id: string } }
-  const dueResponse = await page.request.put(
-    `/api/v1/me/vocabulary/${course.route.id}/${added.itemId}/status`,
-    { data: { status: 'NEW' } },
-  )
-  expect(dueResponse.ok()).toBe(true)
+  await makeVocabularyItemDue(email, added.itemId)
 
   await page.goto('/vocabulary')
   await expect(
@@ -791,6 +785,21 @@ test('text-only vocabulary enters review as a flashcard', async ({ page }) => {
     page.getByRole('heading', { name: 'Повторение завершено' }),
   ).toBeVisible()
 })
+
+async function makeVocabularyItemDue(email: string, itemId: string) {
+  await execFileAsync(
+    'pnpm',
+    [
+      '--filter',
+      '@language/database',
+      'e2e:make-memory-due',
+      '--',
+      email,
+      itemId,
+    ],
+    { cwd: process.cwd() },
+  )
+}
 
 test('practice restores an error only after twelve other answers', async ({
   page,
