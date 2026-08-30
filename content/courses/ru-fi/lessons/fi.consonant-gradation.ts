@@ -499,17 +499,13 @@ const verbs: GradatingVerb[] = [
 ]
 
 export const consonantGradationExercises: PreparedExerciseSeed[] = [
-  ...exerciseGroup('word', 0, 26, (index) =>
-    affirmative(index, index % 2, index),
-  ),
+  ...exerciseGroup('word', 0, 26, (index) => affirmative(index % 2, index)),
   ...exerciseGroup('context', 26, 26, (index) => {
     const personIndex = 2 + (index % 4)
-    return affirmative(index + 3, personIndex, index)
+    return affirmative(personIndex, index)
   }),
-  ...exerciseGroup('pair', 52, 4, (index) => negative(index, index % 2, index)),
-  ...exerciseGroup('pair', 56, 4, (index) =>
-    question(index + 5, (index % 2) + 1, index + 4),
-  ),
+  ...exerciseGroup('pair', 52, 4, (index) => negative(index % 2, index)),
+  ...exerciseGroup('pair', 56, 4, (index) => packingQuestion(index)),
 ]
 
 export const consonantGradationGoldenExerciseIds = [
@@ -520,34 +516,37 @@ export const consonantGradationGoldenExerciseIds = [
   'exercise.fi.consonant-gradation.pair.5',
 ] as const
 
-function affirmative(
-  verbIndex: number,
-  personIndex: number,
-  nounIndex: number,
-) {
-  const item = verbs[verbIndex % verbs.length]!
+function affirmative(personIndex: number, nounIndex: number) {
+  const item = verbs[1]!
   const vocabulary = consonantGradationVocabulary[nounIndex % nouns.length]!
   const pronouns = ['Minä', 'Sinä', 'Hän', 'Me', 'Te', 'He']
-  const skillId = item.reverse
-    ? CONSONANT_GRADATION_STRONG_SKILL_ID
-    : personIndex === 2 || personIndex === 5
+  const skillId =
+    personIndex === 2 || personIndex === 5
       ? CONSONANT_GRADATION_STRONG_SKILL_ID
       : CONSONANT_GRADATION_WEAK_SKILL_ID
-  const targetText = `Tämä on ${vocabulary.lemma}. ${pronouns[personIndex]} ${item.forms[personIndex]}.`
+  const adverbPosition = nounIndex % 3
+  const targetText =
+    adverbPosition === 1
+      ? `Nyt ${pronouns[personIndex]!.toLocaleLowerCase('fi')} ${item.forms[personIndex]}: ${vocabulary.lemma}.`
+      : adverbPosition === 2
+        ? `${pronouns[personIndex]} ${item.forms[personIndex]} nyt: ${vocabulary.lemma}.`
+        : `${pronouns[personIndex]} ${item.forms[personIndex]}: ${vocabulary.lemma}.`
   const canOmit = personIndex === 0 || personIndex === 1 || personIndex === 3
+  const promptPrefix = adverbPosition === 0 ? '' : 'Сейчас '
+  const withoutSubject =
+    adverbPosition === 1
+      ? `Nyt ${item.forms[personIndex]}: ${vocabulary.lemma}.`
+      : adverbPosition === 2
+        ? `${capitalize(item.forms[personIndex]!)} nyt: ${vocabulary.lemma}.`
+        : `${capitalize(item.forms[personIndex]!)}: ${vocabulary.lemma}.`
   return {
-    prompt: `Это ${vocabulary.gloss}. ${capitalize(item.source[personIndex]!)}.`,
+    prompt: `${promptPrefix}${adverbPosition === 0 ? capitalize(item.source[personIndex]!) : item.source[personIndex]}: «${vocabulary.lemma}».`,
     targetText,
-    acceptedVariants: canOmit
-      ? [
-          targetText,
-          `Tämä on ${vocabulary.lemma}. ${capitalize(item.forms[personIndex])}.`,
-        ]
-      : [targetText],
+    acceptedVariants: canOmit ? [targetText, withoutSubject] : [targetText],
     slots: [
-      vocabularySlot('demonstrative', ['tämä'], vocabulary.itemId),
-      vocabularySlot('copula', ['on'], vocabulary.itemId),
-      vocabularySlot('vocabulary', [vocabulary.lemma], vocabulary.itemId),
+      ...(adverbPosition === 1
+        ? [grammarSlot('adverb', ['nyt'], skillId)]
+        : []),
       grammarSlot(
         'subject',
         [pronouns[personIndex]!.toLocaleLowerCase('fi')],
@@ -555,6 +554,10 @@ function affirmative(
         canOmit,
       ),
       grammarSlot('mainVerb', [item.forms[personIndex]!], skillId),
+      ...(adverbPosition === 2
+        ? [grammarSlot('adverb', ['nyt'], skillId)]
+        : []),
+      vocabularySlot(vocabulary.lemma, vocabulary.itemId, skillId),
     ],
     primaryItemId: CONSONANT_GRADATION_SKILL_ID,
     secondaryItemIds: [skillId],
@@ -562,23 +565,20 @@ function affirmative(
   }
 }
 
-function negative(verbIndex: number, personIndex: number, nounIndex: number) {
-  const item = verbs[verbIndex % verbs.length]!
+function negative(personIndex: number, nounIndex: number) {
+  const item = verbs[1]!
   const vocabulary = consonantGradationVocabulary[nounIndex % nouns.length]!
   const pronoun = personIndex === 0 ? 'Minä' : 'Sinä'
   const negativeVerb = personIndex === 0 ? 'en' : 'et'
-  const targetText = `Tämä on ${vocabulary.lemma}. ${pronoun} ${negativeVerb} ${item.connegative}.`
+  const targetText = `${pronoun} ${negativeVerb} ${item.connegative}: ${vocabulary.lemma}.`
   return {
-    prompt: `Это ${vocabulary.gloss}. ${negateRussian(item.source[personIndex]!)}.`,
+    prompt: `${negateRussian(item.source[personIndex]!)}: «${vocabulary.lemma}».`,
     targetText,
     acceptedVariants: [
       targetText,
-      `Tämä on ${vocabulary.lemma}. ${capitalize(negativeVerb)} ${item.connegative}.`,
+      `${capitalize(negativeVerb)} ${item.connegative}: ${vocabulary.lemma}.`,
     ],
     slots: [
-      vocabularySlot('demonstrative', ['tämä'], vocabulary.itemId),
-      vocabularySlot('copula', ['on'], vocabulary.itemId),
-      vocabularySlot('vocabulary', [vocabulary.lemma], vocabulary.itemId),
       grammarSlot(
         'subject',
         [pronoun.toLocaleLowerCase('fi')],
@@ -595,6 +595,11 @@ function negative(verbIndex: number, personIndex: number, nounIndex: number) {
         [item.connegative],
         CONSONANT_GRADATION_WEAK_SKILL_ID,
       ),
+      vocabularySlot(
+        vocabulary.lemma,
+        vocabulary.itemId,
+        CONSONANT_GRADATION_WEAK_SKILL_ID,
+      ),
     ],
     primaryItemId: CONSONANT_GRADATION_SKILL_ID,
     secondaryItemIds: [CONSONANT_GRADATION_WEAK_SKILL_ID],
@@ -602,36 +607,51 @@ function negative(verbIndex: number, personIndex: number, nounIndex: number) {
   }
 }
 
-function question(verbIndex: number, personIndex: number, nounIndex: number) {
-  const item = verbs[verbIndex % verbs.length]!
-  const vocabulary = consonantGradationVocabulary[nounIndex % nouns.length]!
-  const pronoun = personIndex === 1 ? 'sinä' : 'hän'
-  const questionForm = `${item.forms[personIndex]}${questionParticle(item.forms[personIndex]!)}`
-  const targetText = `Tämä on ${vocabulary.lemma}. ${capitalize(questionForm)} ${pronoun}?`
+function packingQuestion(index: number) {
+  const item = verbs[9]!
+  const nounIndexes = [20, 21, 22, 5] as const
+  const vocabulary = consonantGradationVocabulary[nounIndexes[index]!]!
+  const questionForm = `${item.forms[1]}${questionParticle(item.forms[1]!)}`
+  const targetText = `${capitalize(questionForm)} sinä nyt? ${capitalize(vocabulary.lemma)} on tässä.`
   return {
-    prompt: `Это ${vocabulary.gloss}. ${capitalize(item.source[personIndex]!)}?`,
+    prompt: `Ты сейчас собираешь вещи? ${capitalize(vocabulary.gloss)} здесь.`,
     targetText,
     acceptedVariants: [
       targetText,
-      ...(personIndex === 1
-        ? [`Tämä on ${vocabulary.lemma}. ${capitalize(questionForm)}?`]
-        : []),
+      `${capitalize(questionForm)} nyt? ${capitalize(vocabulary.lemma)} on tässä.`,
     ],
     slots: [
-      vocabularySlot('demonstrative', ['tämä'], vocabulary.itemId),
-      vocabularySlot('copula', ['on'], vocabulary.itemId),
-      vocabularySlot('vocabulary', [vocabulary.lemma], vocabulary.itemId),
-      grammarSlot('questionVerb', [questionForm], CONSONANT_GRADATION_SKILL_ID),
+      grammarSlot(
+        'questionVerb',
+        [questionForm],
+        CONSONANT_GRADATION_STRONG_SKILL_ID,
+      ),
       grammarSlot(
         'subject',
-        [pronoun],
-        CONSONANT_GRADATION_SKILL_ID,
-        personIndex === 1,
+        ['sinä'],
+        CONSONANT_GRADATION_STRONG_SKILL_ID,
+        true,
       ),
+      grammarSlot('adverb', ['nyt'], CONSONANT_GRADATION_STRONG_SKILL_ID),
+      vocabularySlot(
+        vocabulary.lemma,
+        vocabulary.itemId,
+        CONSONANT_GRADATION_STRONG_SKILL_ID,
+      ),
+      grammarSlot('copula', ['on'], CONSONANT_GRADATION_STRONG_SKILL_ID),
+      grammarSlot('location', ['tässä'], CONSONANT_GRADATION_STRONG_SKILL_ID),
     ],
     primaryItemId: CONSONANT_GRADATION_SKILL_ID,
-    secondaryItemIds: [],
+    secondaryItemIds: [CONSONANT_GRADATION_STRONG_SKILL_ID],
     vocabularyItemId: vocabulary.itemId,
+  }
+}
+
+function vocabularySlot(value: string, itemId: string, skillId: string) {
+  return {
+    role: 'citedWord',
+    accepted: [value],
+    itemIds: [CONSONANT_GRADATION_SKILL_ID, skillId, itemId],
   }
 }
 
@@ -677,10 +697,6 @@ function grammarSlot(
         : [CONSONANT_GRADATION_SKILL_ID, skillId],
     ...(optional ? { optional: true } : {}),
   }
-}
-
-function vocabularySlot(role: string, accepted: string[], itemId: string) {
-  return { role, accepted, itemIds: [itemId] }
 }
 
 function lexicalForm(

@@ -36,13 +36,15 @@ describe('lesson 16 curated content', () => {
 
     expect(golden).toEqual({
       'exercise.fi.imperfect.negative-question.word.1':
-        'Eilen minä en lähtenyt.',
+        'Eilen minä en lähtenyt kotoa.',
       'exercise.fi.imperfect.negative-question.word.10':
-        'Eilen minä en kasvanut.',
-      'exercise.fi.imperfect.negative-question.context.1': 'Me emme lähteneet.',
-      'exercise.fi.imperfect.negative-question.context.11': 'Katositko sinä?',
+        'Se ei kasvanut kylmän takia.',
+      'exercise.fi.imperfect.negative-question.context.1':
+        'Me emme lähteneet kotoa.',
+      'exercise.fi.imperfect.negative-question.context.11':
+        'Katositko sinä näkyvistä?',
       'exercise.fi.imperfect.negative-question.pair.1':
-        'Hän ei nukkunut eilen.',
+        'Hän ei nukkunut hyvin eilen.',
     })
   })
 })

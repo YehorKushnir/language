@@ -40,8 +40,34 @@ describe('lesson three: negative, questions and word order', () => {
       'exercise.fi.questions.negative.001': 'Tämä ei ole puhelin.',
       'exercise.fi.questions.existential.001': 'Tässä on merkitys.',
       'exercise.fi.questions.absent.001': 'Viesti ei ole tässä.',
-      'exercise.fi.questions.location.001': 'Onko uutinen tässä?',
+      'exercise.fi.questions.location.001': 'Onko puhelin tässä?',
     })
+  })
+
+  it('uses natural contexts for the reported exercises', () => {
+    const exercises = new Map(
+      questionsWordOrderExercises.map((exercise) => [exercise.id, exercise]),
+    )
+
+    expect(
+      exercises.get('exercise.fi.questions.existential.003'),
+    ).toMatchObject({
+      prompt: 'Вот вопрос.',
+      targetText: 'Tässä on kysymys.',
+    })
+    expect(exercises.get('exercise.fi.questions.absent.010')).toMatchObject({
+      prompt: 'Слово не здесь.',
+      targetText: 'Sana ei ole tässä.',
+    })
+    expect(exercises.get('exercise.fi.questions.location.002')).toMatchObject({
+      prompt: 'Сообщение здесь?',
+      targetText: 'Onko viesti tässä?',
+    })
+    expect(
+      questionsWordOrderExercises.some((exercise) =>
+        exercise.prompt.startsWith('Здесь есть '),
+      ),
+    ).toBe(false)
   })
 
   it('passes the strict lesson readiness gate', () => {

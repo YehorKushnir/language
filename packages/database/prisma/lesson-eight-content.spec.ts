@@ -33,10 +33,10 @@ describe('lesson 8 curated content', () => {
     )
 
     expect(golden).toEqual({
-      'exercise.fi.genitive.possession.word.1': 'Tämä on perheen lapsi.',
-      'exercise.fi.genitive.possession.word.2': 'Tämä on äidin vauva.',
+      'exercise.fi.genitive.possession.word.1': 'Tämä on perheen koti.',
+      'exercise.fi.genitive.possession.word.2': 'Tämä on äidin nimi.',
       'exercise.fi.genitive.possession.context.1': 'Minulla on perhe.',
-      'exercise.fi.genitive.possession.context.21': 'Tänään hänellä on sisko.',
+      'exercise.fi.genitive.possession.context.21': 'Nyt hänellä on avain.',
       'exercise.fi.genitive.possession.pair.1': 'Onko sinulla huone?',
     })
   })

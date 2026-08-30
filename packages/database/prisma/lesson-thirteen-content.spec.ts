@@ -42,7 +42,7 @@ describe('lesson 13 curated content', () => {
       'exercise.fi.local-cases.external.word.1': 'Minä matkustan bussilla.',
       'exercise.fi.local-cases.external.word.13': 'Minä olen järvellä.',
       'exercise.fi.local-cases.external.context.1': 'Minä menen tielle.',
-      'exercise.fi.local-cases.external.context.11': 'Nyt minä tulen joelta.',
+      'exercise.fi.local-cases.external.context.11': 'Nyt minä tulen tieltä.',
       'exercise.fi.local-cases.external.pair.1': 'Oletko sinä tiellä?',
     })
   })

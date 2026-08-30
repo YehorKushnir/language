@@ -244,7 +244,7 @@ export const partitiveFormationVocabulary: PartitiveVocabulary[] = nouns.map(
       pattern,
       example: {
         target: `Haluan ${partitive}.`,
-        source: { ru: `Я хочу ${sourcePartitive}.` },
+        source: { ru: `Я хочу немного ${sourcePartitive}.` },
       },
       semanticTypes: [
         'food-or-drink',
@@ -305,7 +305,7 @@ function build(index: number, frame: Frame) {
     }
   > = {
     want: {
-      prompt: `Я хочу ${vocabulary.sourcePartitive}.`,
+      prompt: `Я хочу немного ${vocabulary.sourcePartitive}.`,
       target: `Minä haluan ${vocabulary.partitive}.`,
       variants: [`Haluan ${vocabulary.partitive}.`],
       slots: [
@@ -314,7 +314,7 @@ function build(index: number, frame: Frame) {
       ],
     },
     buy: {
-      prompt: `Сегодня я покупаю ${vocabulary.sourcePartitive}.`,
+      prompt: `Сегодня я покупаю ${purchaseSource(vocabulary)}.`,
       target: `Minä ostan tänään ${vocabulary.partitive}.`,
       variants: [`Ostan tänään ${vocabulary.partitive}.`],
       slots: [
@@ -334,7 +334,7 @@ function build(index: number, frame: Frame) {
       ],
     },
     temporal: {
-      prompt: `Сейчас я хочу ${vocabulary.sourcePartitive}.`,
+      prompt: `Сейчас я хочу немного ${vocabulary.sourcePartitive}.`,
       target: `Nyt minä haluan ${vocabulary.partitive}.`,
       variants: [`Nyt haluan ${vocabulary.partitive}.`],
       slots: [
@@ -344,7 +344,7 @@ function build(index: number, frame: Frame) {
       ],
     },
     question: {
-      prompt: `Ты хочешь ${vocabulary.sourcePartitive}?`,
+      prompt: `Ты хочешь немного ${vocabulary.sourcePartitive}?`,
       target: `Haluatko sinä ${vocabulary.partitive}?`,
       variants: [`Haluatko ${vocabulary.partitive}?`],
       slots: [
@@ -363,6 +363,12 @@ function build(index: number, frame: Frame) {
     secondaryItemIds: [secondary],
     vocabularyItemId: vocabulary.itemId,
   }
+}
+
+function purchaseSource(item: PartitiveVocabulary) {
+  if (item.lemma === 'kala') return 'рыбу'
+  if (item.lemma === 'kana') return 'курицу'
+  return item.gloss
 }
 
 function grammarSlot(

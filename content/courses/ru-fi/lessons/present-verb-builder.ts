@@ -21,6 +21,7 @@ export function buildPresentVerbVocabulary(input: {
 }): LessonVocabularySeed[] {
   return input.verbs.map((item, index) => {
     const source = getRussianPresentForms(item.lemma)
+    const context = getPresentVerbContext(item.lemma)
     const serial = `${String(input.lessonPosition).padStart(2, '0')}.${String(index + 1).padStart(2, '0')}`
     return {
       key: `${input.keyPrefix}-${item.lemma}`,
@@ -31,8 +32,8 @@ export function buildPresentVerbVocabulary(input: {
       partOfSpeech: 'verb',
       gloss: item.gloss,
       example: {
-        target: `Minä ${item.forms[0]}.`,
-        source: { ru: `Я ${source[0]}.` },
+        target: `Minä ${item.forms[0]} ${context.target}.`,
+        source: { ru: `Я ${source[0]} ${context.source}.` },
       },
       semanticTypes: [
         'action',
@@ -139,71 +140,104 @@ export function buildPresentVerbExercises(input: {
 }): PreparedExerciseSeed[] {
   const exercises: PreparedExerciseSeed[] = []
 
-  addGroup(0, 18, 'first', ({ item, skillId, vocabulary }) => ({
-    prompt: `Я ${getRussianPresentForms(item.lemma)[0]}.`,
-    targetText: `Minä ${item.forms[0]}.`,
-    acceptedVariants: [
-      `Minä ${item.forms[0]}.`,
-      `${capitalize(item.forms[0])}.`,
-    ],
-    slots: [
-      skillSlot('subject', ['minä'], skillId, true),
-      vocabularySlot('mainVerb', [item.forms[0]], skillId, vocabulary.itemId),
-    ],
-  }))
-  addGroup(18, 10, 'second-now', ({ item, skillId, vocabulary }) => ({
-    prompt: `Ты сейчас ${getRussianPresentForms(item.lemma)[1]}.`,
-    targetText: `Sinä ${item.forms[1]} nyt.`,
-    acceptedVariants: [
-      `Sinä ${item.forms[1]} nyt.`,
-      `${capitalize(item.forms[1])} nyt.`,
-      `Nyt sinä ${item.forms[1]}.`,
-      `Nyt ${item.forms[1]}.`,
-    ],
-    slots: [
-      skillSlot('subject', ['sinä'], skillId, true),
-      vocabularySlot('mainVerb', [item.forms[1]], skillId, vocabulary.itemId),
-      skillSlot('adverb', ['nyt'], skillId),
-    ],
-  }))
-  addGroup(2, 8, 'third', ({ item, skillId, vocabulary }) => ({
-    prompt: `Он или она ${getRussianPresentForms(item.lemma)[2]}.`,
-    targetText: `Hän ${item.forms[2]}.`,
-    acceptedVariants: [`Hän ${item.forms[2]}.`],
-    slots: [
-      skillSlot('subject', ['hän'], skillId),
-      vocabularySlot('mainVerb', [item.forms[2]], skillId, vocabulary.itemId),
-    ],
-  }))
-  addGroup(10, 8, 'first-plural-now', ({ item, skillId, vocabulary }) => ({
-    prompt: `Сейчас мы ${getRussianPresentForms(item.lemma)[3]}.`,
-    targetText: `Nyt me ${item.forms[3]}.`,
-    acceptedVariants: [`Nyt me ${item.forms[3]}.`, `Nyt ${item.forms[3]}.`],
-    slots: [
-      skillSlot('adverb', ['nyt'], skillId),
-      skillSlot('subject', ['me'], skillId, true),
-      vocabularySlot('mainVerb', [item.forms[3]], skillId, vocabulary.itemId),
-    ],
-  }))
-  addGroup(18, 8, 'second-plural', ({ item, skillId, vocabulary }) => ({
-    prompt: `Вы ${getRussianPresentForms(item.lemma)[4]}.`,
-    targetText: `Te ${item.forms[4]}.`,
-    acceptedVariants: [`Te ${item.forms[4]}.`, `${capitalize(item.forms[4])}.`],
-    slots: [
-      skillSlot('subject', ['te'], skillId, true),
-      vocabularySlot('mainVerb', [item.forms[4]], skillId, vocabulary.itemId),
-    ],
-  }))
-  addGroup(0, 8, 'third-plural-now', ({ item, skillId, vocabulary }) => ({
-    prompt: `Они сейчас ${getRussianPresentForms(item.lemma)[5]}.`,
-    targetText: `He ${item.forms[5]} nyt.`,
-    acceptedVariants: [`He ${item.forms[5]} nyt.`, `Nyt he ${item.forms[5]}.`],
-    slots: [
-      skillSlot('subject', ['he'], skillId),
-      vocabularySlot('mainVerb', [item.forms[5]], skillId, vocabulary.itemId),
-      skillSlot('adverb', ['nyt'], skillId),
-    ],
-  }))
+  addGroup(0, 18, 'first', ({ item, skillId, vocabulary }) => {
+    const context = getPresentVerbContext(item.lemma)
+    return {
+      prompt: `Я ${getRussianPresentForms(item.lemma)[0]} ${context.source}.`,
+      targetText: `Minä ${item.forms[0]} ${context.target}.`,
+      acceptedVariants: [
+        `Minä ${item.forms[0]} ${context.target}.`,
+        `${capitalize(item.forms[0])} ${context.target}.`,
+      ],
+      slots: [
+        skillSlot('subject', ['minä'], skillId, true),
+        vocabularySlot('mainVerb', [item.forms[0]], skillId, vocabulary.itemId),
+        ...contextSlots(context.target, skillId),
+      ],
+    }
+  })
+  addGroup(18, 10, 'second-now', ({ item, skillId, vocabulary }) => {
+    const context = getPresentVerbContext(item.lemma)
+    return {
+      prompt: `Ты сейчас ${getRussianPresentForms(item.lemma)[1]} ${context.source}.`,
+      targetText: `Sinä ${item.forms[1]} nyt ${context.target}.`,
+      acceptedVariants: [
+        `Sinä ${item.forms[1]} nyt ${context.target}.`,
+        `${capitalize(item.forms[1])} nyt ${context.target}.`,
+        `Nyt sinä ${item.forms[1]} ${context.target}.`,
+        `Nyt ${item.forms[1]} ${context.target}.`,
+      ],
+      slots: [
+        skillSlot('subject', ['sinä'], skillId, true),
+        vocabularySlot('mainVerb', [item.forms[1]], skillId, vocabulary.itemId),
+        skillSlot('adverb', ['nyt'], skillId),
+        ...contextSlots(context.target, skillId),
+      ],
+    }
+  })
+  addGroup(2, 8, 'third', ({ item, skillId, vocabulary }) => {
+    const context = getPresentVerbContext(item.lemma)
+    return {
+      prompt: `Он или она ${getRussianPresentForms(item.lemma)[2]} ${context.source}.`,
+      targetText: `Hän ${item.forms[2]} ${context.target}.`,
+      acceptedVariants: [`Hän ${item.forms[2]} ${context.target}.`],
+      slots: [
+        skillSlot('subject', ['hän'], skillId),
+        vocabularySlot('mainVerb', [item.forms[2]], skillId, vocabulary.itemId),
+        ...contextSlots(context.target, skillId),
+      ],
+    }
+  })
+  addGroup(10, 8, 'first-plural-now', ({ item, skillId, vocabulary }) => {
+    const context = getPresentVerbContext(item.lemma)
+    return {
+      prompt: `Сейчас мы ${getRussianPresentForms(item.lemma)[3]} ${context.source}.`,
+      targetText: `Nyt me ${item.forms[3]} ${context.target}.`,
+      acceptedVariants: [
+        `Nyt me ${item.forms[3]} ${context.target}.`,
+        `Nyt ${item.forms[3]} ${context.target}.`,
+      ],
+      slots: [
+        skillSlot('adverb', ['nyt'], skillId),
+        skillSlot('subject', ['me'], skillId, true),
+        vocabularySlot('mainVerb', [item.forms[3]], skillId, vocabulary.itemId),
+        ...contextSlots(context.target, skillId),
+      ],
+    }
+  })
+  addGroup(18, 8, 'second-plural', ({ item, skillId, vocabulary }) => {
+    const context = getPresentVerbContext(item.lemma)
+    return {
+      prompt: `Вы ${getRussianPresentForms(item.lemma)[4]} ${context.source}.`,
+      targetText: `Te ${item.forms[4]} ${context.target}.`,
+      acceptedVariants: [
+        `Te ${item.forms[4]} ${context.target}.`,
+        `${capitalize(item.forms[4])} ${context.target}.`,
+      ],
+      slots: [
+        skillSlot('subject', ['te'], skillId, true),
+        vocabularySlot('mainVerb', [item.forms[4]], skillId, vocabulary.itemId),
+        ...contextSlots(context.target, skillId),
+      ],
+    }
+  })
+  addGroup(0, 8, 'third-plural-now', ({ item, skillId, vocabulary }) => {
+    const context = getPresentVerbContext(item.lemma)
+    return {
+      prompt: `Они сейчас ${getRussianPresentForms(item.lemma)[5]} ${context.source}.`,
+      targetText: `He ${item.forms[5]} nyt ${context.target}.`,
+      acceptedVariants: [
+        `He ${item.forms[5]} nyt ${context.target}.`,
+        `Nyt he ${item.forms[5]} ${context.target}.`,
+      ],
+      slots: [
+        skillSlot('subject', ['he'], skillId),
+        vocabularySlot('mainVerb', [item.forms[5]], skillId, vocabulary.itemId),
+        skillSlot('adverb', ['nyt'], skillId),
+        ...contextSlots(context.target, skillId),
+      ],
+    }
+  })
 
   if (exercises.length !== 60) {
     throw new Error(
@@ -226,7 +260,25 @@ export function buildPresentVerbExercises(input: {
     >,
   ) {
     Array.from({ length: count }, (_, offset) => {
-      const vocabularyIndex = (start + offset) % input.verbs.length
+      let vocabularyIndex = (start + offset) % input.verbs.length
+      if (
+        category === 'second-now' &&
+        input.verbs[vocabularyIndex]?.lemma === 'vanheta'
+      ) {
+        vocabularyIndex = 15
+      }
+      if (
+        category === 'first-plural-now' &&
+        input.verbs[vocabularyIndex]?.lemma === 'pudota'
+      ) {
+        vocabularyIndex = 23
+      }
+      if (
+        category === 'second-plural' &&
+        input.verbs[vocabularyIndex]?.lemma === 'kuolla'
+      ) {
+        vocabularyIndex = 15
+      }
       const item = input.verbs[vocabularyIndex]!
       const vocabulary = input.vocabulary[vocabularyIndex]!
       const skillId = input.skillIdFor(item)
@@ -286,6 +338,12 @@ function vocabularySlot(
   return { role, accepted, itemIds: [skillId, vocabularyItemId] }
 }
 
+function contextSlots(value: string, skillId: string) {
+  return value
+    .split(' ')
+    .map((token, index) => skillSlot(`context${index + 1}`, [token], skillId))
+}
+
 function serial(index: number) {
   return String(index + 1).padStart(3, '0')
 }
@@ -299,6 +357,68 @@ function getRussianPresentForms(lemma: string): RussianPresentForms {
   if (!forms) throw new Error(`Russian present forms are missing for ${lemma}`)
   return forms
 }
+
+function getPresentVerbContext(lemma: string) {
+  const context = presentVerbContexts[lemma]
+  if (!context) throw new Error(`Present verb context is missing for ${lemma}`)
+  return context
+}
+
+const presentVerbContexts: Record<string, { target: string; source: string }> =
+  {
+    saada: { target: 'viestin', source: 'сообщение' },
+    syödä: { target: 'aamiaista', source: 'завтрак' },
+    juoda: { target: 'vettä', source: 'воду' },
+    uida: { target: 'altaassa', source: 'в бассейне' },
+    tupakoida: { target: 'ulkona', source: 'на улице' },
+    imuroida: { target: 'olohuonetta', source: 'гостиную' },
+    pysäköidä: { target: 'pihalle', source: 'во дворе' },
+    viedä: { target: 'roskat ulos', source: 'мусор на улицу' },
+    tuoda: { target: 'kahvia', source: 'кофе' },
+    myydä: { target: 'auton', source: 'машину' },
+    tehdä: { target: 'ruokaa', source: 'еду' },
+    nähdä: { target: 'ystävän', source: 'друга' },
+    käydä: { target: 'kaupassa', source: 'в магазин' },
+    pestä: { target: 'kädet', source: 'руки' },
+    nousta: { target: 'aikaisin', source: 'рано' },
+    purra: { target: 'omenaa', source: 'яблоко' },
+    kuunnella: { target: 'musiikkia', source: 'музыку' },
+    mennä: { target: 'kotiin', source: 'домой' },
+    tulla: { target: 'ajoissa', source: 'вовремя' },
+    kuolla: { target: 'nauruun', source: 'со смеху' },
+    panna: { target: 'kirjan pöydälle', source: 'книгу на стол' },
+    juosta: { target: 'puistossa', source: 'в парке' },
+    ajatella: { target: 'asiaa', source: 'об этом' },
+    opiskella: { target: 'suomea', source: 'финский язык' },
+    harjoitella: { target: 'ääntämistä', source: 'произношение' },
+    työskennellä: { target: 'toimistossa', source: 'в офисе' },
+    haluta: { target: 'kahvia', source: 'кофе' },
+    herätä: { target: 'aikaisin', source: 'рано' },
+    tavata: { target: 'ystävän', source: 'друга' },
+    osata: { target: 'kokata', source: 'готовить' },
+    pelata: { target: 'jalkapalloa', source: 'в футбол' },
+    siivota: { target: 'keittiötä', source: 'кухню' },
+    lainata: { target: 'kirjan', source: 'книгу' },
+    tykätä: { target: 'kahvista', source: 'кофе' },
+    vihata: { target: 'kiirettä', source: 'спешку' },
+    tarvita: { target: 'apua', source: 'в помощи' },
+    pakata: { target: 'laukun', source: 'сумку' },
+    korjata: { target: 'pyörän', source: 'велосипед' },
+    maalata: { target: 'seinän', source: 'стену' },
+    tilata: { target: 'ruokaa', source: 'еду' },
+    pudota: { target: 'portaissa', source: 'на лестнице' },
+    levätä: { target: 'kotona', source: 'дома' },
+    häiritä: { target: 'naapuria', source: 'соседу' },
+    luvata: { target: 'auttaa', source: 'помочь' },
+    palata: { target: 'kotiin', source: 'домой' },
+    pelätä: { target: 'pimeää', source: 'темноты' },
+    lämmetä: { target: 'nopeasti', source: 'быстро' },
+    kylmetä: { target: 'ulkona', source: 'на улице' },
+    vanheta: { target: 'vähitellen', source: 'постепенно' },
+    valita: { target: 'jälkiruoan', source: 'десерт' },
+    avata: { target: 'oven', source: 'дверь' },
+    vastata: { target: 'kysymykseen', source: 'на вопрос' },
+  }
 
 const russianPresentFormsByLemma: Record<string, RussianPresentForms> = {
   saada: [
@@ -339,7 +459,7 @@ const russianPresentFormsByLemma: Record<string, RussianPresentForms> = {
     'приносят',
   ],
   myydä: ['продаю', 'продаёшь', 'продаёт', 'продаём', 'продаёте', 'продают'],
-  tehdä: ['делаю', 'делаешь', 'делает', 'делаем', 'делаете', 'делают'],
+  tehdä: ['готовлю', 'готовишь', 'готовит', 'готовим', 'готовите', 'готовят'],
   nähdä: ['вижу', 'видишь', 'видит', 'видим', 'видите', 'видят'],
   käydä: ['хожу', 'ходишь', 'ходит', 'ходим', 'ходите', 'ходят'],
   pestä: ['мою', 'моешь', 'моет', 'моем', 'моете', 'моют'],
@@ -366,14 +486,21 @@ const russianPresentFormsByLemma: Record<string, RussianPresentForms> = {
   panna: ['кладу', 'кладёшь', 'кладёт', 'кладём', 'кладёте', 'кладут'],
   juosta: ['бегу', 'бежишь', 'бежит', 'бежим', 'бежите', 'бегут'],
   ajatella: ['думаю', 'думаешь', 'думает', 'думаем', 'думаете', 'думают'],
-  opiskella: ['учусь', 'учишься', 'учится', 'учимся', 'учитесь', 'учатся'],
+  opiskella: [
+    'изучаю',
+    'изучаешь',
+    'изучает',
+    'изучаем',
+    'изучаете',
+    'изучают',
+  ],
   harjoitella: [
-    'тренируюсь',
-    'тренируешься',
-    'тренируется',
-    'тренируемся',
-    'тренируетесь',
-    'тренируются',
+    'отрабатываю',
+    'отрабатываешь',
+    'отрабатывает',
+    'отрабатываем',
+    'отрабатываете',
+    'отрабатывают',
   ],
   työskennellä: [
     'работаю',
@@ -474,14 +601,7 @@ const russianPresentFormsByLemma: Record<string, RussianPresentForms> = {
     'согреваетесь',
     'согреваются',
   ],
-  kylmetä: [
-    'остываю',
-    'остываешь',
-    'остывает',
-    'остываем',
-    'остываете',
-    'остывают',
-  ],
+  kylmetä: ['мёрзну', 'мёрзнешь', 'мёрзнет', 'мёрзнем', 'мёрзнете', 'мёрзнут'],
   vanheta: ['старею', 'стареешь', 'стареет', 'стареем', 'стареете', 'стареют'],
   valita: [
     'выбираю',

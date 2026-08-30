@@ -30,13 +30,13 @@ describe('lesson 14 curated content', () => {
         .map((exercise) => [exercise.id, exercise.targetText]),
     )
     expect(golden).toEqual({
-      'exercise.fi.plural.agreement.word.1': 'Suuret talot ovat täällä.',
-      'exercise.fi.plural.agreement.word.7': 'Uudet autot ovat täällä.',
+      'exercise.fi.plural.agreement.word.1': 'Suuret talot ovat kaupungissa.',
+      'exercise.fi.plural.agreement.word.7': 'Uudet autot ovat ulkona.',
       'exercise.fi.plural.agreement.context.1':
-        'Nämä nuoret opiskelijat ovat täällä.',
+        'Nämä nuoret opiskelijat ovat yliopistossa.',
       'exercise.fi.plural.agreement.context.11':
-        'Vaikeat kokeet eivät ole täällä.',
-      'exercise.fi.plural.agreement.pair.1': 'Ovatko pitkät päivät täällä?',
+        'Uudet autot eivät ole ulkona.',
+      'exercise.fi.plural.agreement.pair.1': 'Ovatko pitkät päivät kesällä?',
     })
   })
 })

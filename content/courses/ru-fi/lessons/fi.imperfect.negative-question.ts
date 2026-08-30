@@ -273,7 +273,7 @@ const verbs = [
     'kasvoi',
     'kasvanut',
     'kasvaneet',
-    'minä',
+    'se',
   ],
   [
     'tapahtua',
@@ -437,12 +437,12 @@ const singularNegativeSources = [
   'Вчера я не ходил пешком.',
   'Вчера я не звонил.',
   'Вчера я не отправлял.',
-  'Он не родился вчера.',
-  'Вчера я не рос.',
-  'Это не произошло вчера.',
+  'Он не родился.',
+  'Оно не росло.',
+  'Вчера это не произошло.',
   'Вчера я не исчез.',
   'Вчера я не ломал.',
-  'Вчера я не победил.',
+  'Вчера я не выиграл.',
   'Вчера я не прибыл.',
   'Вчера я не дрожал.',
   'Вчера я не смеялся.',
@@ -466,14 +466,14 @@ const pluralNegativeSources = [
   'Мы не ходили пешком.',
   'Мы не звонили.',
   'Мы не отправляли.',
-  'Мы не родились.',
-  'Мы не росли.',
+  'Мы не ломали.',
+  'Мы не выиграли.',
 ] as const
 
 const secondPersonQuestionSources = [
   'Ты исчез?',
   'Ты сломал?',
-  'Ты победил?',
+  'Ты выиграл?',
   'Ты прибыл?',
   'Ты дрожал?',
   'Ты смеялся?',
@@ -482,25 +482,54 @@ const secondPersonQuestionSources = [
 ] as const
 
 const thirdPersonQuestionSources = [
-  'Он улыбался вчера?',
-  'Он кричал вчера?',
-  'Он шептал вчера?',
-  'Он нёс вчера?',
-  'Он поднимал вчера?',
-  'Он считал вчера?',
-  'Он ронял вчера?',
-  'Он менял вчера?',
+  'Он вчера улыбался?',
+  'Он вчера звал?',
+  'Он вчера шептал?',
+  'Он вчера нёс?',
+  'Он вчера поднимал?',
+  'Он вчера считал?',
+  'Он вчера ронял?',
+  'Он вчера сменил?',
 ] as const
 
 const thirdPersonNegativeSources = [
-  'Он не спал вчера.',
-  'Он не сидел вчера.',
-  'Он не стоял вчера.',
-  'Он не ходил пешком вчера.',
-  'Он не звонил вчера.',
-  'Он не отправлял вчера.',
-  'Он не родился вчера.',
-  'Он не рос вчера.',
+  'Вчера он не спал.',
+  'Вчера он не сидел.',
+  'Вчера он не стоял.',
+  'Вчера он не ходил пешком.',
+  'Вчера он не звонил.',
+  'Вчера он не отправлял.',
+  'Он не родился.',
+  'Вчера оно не росло.',
+] as const
+
+const imperfectContexts = [
+  context('kotoa', 'kotoa', 'из дома'),
+  context('kotiin', 'kotiin', 'дома'),
+  context('hyvin', 'hyvin', 'хорошо'),
+  context('ulkona', 'ulkona', 'на улице'),
+  context('ovella', 'ovella', 'у двери'),
+  context('puistossa', 'puistossa', 'в парке'),
+  context('ystävälle', 'ystävälle', 'другу'),
+  context('viestiä', 'viestin', 'сообщение'),
+  context('Helsingissä', 'Helsingissä', 'в Хельсинки'),
+  context('kylmän takia', 'kylmän takia', 'из-за холода'),
+  context('täällä', 'täällä', 'здесь'),
+  context('näkyvistä', 'näkyvistä', 'из виду'),
+  context('ikkunaa', 'ikkunan', 'окно'),
+  context('kilpailua', 'kilpailun', 'соревнование'),
+  context('ajoissa', 'ajoissa', 'вовремя'),
+  context('kylmästä', 'kylmästä', 'от холода'),
+  context('paljon', 'paljon', 'особенно много'),
+  context('yöllä', 'yöllä', 'ночью'),
+  context('ystävälle', 'minulle', 'другу', 'мне'),
+  context('apua', 'apua', '«Помогите!»', 'на помощь'),
+  context('hiljaa', 'hiljaa', 'тихо'),
+  context('laukkua', 'laukun', 'сумку'),
+  context('laatikkoa', 'laatikon', 'коробку'),
+  context('rahoja', 'rahat', 'деньги'),
+  context('lasia', 'lasin', 'стакан'),
+  context('paikkaa', 'paikan', 'место'),
 ] as const
 
 interface ImperfectVerbVocabulary extends LessonVocabularySeed {
@@ -527,6 +556,7 @@ export const imperfectNegativeQuestionVocabulary: ImperfectVerbVocabulary[] =
       index,
     ) => {
       const serial = `16.${String(index + 1).padStart(2, '0')}`
+      const verbContext = imperfectContexts[index]!
       const subjectText =
         subject === 'minä' ? 'Minä' : subject === 'hän' ? 'Hän' : 'Se'
       const negativeVerb = subject === 'minä' ? 'en' : 'ei'
@@ -550,8 +580,13 @@ export const imperfectNegativeQuestionVocabulary: ImperfectVerbVocabulary[] =
         partOfSpeech: 'verb',
         gloss,
         example: {
-          target: `Eilen ${subjectText.toLocaleLowerCase('fi')} ${negativeVerb} ${negativeSingular}.`,
-          source: { ru: singularNegativeSources[index]! },
+          target: `${index === 8 || index === 9 ? subjectText : `Eilen ${subjectText.toLocaleLowerCase('fi')}`} ${negativeVerb} ${negativeSingular} ${verbContext.negativeTarget}.`,
+          source: {
+            ru: appendSourceContext(
+              singularNegativeSources[index]!,
+              verbContext.negativeSource,
+            ),
+          },
         },
         semanticTypes: ['past-action', 'imperfect-verb'],
         singular: negativeSingular,
@@ -597,7 +632,9 @@ export const imperfectNegativeQuestionVocabulary: ImperfectVerbVocabulary[] =
 
 export const imperfectNegativeQuestionExercises: PreparedExerciseSeed[] = [
   ...exerciseGroup('word', 1, 0, 26, (index) => buildSingularNegative(index)),
-  ...exerciseGroup('context', 1, 26, 10, (index) => buildPluralNegative(index)),
+  ...exerciseGroup('context', 1, 26, 10, (index) =>
+    buildPluralNegative([0, 1, 2, 3, 4, 5, 6, 7, 12, 13][index]!, index),
+  ),
   ...exerciseGroup('context', 11, 36, 8, (index) =>
     buildSecondPersonQuestion(index + 11),
   ),
@@ -619,20 +656,33 @@ export const imperfectNegativeQuestionGoldenExerciseIds = [
 
 function buildSingularNegative(index: number) {
   const item = imperfectNegativeQuestionVocabulary[index]!
+  const verbContext = imperfectContexts[index]!
   const subject =
     item.subject === 'minä' ? 'Minä' : item.subject === 'hän' ? 'Hän' : 'Se'
   const negativeVerb = item.subject === 'minä' ? 'en' : 'ei'
-  const targetText = `Eilen ${subject.toLocaleLowerCase('fi')} ${negativeVerb} ${item.negativeSingular}.`
+  const usesYesterday = index !== 8 && index !== 9
+  const targetSubject = usesYesterday
+    ? `Eilen ${subject.toLocaleLowerCase('fi')}`
+    : subject
+  const targetText = `${targetSubject} ${negativeVerb} ${item.negativeSingular} ${verbContext.negativeTarget}.`
   const canOmitSubject = item.subject === 'minä'
   return exercise({
     item,
-    prompt: singularNegativeSources[index]!,
+    prompt: appendSourceContext(
+      singularNegativeSources[index]!,
+      verbContext.negativeSource,
+    ),
     targetText,
     acceptedVariants: canOmitSubject
-      ? [targetText, `Eilen en ${item.negativeSingular}.`]
+      ? [
+          targetText,
+          `${usesYesterday ? 'Eilen ' : ''}en ${item.negativeSingular} ${verbContext.negativeTarget}.`,
+        ]
       : [targetText],
     slots: [
-      grammarSlot('adverb', ['eilen'], IMPERFECT_NEGATIVE_SKILL_ID),
+      ...(usesYesterday
+        ? [grammarSlot('adverb', ['eilen'], IMPERFECT_NEGATIVE_SKILL_ID)]
+        : []),
       grammarSlot(
         'subject',
         [item.subject],
@@ -646,19 +696,27 @@ function buildSingularNegative(index: number) {
         item,
         IMPERFECT_NEGATIVE_SKILL_ID,
       ),
+      ...contextSlots(verbContext.negativeTarget, IMPERFECT_NEGATIVE_SKILL_ID),
     ],
     secondaryItemId: IMPERFECT_NEGATIVE_SKILL_ID,
   })
 }
 
-function buildPluralNegative(index: number) {
+function buildPluralNegative(index: number, sourceIndex: number) {
   const item = imperfectNegativeQuestionVocabulary[index]!
-  const targetText = `Me emme ${item.negativePlural}.`
+  const verbContext = imperfectContexts[index]!
+  const targetText = `Me emme ${item.negativePlural} ${verbContext.negativeTarget}.`
   return exercise({
     item,
-    prompt: pluralNegativeSources[index]!,
+    prompt: appendSourceContext(
+      pluralNegativeSources[sourceIndex]!,
+      verbContext.negativeSource,
+    ),
     targetText,
-    acceptedVariants: [targetText, `Emme ${item.negativePlural}.`],
+    acceptedVariants: [
+      targetText,
+      `Emme ${item.negativePlural} ${verbContext.negativeTarget}.`,
+    ],
     slots: [
       grammarSlot('subject', ['me'], IMPERFECT_NEGATIVE_SKILL_ID, true),
       grammarSlot('negativeVerb', ['emme'], IMPERFECT_NEGATIVE_SKILL_ID),
@@ -668,6 +726,7 @@ function buildPluralNegative(index: number) {
         item,
         IMPERFECT_NEGATIVE_SKILL_ID,
       ),
+      ...contextSlots(verbContext.negativeTarget, IMPERFECT_NEGATIVE_SKILL_ID),
     ],
     secondaryItemId: IMPERFECT_NEGATIVE_SKILL_ID,
   })
@@ -675,13 +734,20 @@ function buildPluralNegative(index: number) {
 
 function buildSecondPersonQuestion(index: number) {
   const item = imperfectNegativeQuestionVocabulary[index]!
+  const verbContext = imperfectContexts[index]!
   const questionVerb = `${capitalize(item.imperfectSecond)}${questionParticle(item.imperfectSecond)}`
-  const targetText = `${questionVerb} sinä?`
+  const targetText = `${questionVerb} sinä ${verbContext.positiveTarget}?`
   return exercise({
     item,
-    prompt: secondPersonQuestionSources[index - 11]!,
+    prompt: appendSourceContext(
+      secondPersonQuestionSources[index - 11]!,
+      verbContext.positiveSource,
+    ),
     targetText,
-    acceptedVariants: [targetText, `${questionVerb}?`],
+    acceptedVariants: [
+      targetText,
+      `${questionVerb} ${verbContext.positiveTarget}?`,
+    ],
     slots: [
       vocabularySlot(
         'questionVerb',
@@ -690,6 +756,7 @@ function buildSecondPersonQuestion(index: number) {
         IMPERFECT_QUESTION_SKILL_ID,
       ),
       grammarSlot('subject', ['sinä'], IMPERFECT_QUESTION_SKILL_ID, true),
+      ...contextSlots(verbContext.positiveTarget, IMPERFECT_QUESTION_SKILL_ID),
     ],
     secondaryItemId: IMPERFECT_QUESTION_SKILL_ID,
   })
@@ -697,11 +764,15 @@ function buildSecondPersonQuestion(index: number) {
 
 function buildThirdPersonQuestion(index: number) {
   const item = imperfectNegativeQuestionVocabulary[index]!
+  const verbContext = imperfectContexts[index]!
   const questionVerb = `${capitalize(item.imperfectThird)}${questionParticle(item.imperfectThird)}`
-  const targetText = `${questionVerb} hän eilen?`
+  const targetText = `${questionVerb} hän ${verbContext.positiveTarget} eilen?`
   return exercise({
     item,
-    prompt: thirdPersonQuestionSources[index - 18]!,
+    prompt: appendSourceContext(
+      thirdPersonQuestionSources[index - 18]!,
+      verbContext.positiveSource,
+    ),
     targetText,
     acceptedVariants: [targetText],
     slots: [
@@ -712,6 +783,7 @@ function buildThirdPersonQuestion(index: number) {
         IMPERFECT_QUESTION_SKILL_ID,
       ),
       grammarSlot('subject', ['hän'], IMPERFECT_QUESTION_SKILL_ID),
+      ...contextSlots(verbContext.positiveTarget, IMPERFECT_QUESTION_SKILL_ID),
       grammarSlot('adverb', ['eilen'], IMPERFECT_QUESTION_SKILL_ID),
     ],
     secondaryItemId: IMPERFECT_QUESTION_SKILL_ID,
@@ -720,14 +792,24 @@ function buildThirdPersonQuestion(index: number) {
 
 function buildThirdPersonNegative(index: number) {
   const item = imperfectNegativeQuestionVocabulary[index]!
-  const targetText = `Hän ei ${item.negativeSingular} eilen.`
+  const verbContext = imperfectContexts[index]!
+  const usesYesterday = index !== 8
+  const subject = item.subject === 'se' ? 'Se' : 'Hän'
+  const targetText = `${subject} ei ${item.negativeSingular} ${verbContext.negativeTarget}${usesYesterday ? ' eilen' : ''}.`
   return exercise({
     item,
-    prompt: thirdPersonNegativeSources[index - 2]!,
+    prompt: appendSourceContext(
+      thirdPersonNegativeSources[index - 2]!,
+      verbContext.negativeSource,
+    ),
     targetText,
     acceptedVariants: [targetText],
     slots: [
-      grammarSlot('subject', ['hän'], IMPERFECT_NEGATIVE_SKILL_ID),
+      grammarSlot(
+        'subject',
+        [subject.toLocaleLowerCase('fi')],
+        IMPERFECT_NEGATIVE_SKILL_ID,
+      ),
       grammarSlot('negativeVerb', ['ei'], IMPERFECT_NEGATIVE_SKILL_ID),
       vocabularySlot(
         'participle',
@@ -735,10 +817,35 @@ function buildThirdPersonNegative(index: number) {
         item,
         IMPERFECT_NEGATIVE_SKILL_ID,
       ),
-      grammarSlot('adverb', ['eilen'], IMPERFECT_NEGATIVE_SKILL_ID),
+      ...contextSlots(verbContext.negativeTarget, IMPERFECT_NEGATIVE_SKILL_ID),
+      ...(usesYesterday
+        ? [grammarSlot('adverb', ['eilen'], IMPERFECT_NEGATIVE_SKILL_ID)]
+        : []),
     ],
     secondaryItemId: IMPERFECT_NEGATIVE_SKILL_ID,
   })
+}
+
+function context(
+  negativeTarget: string,
+  positiveTarget: string,
+  negativeSource: string,
+  positiveSource = negativeSource,
+) {
+  return { negativeTarget, positiveTarget, negativeSource, positiveSource }
+}
+
+function appendSourceContext(sentence: string, suffix: string) {
+  const punctuation = sentence.endsWith('?') ? '?' : '.'
+  return `${sentence.replace(/[.?]$/u, '')} ${suffix}${punctuation}`
+}
+
+function contextSlots(value: string, secondaryItemId: string) {
+  return value
+    .split(' ')
+    .map((token, index) =>
+      grammarSlot(`context${index + 1}`, [token], secondaryItemId),
+    )
 }
 
 function exercise(input: {

@@ -31,11 +31,12 @@ describe('lesson 7 curated content', () => {
     )
 
     expect(golden).toEqual({
-      'exercise.fi.infinitive.chains.word.1': 'Minä haluan voida.',
-      'exercise.fi.infinitive.chains.word.2': 'Minä haluan tietää.',
-      'exercise.fi.infinitive.chains.context.11': 'Minä osaan sopia hyvin.',
-      'exercise.fi.infinitive.chains.context.19': 'Minä en voi matkustaa.',
-      'exercise.fi.infinitive.chains.pair.1': 'Haluatko sinä laulaa?',
+      'exercise.fi.infinitive.chains.word.1': 'Minä haluan voida auttaa.',
+      'exercise.fi.infinitive.chains.word.2': 'Minä haluan tietää vastauksen.',
+      'exercise.fi.infinitive.chains.context.11': 'Minä osaan matkustaa yksin.',
+      'exercise.fi.infinitive.chains.context.19':
+        'Minä en voi matkustaa yksin.',
+      'exercise.fi.infinitive.chains.pair.1': 'Haluatko sinä laulaa laulun?',
     })
   })
 })

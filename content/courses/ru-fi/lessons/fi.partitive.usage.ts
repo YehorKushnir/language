@@ -253,7 +253,7 @@ export const partitiveUsageVocabulary: UsageVocabulary[] = nouns.map(
       sourcePrepositional,
       example: {
         target: `Ajattelen ${partitive}.`,
-        source: { ru: `Я думаю о ${sourcePrepositional}.` },
+        source: { ru: `Я думаю ${about(sourcePrepositional)}.` },
       },
       semanticTypes: ['abstract-or-activity', 'partitive-governed'],
       singular: lemma,
@@ -274,7 +274,14 @@ export const partitiveUsageVocabulary: UsageVocabulary[] = nouns.map(
   },
 )
 
-const countableIndexes = [1, 2, 13, 14, 15, 25] as const
+const countableItems = [
+  { index: 1, source: 'два фильма' },
+  { index: 2, source: 'два театра' },
+  { index: 13, source: 'две игры' },
+  { index: 14, source: 'две поездки' },
+  { index: 15, source: 'два праздника' },
+  { index: 25, source: 'два увлечения' },
+] as const
 
 export const partitiveUsageExercises: PreparedExerciseSeed[] = [
   ...group('word', 0, 26, (index) => governed(index, 'plain')),
@@ -307,7 +314,7 @@ function governed(index: number, frame: GovernedFrame) {
     }
   > = {
     plain: {
-      prompt: `Я думаю о ${item.sourcePrepositional}.`,
+      prompt: `Я думаю ${about(item.sourcePrepositional)}.`,
       target: `Minä ajattelen ${item.partitive}.`,
       variants: [`Ajattelen ${item.partitive}.`],
       slots: [
@@ -317,7 +324,7 @@ function governed(index: number, frame: GovernedFrame) {
       skill: PARTITIVE_GOVERNMENT_SKILL_ID,
     },
     temporal: {
-      prompt: `Сейчас я думаю о ${item.sourcePrepositional}.`,
+      prompt: `Сейчас я думаю ${about(item.sourcePrepositional)}.`,
       target: `Nyt minä ajattelen ${item.partitive}.`,
       variants: [`Nyt ajattelen ${item.partitive}.`],
       slots: [
@@ -328,7 +335,7 @@ function governed(index: number, frame: GovernedFrame) {
       skill: PARTITIVE_GOVERNMENT_SKILL_ID,
     },
     negative: {
-      prompt: `Я не думаю о ${item.sourcePrepositional}.`,
+      prompt: `Я не думаю ${about(item.sourcePrepositional)}.`,
       target: `Minä en ajattele ${item.partitive}.`,
       variants: [`En ajattele ${item.partitive}.`],
       slots: [
@@ -339,7 +346,7 @@ function governed(index: number, frame: GovernedFrame) {
       skill: PARTITIVE_NEGATIVE_SKILL_ID,
     },
     question: {
-      prompt: `Ты думаешь о ${item.sourcePrepositional}?`,
+      prompt: `Ты думаешь ${about(item.sourcePrepositional)}?`,
       target: `Ajatteletko sinä ${item.partitive}?`,
       variants: [`Ajatteletko ${item.partitive}?`],
       slots: [
@@ -358,15 +365,13 @@ function governed(index: number, frame: GovernedFrame) {
 }
 
 function quantity(index: number) {
-  const item =
-    partitiveUsageVocabulary[
-      countableIndexes[index % countableIndexes.length]!
-    ]!
+  const countable = countableItems[index % countableItems.length]!
+  const item = partitiveUsageVocabulary[countable.index]!
   const target = `Tässä on kaksi ${item.partitive}.`
   return exercise(
     item,
     {
-      prompt: `Здесь два предмета: ${item.gloss}.`,
+      prompt: `Здесь ${countable.source}.`,
       target,
       variants: [],
       slots: [
@@ -377,6 +382,10 @@ function quantity(index: number) {
     },
     PARTITIVE_QUANTITY_SKILL_ID,
   )
+}
+
+function about(sourcePrepositional: string) {
+  return `${/^[аиоуэ]/iu.test(sourcePrepositional) ? 'об' : 'о'} ${sourcePrepositional}`
 }
 
 function exercise(

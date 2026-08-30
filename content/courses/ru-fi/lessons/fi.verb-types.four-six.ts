@@ -201,7 +201,7 @@ const verbs: CuratedPresentVerb[] = [
   ),
   v(
     'kylmetä',
-    'остывать; холодать',
+    'мёрзнуть',
     [
       'kylmenen',
       'kylmenet',

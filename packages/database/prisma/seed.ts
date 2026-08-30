@@ -499,6 +499,14 @@ async function seedExercise() {
   const preparedExerciseIds = moduleOneLessons.flatMap((lesson) =>
     lesson.exercises.map((exercise) => exercise.id),
   )
+  const existingTargets = new Map(
+    (
+      await prisma.exercise.findMany({
+        where: { id: { in: preparedExerciseIds } },
+        select: { id: true, targetText: true },
+      })
+    ).map((exercise) => [exercise.id, exercise.targetText]),
+  )
   await prisma.exercise.updateMany({
     where: {
       courseId: COURSE_ID,
@@ -510,6 +518,13 @@ async function seedExercise() {
 
   for (const lesson of moduleOneLessons) {
     for (const exercise of lesson.exercises) {
+      const existingTarget = existingTargets.get(exercise.id)
+      if (existingTarget && existingTarget !== exercise.targetText) {
+        await prisma.exerciseAudioAsset.deleteMany({
+          where: { exerciseId: exercise.id },
+        })
+      }
+
       const answerSpec = {
         selectionOrder: exercise.selectionOrder,
         acceptedVariants: exercise.acceptedVariants,

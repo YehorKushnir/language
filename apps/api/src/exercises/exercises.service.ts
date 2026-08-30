@@ -98,7 +98,6 @@ export class ExercisesService {
       },
       include: {
         prompts: { where: { sourceLanguage }, take: 1 },
-        userHistory: { where: { userId }, take: 1 },
         items: {
           where: { role: { not: ExerciseItemRole.CONTEXT } },
           select: {
@@ -113,33 +112,7 @@ export class ExercisesService {
         },
       },
     })
-    const candidateItemIds = [
-      ...new Set(
-        candidates.flatMap((candidate) =>
-          candidate.items.map((item) => item.itemId),
-        ),
-      ),
-    ]
-    const dueMemories =
-      candidateItemIds.length > 0
-        ? await this.prisma.userMemory.findMany({
-            where: {
-              userId,
-              itemId: { in: candidateItemIds },
-              dueAt: { lte: new Date() },
-            },
-            orderBy: { dueAt: 'asc' },
-            select: { itemId: true },
-          })
-        : []
-    const duePosition = new Map(
-      dueMemories.map((memory, index) => [memory.itemId, index]),
-    )
-    const exercise = candidates.sort(
-      (left, right) =>
-        compareDueCoverage(left, right, duePosition) ||
-        compareExerciseCandidates(left, right),
-    )[0]
+    const exercise = selectRandomCandidate(candidates)
 
     const prompt = exercise?.prompts[0]
     if (!exercise || !prompt) {
@@ -847,59 +820,9 @@ function localizeMorphologyValue(
   return localized
 }
 
-function compareExerciseCandidates(
-  left: {
-    id: string
-    answerSpec: unknown
-    userHistory: Array<{ timesSeen: number; lastSeenAt: Date }>
-  },
-  right: {
-    id: string
-    answerSpec: unknown
-    userHistory: Array<{ timesSeen: number; lastSeenAt: Date }>
-  },
-): number {
-  const orderDifference =
-    getSelectionOrder(left.answerSpec) - getSelectionOrder(right.answerSpec)
-  if (orderDifference !== 0) {
-    return orderDifference
-  }
-
-  const leftHistory = left.userHistory[0]
-  const rightHistory = right.userHistory[0]
-  const seenDifference =
-    (leftHistory?.timesSeen ?? 0) - (rightHistory?.timesSeen ?? 0)
-  if (seenDifference !== 0) {
-    return seenDifference
-  }
-
-  return left.id.localeCompare(right.id)
-}
-
-function compareDueCoverage(
-  left: { items: Array<{ itemId: string }> },
-  right: { items: Array<{ itemId: string }> },
-  duePosition: Map<string, number>,
-): number {
-  const position = (candidate: { items: Array<{ itemId: string }> }) =>
-    Math.min(
-      ...candidate.items.map(
-        (item) => duePosition.get(item.itemId) ?? Number.MAX_SAFE_INTEGER,
-      ),
-    )
-
-  return position(left) - position(right)
-}
-
-function getSelectionOrder(value: unknown): number {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return Number.MAX_SAFE_INTEGER
-  }
-
-  const selectionOrder = (value as Record<string, unknown>).selectionOrder
-  return typeof selectionOrder === 'number'
-    ? selectionOrder
-    : Number.MAX_SAFE_INTEGER
+function selectRandomCandidate<T>(candidates: T[]): T | undefined {
+  if (candidates.length === 0) return undefined
+  return candidates[Math.floor(Math.random() * candidates.length)]
 }
 
 function toAttemptResponse(attempt: StoredAttempt): ExerciseAttemptResponse {

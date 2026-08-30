@@ -211,10 +211,10 @@ const verbs = [
   ['lopettaa', 'заканчивать', 'lopetan'],
   ['jatkaa', 'продолжать', 'jatkan'],
   ['ehtiä', 'успевать', 'ehdin'],
-  ['pitää', 'любить', 'pidän'],
+  ['pitää', 'держать', 'pidän'],
   ['sopia', 'подходить', 'sovin'],
   ['päättää', 'решать', 'päätän'],
-  ['toivoa', 'надеяться', 'toivon'],
+  ['toivoa', 'желать', 'toivon'],
   ['suunnitella', 'планировать', 'suunnittelen'],
   ['matkustaa', 'путешествовать', 'matkustan'],
   ['lentää', 'летать', 'lennän'],
@@ -231,9 +231,43 @@ const verbs = [
   ['onnistua', 'добиваться успеха', 'onnistun'],
 ] as const
 
+const chainContexts: readonly {
+  source: string
+  target: string
+  negativeTarget?: string
+}[] = [
+  { source: 'иметь возможность помочь', target: 'auttaa' },
+  { source: 'знать ответ', target: 'vastauksen' },
+  { source: 'знать тебя лучше', target: 'sinut paremmin' },
+  { source: 'попытаться ещё раз', target: 'uudelleen' },
+  { source: 'начать учиться', target: 'opiskella' },
+  { source: 'закончить работу', target: 'työn' },
+  { source: 'продолжить работу', target: 'työtä' },
+  { source: 'успеть на автобус', target: 'bussiin' },
+  { source: 'держать дверь открытой', target: 'oven auki' },
+  { source: 'договориться о встрече', target: 'tapaamisen' },
+  { source: 'решить этот вопрос', target: 'asian' },
+  { source: 'пожелать тебе удачи', target: 'sinulle onnea' },
+  { source: 'спланировать поездку', target: 'matkan' },
+  { source: 'путешествовать самостоятельно', target: 'yksin' },
+  { source: 'лететь в Хельсинки', target: 'Helsinkiin' },
+  { source: 'водить машину', target: 'autoa' },
+  { source: 'ездить на велосипеде на работу', target: 'töihin' },
+  { source: 'хорошо танцевать', target: 'hyvin' },
+  { source: 'петь песню', target: 'laulun', negativeTarget: 'laulua' },
+  { source: 'нарисовать дом', target: 'talon', negativeTarget: 'taloa' },
+  { source: 'готовить ужин', target: 'päivällistä' },
+  { source: 'испечь торт', target: 'kakun' },
+  { source: 'перейти в следующую комнату', target: 'seuraavaan huoneeseen' },
+  { source: 'измениться к лучшему', target: 'paremmaksi' },
+  { source: 'следить за новостями', target: 'uutisia' },
+  { source: 'добиться успеха в этот раз', target: 'tällä kertaa' },
+] as const
+
 export const infinitiveChainsVocabulary: LessonVocabularySeed[] = verbs.map(
   ([lemma, gloss, firstPerson], index) => {
     const serial = `07.${String(index + 1).padStart(2, '0')}`
+    const context = chainContexts[index]!
     return {
       key: `chain-${lemma}`,
       itemId: `word.fi.m1.${serial}`,
@@ -243,8 +277,8 @@ export const infinitiveChainsVocabulary: LessonVocabularySeed[] = verbs.map(
       partOfSpeech: 'verb',
       gloss,
       example: {
-        target: `Haluan ${lemma}.`,
-        source: { ru: `Я хочу ${gloss}.` },
+        target: `Haluan ${lemma} ${context.target}.`,
+        source: { ru: `Я хочу ${context.source}.` },
       },
       semanticTypes: ['action', 'a-infinitive', 'chain-compatible'],
       singular: firstPerson,
@@ -270,7 +304,6 @@ interface ChainFrame {
   modal: string
   subject: string
   prefix?: string
-  suffix?: string
 }
 
 const frames: readonly ChainFrame[] = [
@@ -287,14 +320,15 @@ const frames: readonly ChainFrame[] = [
     prompt: 'Я умею',
     modal: 'osaan',
     subject: 'minä',
-    suffix: 'hyvin',
   },
 ]
 
 export const infinitiveChainsExercises: PreparedExerciseSeed[] = [
   ...group('word', 0, 26, (index) => affirmative(index, 0)),
   ...group('context', 26, 10, (index) => affirmative(index + 4, 1)),
-  ...group('context', 36, 8, (index) => affirmative(index + 9, 2)),
+  ...group('context', 36, 8, (index) =>
+    affirmative([13, 15, 16, 17, 18, 19, 20, 21][index]!, 2),
+  ),
   ...group('context', 44, 8, (index) => negative(index + 13)),
   ...group('pair', 52, 8, (index) => question(index + 18)),
 ]
@@ -309,13 +343,14 @@ export const infinitiveChainsGoldenExerciseIds = [
 
 function affirmative(vocabularyIndex: number, frameIndex: number) {
   const vocabulary = infinitiveChainsVocabulary[vocabularyIndex % verbs.length]!
+  const context = chainContexts[vocabularyIndex % verbs.length]!
   const frame = frames[frameIndex]!
   const targetText = [
     frame.prefix,
-    'Minä',
+    frame.prefix ? 'minä' : 'Minä',
     frame.modal,
     vocabulary.lemma,
-    frame.suffix,
+    context.target,
   ]
     .filter(Boolean)
     .join(' ')
@@ -324,13 +359,13 @@ function affirmative(vocabularyIndex: number, frameIndex: number) {
     frame.prefix,
     capitalize(frame.modal),
     vocabulary.lemma,
-    frame.suffix,
+    context.target,
   ]
     .filter(Boolean)
     .join(' ')
     .concat('.')
   return exercise(vocabulary, {
-    prompt: `${frame.prefix ? 'Сейчас я могу' : frame.prompt} ${vocabulary.gloss}${frame.suffix ? ' хорошо' : ''}.`,
+    prompt: `${frame.prefix ? 'Сейчас я могу' : frame.prompt} ${context.source}.`,
     targetText,
     acceptedVariants: [targetText, withoutSubject],
     slots: [
@@ -338,18 +373,23 @@ function affirmative(vocabularyIndex: number, frameIndex: number) {
       grammarSlot('subject', [frame.subject], true),
       grammarSlot('modalVerb', [frame.modal]),
       vocabularySlot('infinitive', vocabulary.lemma, vocabulary.itemId),
-      ...(frame.suffix ? [grammarSlot('manner', ['hyvin'])] : []),
+      ...contextSlots(context.target),
     ],
   })
 }
 
 function negative(vocabularyIndex: number) {
   const vocabulary = infinitiveChainsVocabulary[vocabularyIndex % verbs.length]!
-  const targetText = `Minä en voi ${vocabulary.lemma}.`
+  const context = chainContexts[vocabularyIndex % verbs.length]!
+  const negativeTarget = context.negativeTarget ?? context.target
+  const targetText = `Minä en voi ${vocabulary.lemma} ${negativeTarget}.`
   return exercise(vocabulary, {
-    prompt: `Я не могу ${vocabulary.gloss}.`,
+    prompt: `Я не могу ${context.source}.`,
     targetText,
-    acceptedVariants: [targetText, `En voi ${vocabulary.lemma}.`],
+    acceptedVariants: [
+      targetText,
+      `En voi ${vocabulary.lemma} ${negativeTarget}.`,
+    ],
     slots: [
       grammarSlot(
         'subject',
@@ -370,6 +410,7 @@ function negative(vocabularyIndex: number) {
         INFINITIVE_CHAINS_NEGATIVE_SKILL_ID,
       ),
       vocabularySlot('infinitive', vocabulary.lemma, vocabulary.itemId),
+      ...contextSlots(negativeTarget, INFINITIVE_CHAINS_NEGATIVE_SKILL_ID),
     ],
     secondaryItemIds: [INFINITIVE_CHAINS_NEGATIVE_SKILL_ID],
   })
@@ -377,11 +418,15 @@ function negative(vocabularyIndex: number) {
 
 function question(vocabularyIndex: number) {
   const vocabulary = infinitiveChainsVocabulary[vocabularyIndex % verbs.length]!
-  const targetText = `Haluatko sinä ${vocabulary.lemma}?`
+  const context = chainContexts[vocabularyIndex % verbs.length]!
+  const targetText = `Haluatko sinä ${vocabulary.lemma} ${context.target}?`
   return exercise(vocabulary, {
-    prompt: `Ты хочешь ${vocabulary.gloss}?`,
+    prompt: `Ты хочешь ${context.source}?`,
     targetText,
-    acceptedVariants: [targetText, `Haluatko ${vocabulary.lemma}?`],
+    acceptedVariants: [
+      targetText,
+      `Haluatko ${vocabulary.lemma} ${context.target}?`,
+    ],
     slots: [
       grammarSlot(
         'questionVerb',
@@ -396,9 +441,18 @@ function question(vocabularyIndex: number) {
         INFINITIVE_CHAINS_QUESTION_SKILL_ID,
       ),
       vocabularySlot('infinitive', vocabulary.lemma, vocabulary.itemId),
+      ...contextSlots(context.target, INFINITIVE_CHAINS_QUESTION_SKILL_ID),
     ],
     secondaryItemIds: [INFINITIVE_CHAINS_QUESTION_SKILL_ID],
   })
+}
+
+function contextSlots(value: string, secondarySkillId?: string) {
+  return value
+    .split(' ')
+    .map((token, index) =>
+      grammarSlot(`context${index + 1}`, [token], false, secondarySkillId),
+    )
 }
 
 function exercise(

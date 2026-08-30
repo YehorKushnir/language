@@ -35,12 +35,14 @@ describe('lesson two: present tense type one verbs', () => {
     )
 
     expect(Object.fromEntries(golden)).toEqual({
-      'exercise.fi.present.common.first.001': 'Minä puhun.',
-      'exercise.fi.present.common.first.006': 'Minä luen.',
-      'exercise.fi.present.common.second-now.001': 'Sinä käytät nyt.',
-      'exercise.fi.present.common.third.001': 'Hän kysyy.',
-      'exercise.fi.present.common.first-plural-now.001': 'Nyt me ymmärrämme.',
-      'exercise.fi.present.common.third-plural-now.001': 'He puhuvat nyt.',
+      'exercise.fi.present.common.first.001': 'Minä puhun suomea.',
+      'exercise.fi.present.common.first.006': 'Minä luen kirjaa.',
+      'exercise.fi.present.common.second-now.001': 'Sinä käytät nyt puhelinta.',
+      'exercise.fi.present.common.third.001': 'Hän kysyy neuvoa.',
+      'exercise.fi.present.common.first-plural-now.001':
+        'Nyt me ymmärrämme kysymyksen.',
+      'exercise.fi.present.common.third-plural-now.001':
+        'He puhuvat nyt suomea.',
     })
   })
 
@@ -50,26 +52,26 @@ describe('lesson two: present tense type one verbs', () => {
     )
 
     expect(byId.get('exercise.fi.present.common.first.001')?.prompt).toBe(
-      'Я говорю.',
+      'Я говорю по-фински.',
     )
     expect(byId.get('exercise.fi.present.common.first.004')?.prompt).toBe(
-      'Я произношу.',
+      'Я произношу «привет».',
     )
     expect(byId.get('exercise.fi.present.common.second-now.001')).toMatchObject(
       {
-        prompt: 'Ты сейчас используешь.',
+        prompt: 'Ты сейчас используешь телефон.',
         acceptedVariants: expect.arrayContaining([
-          'Sinä käytät nyt.',
-          'Käytät nyt.',
-          'Nyt sinä käytät.',
-          'Nyt käytät.',
+          'Sinä käytät nyt puhelinta.',
+          'Käytät nyt puhelinta.',
+          'Nyt sinä käytät puhelinta.',
+          'Nyt käytät puhelinta.',
         ]),
       },
     )
     expect(
       byId.get('exercise.fi.present.common.third-plural-now.001')
         ?.acceptedVariants,
-    ).toEqual(['He puhuvat nyt.', 'Nyt he puhuvat.'])
+    ).toEqual(['He puhuvat nyt suomea.', 'Nyt he puhuvat suomea.'])
     expect(
       presentCommonExercises.some((exercise) =>
         exercise.prompt.startsWith('Поставь '),

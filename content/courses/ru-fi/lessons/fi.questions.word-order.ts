@@ -279,67 +279,157 @@ export const questionsWordOrderGoldenExerciseIds = [
 function buildExercises(): PreparedExerciseSeed[] {
   const exercises: PreparedExerciseSeed[] = []
 
-  addGroup(0, PRESENT_QUESTION_SKILL_ID, 'yes-no', (item) => ({
-    prompt: `Это ${item.gloss}?`,
-    targetText: `Onko tämä ${item.lemma}?`,
-    acceptedVariants: [`Onko tämä ${item.lemma}?`],
-    slots: [
-      skillSlot('questionVerb', ['onko'], PRESENT_QUESTION_SKILL_ID),
-      skillSlot('subject', ['tämä'], PRESENT_QUESTION_SKILL_ID),
-      vocabularySlot('predicate', [item.lemma], PRESENT_QUESTION_SKILL_ID),
+  addGroup(
+    [
+      'kysymys',
+      'vastaus',
+      'nimi',
+      'osoite',
+      'numero',
+      'kieli',
+      'sana',
+      'lause',
+      'ääni',
+      'keskustelu',
+      'viesti',
+      'kirje',
     ],
-  }))
-  addGroup(12, PRESENT_NEGATIVE_SKILL_ID, 'negative', (item) => ({
-    prompt: `Это не ${item.gloss}.`,
-    targetText: `Tämä ei ole ${item.lemma}.`,
-    acceptedVariants: [
-      `Tämä ei ole ${item.lemma}.`,
-      `Se ei ole ${item.lemma}.`,
+    PRESENT_QUESTION_SKILL_ID,
+    'yes-no',
+    (item) => ({
+      prompt: `Это ${item.gloss}?`,
+      targetText: `Onko tämä ${item.lemma}?`,
+      acceptedVariants: [`Onko tämä ${item.lemma}?`],
+      slots: [
+        skillSlot('questionVerb', ['onko'], PRESENT_QUESTION_SKILL_ID),
+        skillSlot('subject', ['tämä'], PRESENT_QUESTION_SKILL_ID),
+        vocabularySlot('predicate', [item.lemma], PRESENT_QUESTION_SKILL_ID),
+      ],
+    }),
+  )
+  addGroup(
+    [
+      'puhelin',
+      'sähköposti',
+      'asia',
+      'ongelma',
+      'esimerkki',
+      'syy',
+      'tapa',
+      'mielipide',
+      'ajatus',
+      'tieto',
+      'uutinen',
+      'tarina',
     ],
-    slots: [
-      skillSlot('subject', ['tämä', 'se'], PRESENT_NEGATIVE_SKILL_ID),
-      skillSlot('negativeVerb', ['ei'], PRESENT_NEGATIVE_SKILL_ID),
-      skillSlot('mainVerb', ['ole'], PRESENT_NEGATIVE_SKILL_ID),
-      vocabularySlot('predicate', [item.lemma], PRESENT_NEGATIVE_SKILL_ID),
+    PRESENT_NEGATIVE_SKILL_ID,
+    'negative',
+    (item) => ({
+      prompt: `Это не ${item.gloss}.`,
+      targetText: `Tämä ei ole ${item.lemma}.`,
+      acceptedVariants: [
+        `Tämä ei ole ${item.lemma}.`,
+        `Se ei ole ${item.lemma}.`,
+      ],
+      slots: [
+        skillSlot('subject', ['tämä', 'se'], PRESENT_NEGATIVE_SKILL_ID),
+        skillSlot('negativeVerb', ['ei'], PRESENT_NEGATIVE_SKILL_ID),
+        skillSlot('mainVerb', ['ole'], PRESENT_NEGATIVE_SKILL_ID),
+        vocabularySlot('predicate', [item.lemma], PRESENT_NEGATIVE_SKILL_ID),
+      ],
+    }),
+  )
+  addGroup(
+    [
+      'merkitys',
+      'virhe',
+      'kysymys',
+      'vastaus',
+      'nimi',
+      'osoite',
+      'numero',
+      'viesti',
+      'sana',
+      'lause',
+      'kirje',
+      'esimerkki',
     ],
-  }))
-  addGroup(24, WORD_ORDER_SKILL_ID, 'existential', (item) => ({
-    prompt: `Здесь есть ${item.gloss}.`,
-    targetText: `Tässä on ${item.lemma}.`,
-    acceptedVariants: [`Tässä on ${item.lemma}.`, `Täällä on ${item.lemma}.`],
-    slots: [
-      skillSlot('place', ['tässä', 'täällä'], WORD_ORDER_SKILL_ID),
-      skillSlot('mainVerb', ['on'], WORD_ORDER_SKILL_ID),
-      vocabularySlot('subject', [item.lemma], WORD_ORDER_SKILL_ID),
+    WORD_ORDER_SKILL_ID,
+    'existential',
+    (item) => ({
+      prompt: `Вот ${item.gloss}.`,
+      targetText: `Tässä on ${item.lemma}.`,
+      acceptedVariants: [`Tässä on ${item.lemma}.`, `Täällä on ${item.lemma}.`],
+      slots: [
+        skillSlot('place', ['tässä', 'täällä'], WORD_ORDER_SKILL_ID),
+        skillSlot('mainVerb', ['on'], WORD_ORDER_SKILL_ID),
+        vocabularySlot('subject', [item.lemma], WORD_ORDER_SKILL_ID),
+      ],
+    }),
+  )
+  addGroup(
+    [
+      'viesti',
+      'kirje',
+      'puhelin',
+      'kysymys',
+      'vastaus',
+      'nimi',
+      'esimerkki',
+      'osoite',
+      'numero',
+      'sana',
+      'lause',
+      'virhe',
     ],
-  }))
-  addGroup(10, PRESENT_NEGATIVE_SKILL_ID, 'absent', (item) => ({
-    prompt: `${capitalize(item.gloss)} не здесь.`,
-    targetText: `${capitalize(item.lemma)} ei ole tässä.`,
-    acceptedVariants: [
-      `${capitalize(item.lemma)} ei ole tässä.`,
-      `${capitalize(item.lemma)} ei ole täällä.`,
+    PRESENT_NEGATIVE_SKILL_ID,
+    'absent',
+    (item) => ({
+      prompt: `${capitalize(item.gloss)} не здесь.`,
+      targetText: `${capitalize(item.lemma)} ei ole tässä.`,
+      acceptedVariants: [
+        `${capitalize(item.lemma)} ei ole tässä.`,
+        `${capitalize(item.lemma)} ei ole täällä.`,
+      ],
+      slots: [
+        vocabularySlot('subject', [item.lemma], PRESENT_NEGATIVE_SKILL_ID),
+        skillSlot('negativeVerb', ['ei'], PRESENT_NEGATIVE_SKILL_ID),
+        skillSlot('mainVerb', ['ole'], PRESENT_NEGATIVE_SKILL_ID),
+        skillSlot('place', ['tässä', 'täällä'], PRESENT_NEGATIVE_SKILL_ID),
+      ],
+    }),
+  )
+  addGroup(
+    [
+      'puhelin',
+      'viesti',
+      'kirje',
+      'virhe',
+      'kysymys',
+      'vastaus',
+      'nimi',
+      'osoite',
+      'numero',
+      'esimerkki',
+      'sana',
+      'lause',
     ],
-    slots: [
-      vocabularySlot('subject', [item.lemma], PRESENT_NEGATIVE_SKILL_ID),
-      skillSlot('negativeVerb', ['ei'], PRESENT_NEGATIVE_SKILL_ID),
-      skillSlot('mainVerb', ['ole'], PRESENT_NEGATIVE_SKILL_ID),
-      skillSlot('place', ['tässä', 'täällä'], PRESENT_NEGATIVE_SKILL_ID),
-    ],
-  }))
-  addGroup(22, PRESENT_QUESTION_SKILL_ID, 'location', (item) => ({
-    prompt: `${capitalize(item.gloss)} здесь?`,
-    targetText: `Onko ${item.lemma} tässä?`,
-    acceptedVariants: [
-      `Onko ${item.lemma} tässä?`,
-      `Onko ${item.lemma} täällä?`,
-    ],
-    slots: [
-      skillSlot('questionVerb', ['onko'], PRESENT_QUESTION_SKILL_ID),
-      vocabularySlot('subject', [item.lemma], PRESENT_QUESTION_SKILL_ID),
-      skillSlot('place', ['tässä', 'täällä'], PRESENT_QUESTION_SKILL_ID),
-    ],
-  }))
+    PRESENT_QUESTION_SKILL_ID,
+    'location',
+    (item) => ({
+      prompt: `${capitalize(item.gloss)} здесь?`,
+      targetText: `Onko ${item.lemma} tässä?`,
+      acceptedVariants: [
+        `Onko ${item.lemma} tässä?`,
+        `Onko ${item.lemma} täällä?`,
+      ],
+      slots: [
+        skillSlot('questionVerb', ['onko'], PRESENT_QUESTION_SKILL_ID),
+        vocabularySlot('subject', [item.lemma], PRESENT_QUESTION_SKILL_ID),
+        skillSlot('place', ['tässä', 'täällä'], PRESENT_QUESTION_SKILL_ID),
+      ],
+    }),
+  )
 
   if (exercises.length !== 60) {
     throw new Error(
@@ -349,7 +439,7 @@ function buildExercises(): PreparedExerciseSeed[] {
   return exercises
 
   function addGroup(
-    start: number,
+    lemmas: readonly string[],
     skillId: string,
     category: string,
     create: (
@@ -359,8 +449,15 @@ function buildExercises(): PreparedExerciseSeed[] {
       'prompt' | 'targetText' | 'acceptedVariants' | 'slots'
     >,
   ) {
-    Array.from({ length: 12 }, (_, offset) => {
-      const vocabularyIndex = (start + offset) % nouns.length
+    if (lemmas.length !== 12) {
+      throw new Error(`Exercise group ${category} must contain 12 nouns`)
+    }
+
+    lemmas.forEach((lemma, offset) => {
+      const vocabularyIndex = nouns.findIndex((item) => item.lemma === lemma)
+      if (vocabularyIndex < 0) {
+        throw new Error(`Exercise group ${category} has unknown noun ${lemma}`)
+      }
       const item = nouns[vocabularyIndex]!
       const vocabulary = questionsWordOrderVocabulary[vocabularyIndex]!
       const values = create(item)

@@ -323,6 +323,8 @@ export const externalCasesVocabulary: ExternalVocabulary[] = items.map(
     index,
   ) => {
     const serial = `13.${String(index + 1).padStart(2, '0')}`
+    const exampleLocation =
+      lemma === 'liikennevalo' ? 'liikennevalon luona' : location
     return {
       key: `external-${lemma}`,
       itemId: `word.fi.m1.${serial}`,
@@ -340,7 +342,7 @@ export const externalCasesVocabulary: ExternalVocabulary[] = items.map(
         target:
           usage === 'instrument'
             ? `Matkustan ${location}.`
-            : `Olen ${location}.`,
+            : `Olen ${exampleLocation}.`,
         source: {
           ru:
             usage === 'instrument'
@@ -384,14 +386,6 @@ export const externalCasesVocabulary: ExternalVocabulary[] = items.map(
 
 const directional = externalCasesVocabulary.filter((item) => item.direction)
 
-export const externalCasesExercises: PreparedExerciseSeed[] = [
-  ...group('word', 0, 26, (index) => location(index, 'plain')),
-  ...group('context', 26, 10, (index) => direction(index, 'to')),
-  ...group('context', 36, 8, (index) => direction(index + 7, 'from')),
-  ...group('context', 44, 8, (index) => location(index + 12, 'negative')),
-  ...group('pair', 52, 8, (index) => location(index + 7, 'question')),
-]
-
 export const externalCasesGoldenExerciseIds = [
   'exercise.fi.local-cases.external.word.1',
   'exercise.fi.local-cases.external.word.13',
@@ -402,9 +396,31 @@ export const externalCasesGoldenExerciseIds = [
 
 function location(index: number, frame: 'plain' | 'negative' | 'question') {
   const item = externalCasesVocabulary[index % items.length]!
+  if (item.lemma === 'pilvi' && frame === 'plain') {
+    const targetText = 'Pilvi on taivaalla.'
+    return {
+      prompt: 'Облако в небе.',
+      targetText,
+      acceptedVariants: [targetText],
+      slots: [
+        {
+          role: 'subject',
+          accepted: ['pilvi'],
+          itemIds: [EXTERNAL_CASES_SKILL_ID, item.itemId],
+        },
+        slot('copula', ['on']),
+        slot('location', ['taivaalla']),
+      ],
+      primaryItemId: EXTERNAL_CASES_SKILL_ID,
+      secondaryItemIds: [],
+      vocabularyItemId: item.itemId,
+    }
+  }
   const instrument = item.usage === 'instrument'
   const secondary = instrument ? EXTERNAL_INSTRUMENT_SKILL_ID : undefined
   const plainVerb = instrument ? 'matkustan' : 'olen'
+  const value =
+    item.lemma === 'liikennevalo' ? 'liikennevalon luona' : item.location
   const source = instrument
     ? `Я еду ${item.sourceLocation}.`
     : `Я ${item.sourceLocation}.`
@@ -419,8 +435,8 @@ function location(index: number, frame: 'plain' | 'negative' | 'question') {
   > = {
     plain: {
       prompt: source,
-      target: `Minä ${plainVerb} ${item.location}.`,
-      variants: [`${capitalize(plainVerb)} ${item.location}.`],
+      target: `Minä ${plainVerb} ${value}.`,
+      variants: [`${capitalize(plainVerb)} ${value}.`],
       slots: [
         slot('subject', ['minä'], secondary, true),
         slot(instrument ? 'movementVerb' : 'copula', [plainVerb], secondary),
@@ -430,8 +446,8 @@ function location(index: number, frame: 'plain' | 'negative' | 'question') {
       prompt: instrument
         ? `Я не еду ${item.sourceLocation}.`
         : `Я не ${item.sourceLocation}.`,
-      target: `Minä en ${instrument ? 'matkusta' : 'ole'} ${item.location}.`,
-      variants: [`En ${instrument ? 'matkusta' : 'ole'} ${item.location}.`],
+      target: `Minä en ${instrument ? 'matkusta' : 'ole'} ${value}.`,
+      variants: [`En ${instrument ? 'matkusta' : 'ole'} ${value}.`],
       slots: [
         slot('subject', ['minä'], secondary, true),
         slot('negativeVerb', ['en'], secondary),
@@ -446,8 +462,8 @@ function location(index: number, frame: 'plain' | 'negative' | 'question') {
       prompt: instrument
         ? `Ты едешь ${item.sourceLocation}?`
         : `Ты ${item.sourceLocation}?`,
-      target: `${instrument ? 'Matkustatko' : 'Oletko'} sinä ${item.location}?`,
-      variants: [`${instrument ? 'Matkustatko' : 'Oletko'} ${item.location}?`],
+      target: `${instrument ? 'Matkustatko' : 'Oletko'} sinä ${value}?`,
+      variants: [`${instrument ? 'Matkustatko' : 'Oletko'} ${value}?`],
       slots: [
         slot(
           instrument ? 'questionVerb' : 'questionCopula',
@@ -459,16 +475,25 @@ function location(index: number, frame: 'plain' | 'negative' | 'question') {
     },
   }
   const selected = frames[frame]
-  return exercise(item, selected, secondary, item.location)
+  return exercise(item, selected, secondary, value)
 }
 
 function direction(index: number, frame: 'to' | 'from') {
   const item = directional[index % directional.length]!
-  const value = frame === 'to' ? item.direction : item.origin
+  const value =
+    item.lemma === 'liikennevalo'
+      ? frame === 'to'
+        ? 'liikennevalon luo'
+        : 'liikennevalon luota'
+      : frame === 'to'
+        ? item.direction
+        : item.origin
+  const source = directionSources[item.lemma]
+  if (!source) throw new Error(`Missing direction source for ${item.lemma}`)
   const selected =
     frame === 'to'
       ? {
-          prompt: `Я иду к месту «${item.gloss}».`,
+          prompt: source.to,
           target: `Minä menen ${value}.`,
           variants: [`Menen ${value}.`],
           slots: [
@@ -477,7 +502,7 @@ function direction(index: number, frame: 'to' | 'from') {
           ],
         }
       : {
-          prompt: `Сейчас я иду от места «${item.gloss}».`,
+          prompt: source.from,
           target: `Nyt minä tulen ${value}.`,
           variants: [`Nyt tulen ${value}.`],
           slots: [
@@ -488,6 +513,93 @@ function direction(index: number, frame: 'to' | 'from') {
         }
   return exercise(item, selected, EXTERNAL_DIRECTION_SKILL_ID, value)
 }
+
+const directionSources: Record<string, { to: string; from: string }> = {
+  tie: {
+    to: 'Я выхожу на дорогу.',
+    from: 'Сейчас я возвращаюсь с дороги.',
+  },
+  risteys: {
+    to: 'Я иду к перекрёстку.',
+    from: 'Сейчас я возвращаюсь с перекрёстка.',
+  },
+  liikennevalo: {
+    to: 'Я иду к светофору.',
+    from: 'Сейчас я возвращаюсь от светофора.',
+  },
+  pysäkki: {
+    to: 'Я иду на остановку.',
+    from: 'Сейчас я возвращаюсь с остановки.',
+  },
+  metsä: {
+    to: 'Я иду в лес.',
+    from: 'Сейчас я возвращаюсь из леса.',
+  },
+  järvi: {
+    to: 'Я иду к озеру.',
+    from: 'Сейчас я возвращаюсь с озера.',
+  },
+  meri: {
+    to: 'Я иду к морю.',
+    from: 'Сейчас я возвращаюсь с моря.',
+  },
+  joki: {
+    to: 'Я иду к реке.',
+    from: 'Сейчас я возвращаюсь с реки.',
+  },
+  vuori: {
+    to: 'Я иду на гору.',
+    from: 'Сейчас я возвращаюсь с горы.',
+  },
+  saari: {
+    to: 'Я направляюсь на остров.',
+    from: 'Сейчас я возвращаюсь с острова.',
+  },
+  pelto: {
+    to: 'Я иду на поле.',
+    from: 'Сейчас я возвращаюсь с поля.',
+  },
+  niitty: {
+    to: 'Я иду на луг.',
+    from: 'Сейчас я возвращаюсь с луга.',
+  },
+  puu: {
+    to: 'Я забираюсь на дерево.',
+    from: 'Сейчас я спускаюсь с дерева.',
+  },
+  ruoho: {
+    to: 'Я выхожу на траву.',
+    from: 'Сейчас я возвращаюсь с лужайки.',
+  },
+  lumi: {
+    to: 'Я выхожу в снег.',
+    from: 'Сейчас я выбираюсь из снега.',
+  },
+  sade: {
+    to: 'Я выхожу под дождь.',
+    from: 'Сейчас я возвращаюсь с дождя.',
+  },
+  tuuli: {
+    to: 'Я выхожу на ветер.',
+    from: 'Сейчас я возвращаюсь с ветра.',
+  },
+  aurinko: {
+    to: 'Я выхожу на солнце.',
+    from: 'Сейчас я ухожу с солнца в тень.',
+  },
+  pilvi: {
+    to: 'Я вхожу в облако.',
+    from: 'Сейчас я выхожу из облака.',
+  },
+}
+
+export const externalCasesExercises: PreparedExerciseSeed[] = [
+  ...group('word', 0, 26, (index) => location(index, 'plain')),
+  ...group('context', 26, 10, (index) => direction(index, 'to')),
+  ...group('context', 36, 8, (index) => direction(index, 'from')),
+  ...group('context', 44, 8, (index) => location(index + 12, 'negative')),
+  ...group('pair', 52, 8, (index) => location(index + 7, 'question')),
+]
 
 function exercise(
   item: ExternalVocabulary,
@@ -506,15 +618,15 @@ function exercise(
     acceptedVariants: [selected.target, ...selected.variants],
     slots: [
       ...selected.slots,
-      {
-        role: 'location',
-        accepted: [value],
+      ...value.split(' ').map((token, index) => ({
+        role: index === 0 ? 'location' : `locationPart${index + 1}`,
+        accepted: [token],
         itemIds: [
           EXTERNAL_CASES_SKILL_ID,
           ...(secondary ? [secondary] : []),
           item.itemId,
         ],
-      },
+      })),
     ],
     primaryItemId: EXTERNAL_CASES_SKILL_ID,
     secondaryItemIds: secondary ? [secondary] : [],

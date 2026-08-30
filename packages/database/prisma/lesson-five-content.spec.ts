@@ -36,14 +36,15 @@ describe('lesson five: verb types four through six', () => {
     )
 
     expect(golden).toEqual({
-      'exercise.fi.verb-types.four-six.first.001': 'Minä haluan.',
-      'exercise.fi.verb-types.four-six.first.010': 'Minä tarvitsen.',
-      'exercise.fi.verb-types.four-six.second-now.001': 'Sinä palaat nyt.',
-      'exercise.fi.verb-types.four-six.third.001': 'Hän tapaa.',
+      'exercise.fi.verb-types.four-six.first.001': 'Minä haluan kahvia.',
+      'exercise.fi.verb-types.four-six.first.010': 'Minä tarvitsen apua.',
+      'exercise.fi.verb-types.four-six.second-now.001':
+        'Sinä palaat nyt kotiin.',
+      'exercise.fi.verb-types.four-six.third.001': 'Hän tapaa ystävän.',
       'exercise.fi.verb-types.four-six.first-plural-now.001':
-        'Nyt me pakkaamme.',
+        'Nyt me pakkaamme laukun.',
       'exercise.fi.verb-types.four-six.third-plural-now.001':
-        'He haluavat nyt.',
+        'He haluavat nyt kahvia.',
     })
   })
 
@@ -53,11 +54,11 @@ describe('lesson five: verb types four through six', () => {
     )
 
     expect(byId.get('exercise.fi.verb-types.four-six.first.007')?.prompt).toBe(
-      'Я беру взаймы.',
+      'Я беру взаймы книгу.',
     )
     expect(
       byId.get('exercise.fi.verb-types.four-six.second-now.001')?.prompt,
-    ).toBe('Ты сейчас возвращаешься.')
+    ).toBe('Ты сейчас возвращаешься домой.')
     expect(
       verbTypesFourSixExercises.some((exercise) =>
         exercise.prompt.startsWith('Поставь '),

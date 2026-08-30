@@ -244,14 +244,6 @@ export const nounsGradationVocabulary: NounGradationVocabulary[] = nouns.map(
   },
 )
 
-export const nounsGradationExercises: PreparedExerciseSeed[] = [
-  ...group('word', 0, 26, (index) => phrase(index, 'demonstrative')),
-  ...group('context', 26, 10, (index) => phrase(index + 4, 'possessive')),
-  ...group('context', 36, 8, (index) => phrase(index + 11, 'temporal')),
-  ...group('context', 44, 8, (index) => phrase(index + 17, 'negative')),
-  ...group('pair', 52, 8, (index) => phrase(index + 2, 'question')),
-]
-
 export const nounsGradationGoldenExerciseIds = [
   'exercise.fi.nouns.gradation.word.1',
   'exercise.fi.nouns.gradation.word.5',
@@ -265,15 +257,15 @@ type Frame =
 
 function phrase(index: number, frame: Frame) {
   const owner = nounsGradationVocabulary[index % nouns.length]!
-  const possessed = nounsGradationVocabulary[(index + 7) % nouns.length]!
+  const possessed = nounComplements[index % nouns.length]!
   const grammarSkill =
     owner.pattern === 'quantitative'
       ? NOUNS_GRADATION_QUANTITATIVE_SKILL_ID
       : owner.pattern === 'stem'
         ? NOUNS_GRADATION_STEM_SKILL_ID
         : undefined
-  const nounPhrase = `${owner.genitive} ${possessed.lemma}`
-  const sourcePhrase = `${possessed.gloss} ${owner.sourceGenitive}`
+  const nounPhrase = `${owner.genitive} ${possessed.target}`
+  const sourcePhrase = `${possessed.source} ${owner.sourceGenitive}`
   const frames: Record<
     Frame,
     {
@@ -301,12 +293,12 @@ function phrase(index: number, frame: Frame) {
       ],
     },
     temporal: {
-      prompt: `Сейчас у меня есть ${sourcePhrase}.`,
-      target: `Nyt minulla on ${nounPhrase}.`,
+      prompt: `У меня также есть ${sourcePhrase}.`,
+      target: `Minulla on myös ${nounPhrase}.`,
       prefixSlots: [
-        grammarSlot('adverb', ['nyt'], grammarSkill),
         grammarSlot('possessor', ['minulla'], grammarSkill),
         grammarSlot('copula', ['on'], grammarSkill),
+        grammarSlot('adverb', ['myös'], grammarSkill),
       ],
     },
     negative: {
@@ -336,16 +328,52 @@ function phrase(index: number, frame: Frame) {
     slots: [
       ...selected.prefixSlots,
       vocabularySlot('genitiveOwner', owner.genitive, owner.itemId),
-      vocabularySlot('possessed', possessed.lemma, possessed.itemId),
+      grammarSlot('possessed', [possessed.target], grammarSkill),
     ],
     primaryItemId: NOUNS_GRADATION_SKILL_ID,
-    secondaryItemIds: [
-      ...(grammarSkill ? [grammarSkill] : []),
-      possessed.itemId,
-    ],
+    secondaryItemIds: [...(grammarSkill ? [grammarSkill] : [])],
     vocabularyItemId: owner.itemId,
   }
 }
+
+const nounComplements = [
+  { target: 'kansi', source: 'обложка' },
+  { target: 'sivu', source: 'страница' },
+  { target: 'väri', source: 'цвет' },
+  { target: 'reuna', source: 'край' },
+  { target: 'valo', source: 'свет' },
+  { target: 'viisari', source: 'стрелка' },
+  { target: 'väri', source: 'цвет' },
+  { target: 'pinta', source: 'поверхность' },
+  { target: 'ovi', source: 'дверь' },
+  { target: 'kansi', source: 'крышка' },
+  { target: 'korkki', source: 'пробка' },
+  { target: 'reuna', source: 'край' },
+  { target: 'kahva', source: 'ручка' },
+  { target: 'reuna', source: 'край' },
+  { target: 'varsi', source: 'ручка' },
+  { target: 'piikki', source: 'зубец' },
+  { target: 'terä', source: 'лезвие' },
+  { target: 'kansi', source: 'крышка' },
+  { target: 'kahva', source: 'ручка' },
+  { target: 'väri', source: 'цвет' },
+  { target: 'tuoksu', source: 'запах' },
+  { target: 'varsi', source: 'ручка' },
+  { target: 'osa', source: 'деталь' },
+  { target: 'näyttö', source: 'экран' },
+  { target: 'kaukosäädin', source: 'пульт' },
+  { target: 'ääni', source: 'звук' },
+] as const
+
+export const nounsGradationExercises: PreparedExerciseSeed[] = [
+  ...group('word', 0, 26, (index) => phrase(index, 'demonstrative')),
+  ...group('context', 26, 10, (index) =>
+    phrase([1, 5, 8, 9, 10, 12, 14, 16, 22, 24][index]!, 'possessive'),
+  ),
+  ...group('context', 36, 8, (index) => phrase(index + 11, 'temporal')),
+  ...group('context', 44, 8, (index) => phrase(index + 17, 'negative')),
+  ...group('pair', 52, 8, (index) => phrase(index + 2, 'question')),
+]
 
 function grammarSlot(role: string, accepted: string[], secondary?: string) {
   return {

@@ -31,12 +31,11 @@ describe('lesson 9 curated content', () => {
     )
 
     expect(golden).toEqual({
-      'exercise.fi.nouns.gradation.word.1': 'Tämä on kirjan peili.',
-      'exercise.fi.nouns.gradation.word.5': 'Tämä on lampun lasi.',
-      'exercise.fi.nouns.gradation.context.1': 'Minulla on lampun lasi.',
-      'exercise.fi.nouns.gradation.context.19':
-        'Tämä ei ole kattilan televisio.',
-      'exercise.fi.nouns.gradation.pair.1': 'Onko tämä kynän laatikko?',
+      'exercise.fi.nouns.gradation.word.1': 'Tämä on kirjan kansi.',
+      'exercise.fi.nouns.gradation.word.5': 'Tämä on lampun valo.',
+      'exercise.fi.nouns.gradation.context.1': 'Minulla on vihkon sivu.',
+      'exercise.fi.nouns.gradation.context.19': 'Tämä ei ole kattilan kansi.',
+      'exercise.fi.nouns.gradation.pair.1': 'Onko tämä kynän väri?',
     })
   })
 })

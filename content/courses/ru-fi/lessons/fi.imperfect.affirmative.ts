@@ -196,6 +196,35 @@ const nouns = [
   ['päivä', 'день', 'день', 'päivän'],
 ] as const
 
+const pastContexts = [
+  { target: 'matkalaukun', source: 'чемодан' },
+  { target: 'passin', source: 'паспорт' },
+  { target: 'varauksen tiedot', source: 'данные бронирования' },
+  { target: 'matkalipun', source: 'проездной билет' },
+  { target: 'hotellihuoneen', source: 'номер в отеле' },
+  { target: 'kartan', source: 'карту' },
+  { target: 'matkaoppaan', source: 'путеводитель' },
+  { target: 'turistin', source: 'туриста' },
+  { target: 'retken ohjelman', source: 'программу экскурсии' },
+  { target: 'loman kuvat', source: 'фотографии из отпуска' },
+  { target: 'lähdön ajan', source: 'время отправления' },
+  { target: 'saapumisen ajan', source: 'время прибытия' },
+  { target: 'lennon numeron', source: 'номер рейса' },
+  { target: 'matkatavaran', source: 'багаж' },
+  { target: 'valokuvan', source: 'фотографию' },
+  { target: 'muiston', source: 'памятный сувенир' },
+  { target: 'tapahtuman ilmoituksen', source: 'объявление о событии' },
+  { target: 'konsertin mainoksen', source: 'афишу концерта' },
+  { target: 'kokouksen ohjelman', source: 'программу собрания' },
+  { target: 'kilpailun tuloksen', source: 'результат соревнования' },
+  { target: 'kurssin ohjelman', source: 'программу курса' },
+  { target: 'kokeen tehtävät', source: 'задания экзамена' },
+  { target: 'tehtävän', source: 'задание' },
+  { target: 'tuloksen', source: 'результат' },
+  { target: 'palkinnon', source: 'награду' },
+  { target: 'päivän ohjelman', source: 'расписание на день' },
+] as const
+
 interface PastVocabulary extends LessonVocabularySeed {
   object: string
   sourceObject: string
@@ -203,6 +232,7 @@ interface PastVocabulary extends LessonVocabularySeed {
 export const imperfectAffirmativeVocabulary: PastVocabulary[] = nouns.map(
   ([lemma, gloss, sourceObject, object], index) => {
     const serial = `15.${String(index + 1).padStart(2, '0')}`
+    const context = pastContexts[index]!
     return {
       key: `past-${lemma}`,
       itemId: `word.fi.m1.${serial}`,
@@ -214,8 +244,8 @@ export const imperfectAffirmativeVocabulary: PastVocabulary[] = nouns.map(
       object,
       sourceObject,
       example: {
-        target: `Eilen näin ${object}.`,
-        source: { ru: `Вчера я увидел ${sourceObject}.` },
+        target: `Eilen näin ${context.target}.`,
+        source: { ru: `Вчера я увидел ${context.source}.` },
       },
       semanticTypes: ['travel', 'past-story-context'],
       singular: lemma,
@@ -254,6 +284,7 @@ export const imperfectAffirmativeGoldenExerciseIds = [
 type Frame = 'yesterday' | 'last-week' | 'third' | 'plural' | 'then'
 function build(index: number, frame: Frame) {
   const item = imperfectAffirmativeVocabulary[index % nouns.length]!
+  const context = pastContexts[index % nouns.length]!
   const frames: Record<
     Frame,
     {
@@ -264,9 +295,9 @@ function build(index: number, frame: Frame) {
     }
   > = {
     yesterday: {
-      prompt: `Вчера я увидел ${item.sourceObject}.`,
-      target: `Eilen minä näin ${item.object}.`,
-      variants: [`Eilen näin ${item.object}.`],
+      prompt: `Вчера я увидел ${context.source}.`,
+      target: `Eilen minä näin ${context.target}.`,
+      variants: [`Eilen näin ${context.target}.`],
       slots: [
         grammar('adverb', ['eilen']),
         grammar('subject', ['minä'], true),
@@ -274,9 +305,9 @@ function build(index: number, frame: Frame) {
       ],
     },
     'last-week': {
-      prompt: `На прошлой неделе я нашёл ${item.sourceObject}.`,
-      target: `Viime viikolla minä löysin ${item.object}.`,
-      variants: [`Viime viikolla löysin ${item.object}.`],
+      prompt: `На прошлой неделе я нашёл ${context.source}.`,
+      target: `Viime viikolla minä löysin ${context.target}.`,
+      variants: [`Viime viikolla löysin ${context.target}.`],
       slots: [
         grammar('timeAdjective', ['viime']),
         grammar('timeNoun', ['viikolla']),
@@ -285,8 +316,8 @@ function build(index: number, frame: Frame) {
       ],
     },
     third: {
-      prompt: `Он увидел ${item.sourceObject} вчера.`,
-      target: `Hän näki ${item.object} eilen.`,
+      prompt: `Он увидел ${context.source} вчера.`,
+      target: `Hän näki ${context.target} eilen.`,
       variants: [],
       slots: [
         grammar('subject', ['hän']),
@@ -295,18 +326,18 @@ function build(index: number, frame: Frame) {
       ],
     },
     plural: {
-      prompt: `Мы увидели ${item.sourceObject}.`,
-      target: `Me näimme ${item.object}.`,
-      variants: [`Näimme ${item.object}.`],
+      prompt: `Мы увидели ${context.source}.`,
+      target: `Me näimme ${context.target}.`,
+      variants: [`Näimme ${context.target}.`],
       slots: [
         grammar('subject', ['me'], true),
         grammar('pastVerb', ['näimme']),
       ],
     },
     then: {
-      prompt: `Затем я также увидел ${item.sourceObject}.`,
-      target: `Sitten minä näin myös ${item.object}.`,
-      variants: [`Sitten näin myös ${item.object}.`],
+      prompt: `Затем я также увидел ${context.source}.`,
+      target: `Sitten minä näin myös ${context.target}.`,
+      variants: [`Sitten näin myös ${context.target}.`],
       slots: [
         grammar('adverb', ['sitten']),
         grammar('subject', ['minä'], true),
@@ -322,11 +353,11 @@ function build(index: number, frame: Frame) {
     acceptedVariants: [selected.target, ...selected.variants],
     slots: [
       ...selected.slots,
-      {
-        role: 'object',
-        accepted: [item.object],
+      ...context.target.split(' ').map((token, tokenIndex) => ({
+        role: `object${tokenIndex + 1}`,
+        accepted: [token],
         itemIds: [IMPERFECT_AFFIRMATIVE_SKILL_ID, item.itemId],
-      },
+      })),
     ],
     primaryItemId: IMPERFECT_AFFIRMATIVE_SKILL_ID,
     secondaryItemIds: [IMPERFECT_IRREGULAR_SKILL_ID],

@@ -293,14 +293,6 @@ export const pluralAgreementVocabulary: PluralVocabulary[] = adjectives.map(
   },
 )
 
-export const pluralAgreementExercises: PreparedExerciseSeed[] = [
-  ...group('word', 0, 26, (i) => build(i, 'plain')),
-  ...group('context', 26, 10, (i) => build(i + 5, 'demonstrative')),
-  ...group('context', 36, 8, (i) => build(i + 12, 'negative')),
-  ...group('context', 44, 8, (i) => build(i + 18, 'temporal')),
-  ...group('pair', 52, 8, (i) => build(i + 2, 'question')),
-]
-
 export const pluralAgreementGoldenExerciseIds = [
   'exercise.fi.plural.agreement.word.1',
   'exercise.fi.plural.agreement.word.7',
@@ -312,6 +304,7 @@ export const pluralAgreementGoldenExerciseIds = [
 type Frame = 'plain' | 'demonstrative' | 'negative' | 'temporal' | 'question'
 function build(index: number, frame: Frame) {
   const item = pluralAgreementVocabulary[index % adjectives.length]!
+  const context = pluralContexts[index % adjectives.length]!
   const phrase = `${item.pluralForm} ${item.noun}`
   const source = `${item.sourcePluralForm} ${item.sourceNoun}`
   const frames: Record<
@@ -324,9 +317,9 @@ function build(index: number, frame: Frame) {
     }
   > = {
     plain: {
-      prompt: `${capitalize(source)} здесь.`,
-      target: `${capitalize(phrase)} ovat täällä.`,
-      variants: [`Täällä ovat ${phrase}.`],
+      prompt: `${capitalize(source)} ${context.source}.`,
+      target: `${capitalize(phrase)} ovat ${context.target}.`,
+      variants: [`${capitalize(context.target)} ovat ${phrase}.`],
       slots: [
         grammar('adjective'),
         grammar('noun'),
@@ -335,8 +328,8 @@ function build(index: number, frame: Frame) {
       ],
     },
     demonstrative: {
-      prompt: `Эти ${source} здесь.`,
-      target: `Nämä ${phrase} ovat täällä.`,
+      prompt: `Эти ${source} ${context.source}.`,
+      target: `Nämä ${phrase} ovat ${context.target}.`,
       variants: [],
       slots: [
         grammar('demonstrative'),
@@ -347,8 +340,8 @@ function build(index: number, frame: Frame) {
       ],
     },
     negative: {
-      prompt: `${capitalize(source)} не здесь.`,
-      target: `${capitalize(phrase)} eivät ole täällä.`,
+      prompt: `${capitalize(source)} не ${context.source}.`,
+      target: `${capitalize(phrase)} eivät ole ${context.target}.`,
       variants: [],
       slots: [
         grammar('adjective'),
@@ -359,8 +352,8 @@ function build(index: number, frame: Frame) {
       ],
     },
     temporal: {
-      prompt: `Сейчас ${source} здесь.`,
-      target: `Nyt ${phrase} ovat täällä.`,
+      prompt: `Сейчас ${source} ${context.source}.`,
+      target: `Nyt ${phrase} ovat ${context.target}.`,
       variants: [],
       slots: [
         grammar('adverb'),
@@ -371,8 +364,8 @@ function build(index: number, frame: Frame) {
       ],
     },
     question: {
-      prompt: `${capitalize(source)} здесь?`,
-      target: `Ovatko ${phrase} täällä?`,
+      prompt: `${capitalize(source)} ${context.source}?`,
+      target: `Ovatko ${phrase} ${context.target}?`,
       variants: [],
       slots: [
         grammar('questionCopula'),
@@ -397,6 +390,14 @@ function build(index: number, frame: Frame) {
     accepted: [item.noun],
     itemIds: [PLURAL_AGREEMENT_SKILL_ID, PLURAL_PREDICATE_SKILL_ID],
   }
+  const locationIndex = selected.slots.findIndex(
+    (slot) => slot.role === 'location',
+  )
+  selected.slots[locationIndex] = {
+    role: 'location',
+    accepted: [context.target],
+    itemIds: [PLURAL_AGREEMENT_SKILL_ID, PLURAL_PREDICATE_SKILL_ID],
+  }
   return {
     prompt: selected.prompt,
     targetText: selected.target,
@@ -407,6 +408,45 @@ function build(index: number, frame: Frame) {
     vocabularyItemId: item.itemId,
   }
 }
+
+const pluralContexts = [
+  { target: 'kaupungissa', source: 'в городе' },
+  { target: 'hotellissa', source: 'в отеле' },
+  { target: 'kesällä', source: 'летом' },
+  { target: 'lähellä', source: 'рядом' },
+  { target: 'kirjastossa', source: 'в библиотеке' },
+  { target: 'yliopistossa', source: 'в университете' },
+  { target: 'ulkona', source: 'на улице' },
+  { target: 'listalla', source: 'в списке' },
+  { target: 'verkossa', source: 'в интернете' },
+  { target: 'Suomessa', source: 'в Финляндии' },
+  { target: 'keskustassa', source: 'в центре' },
+  { target: 'kirjassa', source: 'в учебнике' },
+  { target: 'koulussa', source: 'в школе' },
+  { target: 'asemalla', source: 'на станции' },
+  { target: 'pysäkillä', source: 'на остановке' },
+  { target: 'kesällä', source: 'летом' },
+  { target: 'talvella', source: 'зимой' },
+  { target: 'pöydällä', source: 'на столе' },
+  { target: 'vitriinissä', source: 'в витрине' },
+  { target: 'pöydällä', source: 'на столе' },
+  { target: 'hotellissa', source: 'в отеле' },
+  { target: 'keittiössä', source: 'на кухне' },
+  { target: 'keskustassa', source: 'в центре' },
+  { target: 'verkossa', source: 'в интернете' },
+  { target: 'listalla', source: 'в списке' },
+  { target: 'kalenterissa', source: 'в календаре' },
+] as const
+
+export const pluralAgreementExercises: PreparedExerciseSeed[] = [
+  ...group('word', 0, 26, (i) => build(i, 'plain')),
+  ...group('context', 26, 10, (i) => build(i + 5, 'demonstrative')),
+  ...group('context', 36, 8, (i) =>
+    build([6, 7, 8, 9, 10, 11, 13, 14][i]!, 'negative'),
+  ),
+  ...group('context', 44, 8, (i) => build(i + 18, 'temporal')),
+  ...group('pair', 52, 8, (i) => build(i + 2, 'question')),
+]
 
 function grammar(role: string) {
   const accepted: Record<string, string[]> = {

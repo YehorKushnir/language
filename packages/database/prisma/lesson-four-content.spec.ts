@@ -30,12 +30,15 @@ describe('lesson four: verb types two and three', () => {
     )
 
     expect(golden).toEqual({
-      'exercise.fi.verb-types.two-three.first.001': 'Minä saan.',
-      'exercise.fi.verb-types.two-three.first.011': 'Minä teen.',
-      'exercise.fi.verb-types.two-three.second-now.001': 'Sinä tulet nyt.',
-      'exercise.fi.verb-types.two-three.third.001': 'Hän juo.',
-      'exercise.fi.verb-types.two-three.first-plural-now.001': 'Nyt me teemme.',
-      'exercise.fi.verb-types.two-three.third-plural-now.001': 'He saavat nyt.',
+      'exercise.fi.verb-types.two-three.first.001': 'Minä saan viestin.',
+      'exercise.fi.verb-types.two-three.first.011': 'Minä teen ruokaa.',
+      'exercise.fi.verb-types.two-three.second-now.001':
+        'Sinä tulet nyt ajoissa.',
+      'exercise.fi.verb-types.two-three.third.001': 'Hän juo vettä.',
+      'exercise.fi.verb-types.two-three.first-plural-now.001':
+        'Nyt me teemme ruokaa.',
+      'exercise.fi.verb-types.two-three.third-plural-now.001':
+        'He saavat nyt viestin.',
     })
   })
 
@@ -49,16 +52,16 @@ describe('lesson four: verb types two and three', () => {
         ?.acceptedVariants,
     ).toEqual(
       expect.arrayContaining([
-        'Sinä tulet nyt.',
-        'Tulet nyt.',
-        'Nyt sinä tulet.',
-        'Nyt tulet.',
+        'Sinä tulet nyt ajoissa.',
+        'Tulet nyt ajoissa.',
+        'Nyt sinä tulet ajoissa.',
+        'Nyt tulet ajoissa.',
       ]),
     )
     expect(
       byId.get('exercise.fi.verb-types.two-three.third-plural-now.001')
         ?.acceptedVariants,
-    ).toEqual(['He saavat nyt.', 'Nyt he saavat.'])
+    ).toEqual(['He saavat nyt viestin.', 'Nyt he saavat viestin.'])
   })
 
   it('asks for sentence translations instead of naming Finnish forms', () => {
@@ -67,11 +70,11 @@ describe('lesson four: verb types two and three', () => {
     )
 
     expect(byId.get('exercise.fi.verb-types.two-three.first.001')?.prompt).toBe(
-      'Я получаю.',
+      'Я получаю сообщение.',
     )
     expect(
       byId.get('exercise.fi.verb-types.two-three.second-now.001')?.prompt,
-    ).toBe('Ты сейчас приходишь.')
+    ).toBe('Ты сейчас приходишь вовремя.')
     expect(
       verbTypesTwoThreeExercises.some((exercise) =>
         exercise.prompt.startsWith('Поставь '),

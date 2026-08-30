@@ -110,25 +110,25 @@ const verbs: TypeOneVerbSeed[] = [
   ),
   verb(
     'oppia',
-    'усваивать; научиться',
+    'учить; усваивать',
     ['opin', 'opit', 'oppii', 'opimme', 'opitte', 'oppivat'],
     'opi',
-    [
-      'усваиваю',
-      'усваиваешь',
-      'усваивает',
-      'усваиваем',
-      'усваиваете',
-      'усваивают',
-    ],
+    ['учу', 'учишь', 'учит', 'учим', 'учите', 'учат'],
     'ambitransitive',
   ),
   verb(
     'opettaa',
-    'обучать',
+    'преподавать',
     ['opetan', 'opetat', 'opettaa', 'opetamme', 'opetatte', 'opettavat'],
     'opeta',
-    ['обучаю', 'обучаешь', 'обучает', 'обучаем', 'обучаете', 'обучают'],
+    [
+      'преподаю',
+      'преподаёшь',
+      'преподаёт',
+      'преподаём',
+      'преподаёте',
+      'преподают',
+    ],
     'transitive',
   ),
   verb(
@@ -316,6 +316,38 @@ const verbs: TypeOneVerbSeed[] = [
     'ambitransitive',
   ),
 ]
+
+const presentCommonContexts: Record<
+  string,
+  { target: string; source: string }
+> = {
+  puhua: { target: 'suomea', source: 'по-фински' },
+  asua: { target: 'Helsingissä', source: 'в Хельсинки' },
+  kysyä: { target: 'neuvoa', source: 'совета' },
+  sanoa: { target: 'hei', source: '«привет»' },
+  kertoa: { target: 'tarinan', source: 'историю' },
+  lukea: { target: 'kirjaa', source: 'книгу' },
+  kirjoittaa: { target: 'viestin', source: 'сообщение' },
+  katsoa: { target: 'televisiota', source: 'телевизор' },
+  oppia: { target: 'suomea', source: 'финский язык' },
+  opettaa: { target: 'suomea', source: 'финский язык' },
+  ymmärtää: { target: 'kysymyksen', source: 'вопрос' },
+  muistaa: { target: 'nimen', source: 'имя' },
+  unohtaa: { target: 'osoitteen', source: 'адрес' },
+  auttaa: { target: 'ystävää', source: 'другу' },
+  odottaa: { target: 'bussia', source: 'автобус' },
+  ottaa: { target: 'kahvin', source: 'кофе' },
+  antaa: { target: 'vastauksen', source: 'ответ' },
+  löytää: { target: 'avaimen', source: 'ключ' },
+  käyttää: { target: 'puhelinta', source: 'телефон' },
+  maksaa: { target: 'laskun', source: 'счёт' },
+  ostaa: { target: 'lipun', source: 'билет' },
+  sulkea: { target: 'oven', source: 'дверь' },
+  selittää: { target: 'tilanteen', source: 'ситуацию' },
+  näyttää: { target: 'kuvan', source: 'фотографию' },
+  tarkistaa: { target: 'osoitteen', source: 'адрес' },
+  hoitaa: { target: 'asian', source: 'этим делом' },
+}
 
 const pronouns = [
   ['minä', 'я'],
@@ -512,6 +544,7 @@ export const presentCommonContent = {
 export const presentCommonVocabulary: LessonVocabularySeed[] = verbs.map(
   (item, index) => {
     const serial = `02.${String(index + 1).padStart(2, '0')}`
+    const context = presentCommonContexts[item.key]!
     return {
       key: `present-${item.key}`,
       itemId: `word.fi.m1.${serial}`,
@@ -521,8 +554,8 @@ export const presentCommonVocabulary: LessonVocabularySeed[] = verbs.map(
       partOfSpeech: 'verb',
       gloss: item.gloss,
       example: {
-        target: `Minä ${item.forms[0]}.`,
-        source: { ru: item.source[0] },
+        target: `Minä ${item.forms[0]} ${context.target}.`,
+        source: { ru: `Я ${item.source[0]} ${context.source}.` },
       },
       semanticTypes: ['action', `valency:${item.valency}`, 'verb-type:1'],
       singular: item.forms[0],
@@ -578,17 +611,22 @@ function buildExercises(): PreparedExerciseSeed[] {
 
   verbs.slice(0, 18).forEach((item, index) => {
     const vocabulary = presentCommonVocabulary[index]!
-    const targetText = `Minä ${item.forms[0]}.`
+    const context = presentCommonContexts[item.key]!
+    const targetText = `Minä ${item.forms[0]} ${context.target}.`
     exercises.push(
       exercise({
         id: `exercise.fi.present.common.first.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Я ${item.source[0]}.`,
+        prompt: `Я ${item.source[0]} ${context.source}.`,
         targetText,
-        acceptedVariants: [targetText, `${capitalize(item.forms[0])}.`],
+        acceptedVariants: [
+          targetText,
+          `${capitalize(item.forms[0])} ${context.target}.`,
+        ],
         slots: [
           grammarSlot('subject', ['minä'], true),
           vocabularySlot('mainVerb', [item.forms[0]], vocabulary.itemId),
+          ...contextSlots(context.target),
         ],
         vocabularyItemId: vocabulary.itemId,
       }),
@@ -597,22 +635,24 @@ function buildExercises(): PreparedExerciseSeed[] {
 
   takeVerbs(18, 10).forEach(({ item, vocabularyIndex }, index) => {
     const vocabulary = presentCommonVocabulary[vocabularyIndex]!
+    const context = presentCommonContexts[item.key]!
     exercises.push(
       exercise({
         id: `exercise.fi.present.common.second-now.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Ты сейчас ${item.source[1]}.`,
-        targetText: `Sinä ${item.forms[1]} nyt.`,
+        prompt: `Ты сейчас ${item.source[1]} ${context.source}.`,
+        targetText: `Sinä ${item.forms[1]} nyt ${context.target}.`,
         acceptedVariants: [
-          `Sinä ${item.forms[1]} nyt.`,
-          `${capitalize(item.forms[1])} nyt.`,
-          `Nyt sinä ${item.forms[1]}.`,
-          `Nyt ${item.forms[1]}.`,
+          `Sinä ${item.forms[1]} nyt ${context.target}.`,
+          `${capitalize(item.forms[1])} nyt ${context.target}.`,
+          `Nyt sinä ${item.forms[1]} ${context.target}.`,
+          `Nyt ${item.forms[1]} ${context.target}.`,
         ],
         slots: [
           grammarSlot('subject', ['sinä'], true),
           vocabularySlot('mainVerb', [item.forms[1]], vocabulary.itemId),
           grammarSlot('adverb', ['nyt']),
+          ...contextSlots(context.target),
         ],
         vocabularyItemId: vocabulary.itemId,
       }),
@@ -621,16 +661,18 @@ function buildExercises(): PreparedExerciseSeed[] {
 
   takeVerbs(2, 8).forEach(({ item, vocabularyIndex }, index) => {
     const vocabulary = presentCommonVocabulary[vocabularyIndex]!
+    const context = presentCommonContexts[item.key]!
     exercises.push(
       exercise({
         id: `exercise.fi.present.common.third.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Он или она ${item.source[2]}.`,
-        targetText: `Hän ${item.forms[2]}.`,
-        acceptedVariants: [`Hän ${item.forms[2]}.`],
+        prompt: `Он или она ${item.source[2]} ${context.source}.`,
+        targetText: `Hän ${item.forms[2]} ${context.target}.`,
+        acceptedVariants: [`Hän ${item.forms[2]} ${context.target}.`],
         slots: [
           grammarSlot('subject', ['hän']),
           vocabularySlot('mainVerb', [item.forms[2]], vocabulary.itemId),
+          ...contextSlots(context.target),
         ],
         vocabularyItemId: vocabulary.itemId,
       }),
@@ -639,17 +681,22 @@ function buildExercises(): PreparedExerciseSeed[] {
 
   takeVerbs(10, 8).forEach(({ item, vocabularyIndex }, index) => {
     const vocabulary = presentCommonVocabulary[vocabularyIndex]!
+    const context = presentCommonContexts[item.key]!
     exercises.push(
       exercise({
         id: `exercise.fi.present.common.first-plural-now.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Сейчас мы ${item.source[3]}.`,
-        targetText: `Nyt me ${item.forms[3]}.`,
-        acceptedVariants: [`Nyt me ${item.forms[3]}.`, `Nyt ${item.forms[3]}.`],
+        prompt: `Сейчас мы ${item.source[3]} ${context.source}.`,
+        targetText: `Nyt me ${item.forms[3]} ${context.target}.`,
+        acceptedVariants: [
+          `Nyt me ${item.forms[3]} ${context.target}.`,
+          `Nyt ${item.forms[3]} ${context.target}.`,
+        ],
         slots: [
           grammarSlot('adverb', ['nyt']),
           grammarSlot('subject', ['me'], true),
           vocabularySlot('mainVerb', [item.forms[3]], vocabulary.itemId),
+          ...contextSlots(context.target),
         ],
         vocabularyItemId: vocabulary.itemId,
       }),
@@ -658,19 +705,21 @@ function buildExercises(): PreparedExerciseSeed[] {
 
   takeVerbs(18, 8).forEach(({ item, vocabularyIndex }, index) => {
     const vocabulary = presentCommonVocabulary[vocabularyIndex]!
+    const context = presentCommonContexts[item.key]!
     exercises.push(
       exercise({
         id: `exercise.fi.present.common.second-plural.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Вы ${item.source[4]}.`,
-        targetText: `Te ${item.forms[4]}.`,
+        prompt: `Вы ${item.source[4]} ${context.source}.`,
+        targetText: `Te ${item.forms[4]} ${context.target}.`,
         acceptedVariants: [
-          `Te ${item.forms[4]}.`,
-          `${capitalize(item.forms[4])}.`,
+          `Te ${item.forms[4]} ${context.target}.`,
+          `${capitalize(item.forms[4])} ${context.target}.`,
         ],
         slots: [
           grammarSlot('subject', ['te'], true),
           vocabularySlot('mainVerb', [item.forms[4]], vocabulary.itemId),
+          ...contextSlots(context.target),
         ],
         vocabularyItemId: vocabulary.itemId,
       }),
@@ -679,20 +728,22 @@ function buildExercises(): PreparedExerciseSeed[] {
 
   takeVerbs(0, 8).forEach(({ item, vocabularyIndex }, index) => {
     const vocabulary = presentCommonVocabulary[vocabularyIndex]!
+    const context = presentCommonContexts[item.key]!
     exercises.push(
       exercise({
         id: `exercise.fi.present.common.third-plural-now.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Они сейчас ${item.source[5]}.`,
-        targetText: `He ${item.forms[5]} nyt.`,
+        prompt: `Они сейчас ${item.source[5]} ${context.source}.`,
+        targetText: `He ${item.forms[5]} nyt ${context.target}.`,
         acceptedVariants: [
-          `He ${item.forms[5]} nyt.`,
-          `Nyt he ${item.forms[5]}.`,
+          `He ${item.forms[5]} nyt ${context.target}.`,
+          `Nyt he ${item.forms[5]} ${context.target}.`,
         ],
         slots: [
           grammarSlot('subject', ['he']),
           vocabularySlot('mainVerb', [item.forms[5]], vocabulary.itemId),
           grammarSlot('adverb', ['nyt']),
+          ...contextSlots(context.target),
         ],
         vocabularyItemId: vocabulary.itemId,
       }),
@@ -755,6 +806,12 @@ function grammarSlot(role: string, accepted: string[], optional = false) {
 
 function vocabularySlot(role: string, accepted: string[], itemId: string) {
   return { role, accepted, itemIds: [SKILL_ID, itemId] }
+}
+
+function contextSlots(value: string) {
+  return value
+    .split(' ')
+    .map((token, index) => grammarSlot(`context${index + 1}`, [token]))
 }
 
 function serial(index: number) {

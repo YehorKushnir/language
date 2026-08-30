@@ -28,9 +28,11 @@ describe('present-tense translation prompts', () => {
       exercises.map((exercise) => [exercise.targetText, exercise.prompt]),
     )
 
-    expect(promptByTarget.get('Minä puhun.')).toBe('Я говорю.')
-    expect(promptByTarget.get('Minä sanon.')).toBe('Я произношу.')
-    expect(promptByTarget.get('Minä opin.')).toBe('Я усваиваю.')
-    expect(promptByTarget.get('Sinä opiskelet nyt.')).toBe('Ты сейчас учишься.')
+    expect(promptByTarget.get('Minä puhun suomea.')).toBe('Я говорю по-фински.')
+    expect(promptByTarget.get('Minä sanon hei.')).toBe('Я произношу «привет».')
+    expect(promptByTarget.get('Minä opin suomea.')).toBe('Я учу финский язык.')
+    expect(promptByTarget.get('Sinä opiskelet nyt suomea.')).toBe(
+      'Ты сейчас изучаешь финский язык.',
+    )
   })
 })

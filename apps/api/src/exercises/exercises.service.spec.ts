@@ -5,7 +5,7 @@ import {
   KnowledgeItemKind,
   MemoryState,
 } from '@language/database'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PrismaService } from '../database/prisma.service'
 import { FinnishMorphologyService } from '../morphology/finnish-morphology.service'
@@ -101,6 +101,10 @@ describe('ExercisesService morphology diagnostics', () => {
         }
       },
     )
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('turns a same-lemma mismatch into a precise grammar diagnostic', async () => {
@@ -319,7 +323,8 @@ describe('ExercisesService morphology diagnostics', () => {
     ])
   })
 
-  it('keeps the curated mixed exercise order ahead of attempt history', async () => {
+  it('selects a random exercise instead of following selectionOrder', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
     prisma.exercise.findMany.mockResolvedValue([
       {
         id: 'exercise.second',
@@ -362,10 +367,10 @@ describe('ExercisesService morphology diagnostics', () => {
     await expect(
       service.getNextExercise('user.1', 'route.1', 'lesson.1', 'ru', []),
     ).resolves.toMatchObject({
-      id: 'exercise.first',
-      prompt: 'Первое задание',
+      id: 'exercise.second',
+      prompt: 'Второе задание',
       answerSpec: {
-        acceptedVariants: ['Ensimmäinen vastaus.'],
+        acceptedVariants: ['Toinen vastaus.'],
         slots: [],
       },
       checkerVersion: 'structured-v5-split-lexical-grammar-evidence-voikko',
@@ -374,7 +379,7 @@ describe('ExercisesService morphology diagnostics', () => {
       data: [
         expect.objectContaining({
           userId: 'user.1',
-          itemId: 'word.fi.first',
+          itemId: 'word.fi.second',
           state: 'NEW',
           dueAt: expect.any(Date),
         }),
@@ -383,7 +388,8 @@ describe('ExercisesService morphology diagnostics', () => {
     })
   })
 
-  it('prioritizes an exercise covering the earliest due word', async () => {
+  it('does not turn due-word order into a sorted practice session', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
     prisma.exercise.findMany.mockResolvedValue([
       {
         id: 'exercise.ordered-first',
@@ -417,17 +423,10 @@ describe('ExercisesService morphology diagnostics', () => {
     await expect(
       service.getNextExercise('user.1', 'route.1', 'lesson.1', 'ru', []),
     ).resolves.toMatchObject({
-      id: 'exercise.due',
-      prompt: 'Просроченное слово',
+      id: 'exercise.ordered-first',
+      prompt: 'Обычное задание',
     })
-    expect(prisma.userMemory.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          userId: 'user.1',
-          dueAt: { lte: expect.any(Date) },
-        }),
-      }),
-    )
+    expect(prisma.userMemory.findMany).not.toHaveBeenCalled()
   })
 
   it('diagnoses olla when a valid optional subject is omitted', async () => {

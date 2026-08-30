@@ -259,16 +259,6 @@ export const genitivePossessionVocabulary: PossessionVocabulary[] = nouns.map(
   },
 )
 
-export const genitivePossessionExercises: PreparedExerciseSeed[] = [
-  ...group('word', 0, 26, genitivePhrase),
-  ...group('context', 26, 12, (index) => possession(index, 'minulla')),
-  ...group('context', 38, 8, (index) =>
-    possession(index + 12, 'sinulla', true),
-  ),
-  ...group('context', 46, 8, (index) => timedThirdPersonPossession(index + 4)),
-  ...group('pair', 54, 6, (index) => possessionQuestion(index + 15)),
-]
-
 export const genitivePossessionGoldenExerciseIds = [
   'exercise.fi.genitive.possession.word.1',
   'exercise.fi.genitive.possession.word.2',
@@ -279,22 +269,22 @@ export const genitivePossessionGoldenExerciseIds = [
 
 function genitivePhrase(index: number) {
   const owner = genitivePossessionVocabulary[index]!
-  const possessed = genitivePossessionVocabulary[(index + 5) % nouns.length]!
-  const targetText = `Tämä on ${owner.genitive} ${possessed.lemma}.`
+  const possessed = genitiveComplements[index]!
+  const targetText = `Tämä on ${owner.genitive} ${possessed.target}.`
   return exercise(owner, {
-    prompt: `Это ${possessed.gloss} ${owner.sourceGenitive}.`,
+    prompt: `Это ${possessed.source} ${owner.sourceGenitive}.`,
     targetText,
     acceptedVariants: [
       targetText,
-      `Se on ${owner.genitive} ${possessed.lemma}.`,
+      `Se on ${owner.genitive} ${possessed.target}.`,
     ],
     slots: [
       grammarSlot('demonstrative', ['tämä', 'se']),
       grammarSlot('copula', ['on']),
       vocabularySlot('genitiveOwner', owner.genitive, owner.itemId),
-      vocabularySlot('possessed', possessed.lemma, possessed.itemId),
+      grammarSlot('possessed', [possessed.target]),
     ],
-    secondaryItemIds: [possessed.itemId],
+    secondaryItemIds: [],
   })
 }
 
@@ -305,32 +295,34 @@ function possession(
 ) {
   const vocabulary = genitivePossessionVocabulary[index % nouns.length]!
   const subject = possessor === 'minulla' ? 'меня' : 'тебя'
-  const targetText = `${withAdverb ? 'Nyt ' : ''}${capitalize(possessor)} on ${vocabulary.lemma}.`
+  const targetText = withAdverb
+    ? `${capitalize(possessor)} on myös ${vocabulary.lemma}.`
+    : `${capitalize(possessor)} on ${vocabulary.lemma}.`
   return exercise(vocabulary, {
-    prompt: `${withAdverb ? 'Сейчас у' : 'У'} ${subject} есть ${vocabulary.gloss}.`,
+    prompt: `${withAdverb ? 'Также у' : 'У'} ${subject} есть ${vocabulary.gloss}.`,
     targetText,
     acceptedVariants: [targetText],
     slots: [
-      ...(withAdverb
-        ? [grammarSlot('adverb', ['nyt'], MINULLA_ON_SKILL_ID)]
-        : []),
       grammarSlot('possessor', [possessor], MINULLA_ON_SKILL_ID),
       grammarSlot('copula', ['on'], MINULLA_ON_SKILL_ID),
+      ...(withAdverb
+        ? [grammarSlot('adverb', ['myös'], MINULLA_ON_SKILL_ID)]
+        : []),
       vocabularySlot('possessed', vocabulary.lemma, vocabulary.itemId),
     ],
     secondaryItemIds: [MINULLA_ON_SKILL_ID],
   })
 }
 
-function timedThirdPersonPossession(index: number) {
+function thirdPersonPossession(index: number) {
   const vocabulary = genitivePossessionVocabulary[index % nouns.length]!
-  const targetText = `Tänään hänellä on ${vocabulary.lemma}.`
+  const targetText = `Nyt hänellä on ${vocabulary.lemma}.`
   return exercise(vocabulary, {
-    prompt: `Сегодня у него или неё есть ${vocabulary.gloss}.`,
+    prompt: `Теперь у него или неё есть ${vocabulary.gloss}.`,
     targetText,
     acceptedVariants: [targetText],
     slots: [
-      grammarSlot('timeAdverb', ['tänään'], MINULLA_ON_SKILL_ID),
+      grammarSlot('adverb', ['nyt'], MINULLA_ON_SKILL_ID),
       grammarSlot('possessor', ['hänellä'], MINULLA_ON_SKILL_ID),
       grammarSlot('copula', ['on'], MINULLA_ON_SKILL_ID),
       vocabularySlot('possessed', vocabulary.lemma, vocabulary.itemId),
@@ -338,6 +330,49 @@ function timedThirdPersonPossession(index: number) {
     secondaryItemIds: [MINULLA_ON_SKILL_ID],
   })
 }
+
+const genitiveComplements = [
+  { target: 'koti', source: 'дом' },
+  { target: 'nimi', source: 'имя' },
+  { target: 'auto', source: 'машина' },
+  { target: 'huone', source: 'комната' },
+  { target: 'kirja', source: 'книга' },
+  { target: 'lelu', source: 'игрушка' },
+  { target: 'sänky', source: 'кровать' },
+  { target: 'puhelin', source: 'телефон' },
+  { target: 'koti', source: 'дом' },
+  { target: 'auto', source: 'машина' },
+  { target: 'avain', source: 'ключ' },
+  { target: 'laukku', source: 'сумка' },
+  { target: 'asunto', source: 'квартира' },
+  { target: 'avain', source: 'ключ' },
+  { target: 'ovi', source: 'дверь' },
+  { target: 'ikkuna', source: 'окно' },
+  { target: 'pöytä', source: 'стол' },
+  { target: 'ovi', source: 'дверь' },
+  { target: 'ikkuna', source: 'окно' },
+  { target: 'sohva', source: 'диван' },
+  { target: 'ovi', source: 'дверь' },
+  { target: 'portti', source: 'ворота' },
+  { target: 'muoto', source: 'форма' },
+  { target: 'kahva', source: 'ручка' },
+  { target: 'lasi', source: 'стекло' },
+  { target: 'hinta', source: 'цена' },
+] as const
+
+export const genitivePossessionExercises: PreparedExerciseSeed[] = [
+  ...group('word', 0, 26, genitivePhrase),
+  ...group('context', 26, 12, (index) =>
+    possession([0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12][index]!, 'minulla'),
+  ),
+  ...group('context', 38, 8, (index) =>
+    possession(index + 12, 'sinulla', true),
+  ),
+  ...group('context', 46, 8, (index) =>
+    thirdPersonPossession([22, 13, 14, 15, 20, 0, 5, 12][index]!),
+  ),
+  ...group('pair', 54, 6, (index) => possessionQuestion(index + 15)),
+]
 
 function possessionQuestion(index: number) {
   const vocabulary = genitivePossessionVocabulary[index % nouns.length]!

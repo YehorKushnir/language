@@ -32,13 +32,12 @@ describe('lesson 6 curated content', () => {
     )
 
     expect(golden).toEqual({
-      'exercise.fi.consonant-gradation.word.1': 'Tämä on kauppa. Minä luen.',
-      'exercise.fi.consonant-gradation.word.2':
-        'Tämä on matto. Sinä kirjoitat.',
-      'exercise.fi.consonant-gradation.context.1':
-        'Tämä on kauppa. Hän auttaa.',
-      'exercise.fi.consonant-gradation.pair.1': 'Tämä on kauppa. Minä en lue.',
-      'exercise.fi.consonant-gradation.pair.5': 'Tämä on kukka. Annatko sinä?',
+      'exercise.fi.consonant-gradation.word.1': 'Minä kirjoitan: kauppa.',
+      'exercise.fi.consonant-gradation.word.2': 'Nyt sinä kirjoitat: matto.',
+      'exercise.fi.consonant-gradation.context.1': 'Hän kirjoittaa: kauppa.',
+      'exercise.fi.consonant-gradation.pair.1': 'Minä en kirjoita: kauppa.',
+      'exercise.fi.consonant-gradation.pair.5':
+        'Pakkaatko sinä nyt? Laukku on tässä.',
     })
   })
 })

@@ -37,9 +37,10 @@ describe('lesson 15 curated content', () => {
       'exercise.fi.imperfect.affirmative.word.6': 'Eilen minä näin kartan.',
       'exercise.fi.imperfect.affirmative.context.1':
         'Viime viikolla minä löysin kartan.',
-      'exercise.fi.imperfect.affirmative.context.11': 'Hän näki lennon eilen.',
+      'exercise.fi.imperfect.affirmative.context.11':
+        'Hän näki lennon numeron eilen.',
       'exercise.fi.imperfect.affirmative.pair.1':
-        'Sitten minä näin myös varauksen.',
+        'Sitten minä näin myös varauksen tiedot.',
     })
   })
 })
