@@ -35,6 +35,9 @@
     "audio:generate:words": "pnpm --filter @language/database build && pnpm --filter @language/api audio:generate:words",
     "audio:generate:sentences": "pnpm --filter @language/database build && pnpm --filter @language/api audio:generate:sentences",
     "audio:generate:texts": "pnpm --filter @language/database build && pnpm --filter @language/api audio:generate:texts",
+    "audio:bundle:export": "pnpm --filter @language/api audio:bundle:export",
+    "audio:bundle:import": "pnpm --filter @language/api audio:bundle:import",
+    "audio:sync:vps": "sh scripts/audio/sync-to-vps.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

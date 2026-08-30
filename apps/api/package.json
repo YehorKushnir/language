@@ -14,7 +14,9 @@
     "audio:generate": "tsx src/audio/generate-audio.ts",
     "audio:generate:words": "tsx src/audio/generate-audio.ts --scope=words",
     "audio:generate:sentences": "tsx src/audio/generate-audio.ts --scope=sentences",
-    "audio:generate:texts": "tsx src/audio/generate-audio.ts --scope=texts"
+    "audio:generate:texts": "tsx src/audio/generate-audio.ts --scope=texts",
+    "audio:bundle:export": "tsx src/audio/export-audio-bundle.ts",
+    "audio:bundle:import": "tsx src/audio/import-audio-bundle.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1117.0",

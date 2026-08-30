@@ -10,6 +10,8 @@ test-results/
 .env.*.local
 backups/
 .data/
+audio-bundle-*.tar.gz
+audio-bundle-*.tar.gz.sha256
 *.log
 .DS_Store
 apps/web/src/routeTree.gen.ts

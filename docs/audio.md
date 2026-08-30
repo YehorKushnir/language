@@ -106,6 +106,32 @@ scope — `./scripts/deploy/generate-audio.sh`. Без корректного
 `GOOGLE_TTS_CREDENTIALS_FILE` завершится только generation-команда, а обычный
 deploy и воспроизведение готового аудио продолжат работать.
 
+## Перенос готового локального аудио на VPS
+
+Повторно вызывать Google TTS на сервере не требуется. После локальной генерации
+одна команда проверяет SHA-256 всех MP3, экспортирует `AudioAsset` и связи со
+словами, упражнениями и текстами, загружает bundle по SSH и импортирует его в
+production PostgreSQL и persistent Docker volume:
+
+```bash
+pnpm audio:sync:vps
+```
+
+Один раз настройте в локальном `.env` доступ по SSH:
+
+```dotenv
+AUDIO_SYNC_SSH_TARGET=deploy@95.169.192.201
+AUDIO_SYNC_SSH_PORT=22
+AUDIO_SYNC_SSH_KEY=/absolute/path/to/private-key
+AUDIO_SYNC_REMOTE_DIRECTORY=/home/deploy/morpho-learning
+```
+
+Если ключ уже доступен через `ssh-agent` или стандартный SSH config,
+`AUDIO_SYNC_SSH_KEY` можно оставить пустым. Импорт создаёт backup базы, проверяет
+совпадение идентификаторов контента, не перезаписывает файлы с другим checksum и
+может безопасно запускаться повторно. Production должен быть развернут из той же
+версии контента, на которой создавался bundle.
+
 ## Опционально: Cloudflare R2 или S3
 
 Для R2 создайте bucket, S3 API token и публичный custom domain. Конфигурация:
