@@ -134,5 +134,14 @@ describe('AudioButton', () => {
 
     expect(audio.currentTime).toBe(40)
     expect(audio.play).toHaveBeenCalledOnce()
+
+    act(() => audioButtonRef.current?.pause())
+    expect(audio.pause).toHaveBeenCalledOnce()
+
+    await act(async () => {
+      audioButtonRef.current?.play()
+      await Promise.resolve()
+    })
+    expect(audio.play).toHaveBeenCalledTimes(2)
   })
 })

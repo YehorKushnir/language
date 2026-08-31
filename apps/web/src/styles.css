@@ -141,16 +141,13 @@
     box-decoration-break: clone;
     background: color-mix(in oklab, var(--primary) 20%, transparent);
   }
-
-  .interactive-text-sentence[data-audio-active='true'] .interactive-text-word {
-    background: color-mix(in oklab, var(--primary) 20%, transparent);
-    text-decoration-color: color-mix(in oklab, var(--primary) 60%, transparent);
-  }
 }
 
 @media (hover: none), (pointer: coarse) {
+  .interactive-text-sentence,
   .interactive-text-word {
     -webkit-touch-callout: none;
+    user-select: none;
   }
 }
 

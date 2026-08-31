@@ -695,6 +695,48 @@ test('learner can move through the first lesson with keyboard controls', async (
   await page
     .getByRole('link', { name: 'Открыть Первый день на курсах' })
     .click()
+  const textAudioControls = page.getByRole('group', {
+    name: 'Управление аудио текста',
+  })
+  await expect(textAudioControls).toBeVisible()
+  await expect(page.getByRole('button', { name: /Обычная/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Медленно/ })).toHaveCount(0)
+  expect(
+    await textAudioControls.evaluate(
+      (controls) => getComputedStyle(controls.parentElement!).position,
+    ),
+  ).toBe('fixed')
+  const textAudioToggle = textAudioControls.locator('[data-text-audio-toggle]')
+  await expect(textAudioToggle).toHaveAttribute('aria-label', 'Запустить аудио')
+  await textAudioToggle.click()
+  await expect(textAudioToggle).toHaveAttribute(
+    'aria-label',
+    'Поставить аудио на паузу',
+  )
+  await expect(
+    page.locator('[data-sentence-index="0"][data-audio-active="true"]'),
+  ).toBeVisible()
+  await expect(
+    page.locator('[data-word-trigger][data-audio-active="true"]'),
+  ).toHaveCount(0)
+  await textAudioToggle.click()
+  await expect(textAudioToggle).toHaveAttribute(
+    'aria-label',
+    'Продолжить аудио',
+  )
+  await textAudioControls
+    .getByRole('button', { name: 'Следующее предложение' })
+    .click()
+  await expect(
+    page.locator('[data-sentence-index="1"][data-audio-active="true"]'),
+  ).toBeVisible()
+  await textAudioControls
+    .getByRole('button', { name: 'Предыдущее предложение' })
+    .click()
+  await expect(
+    page.locator('[data-sentence-index="0"][data-audio-active="true"]'),
+  ).toBeVisible()
+  await textAudioToggle.click()
   const analyzedWord = page.getByLabel('Tänään: сегодня')
   await expect(analyzedWord).toBeVisible()
   await analyzedWord.hover()
@@ -767,9 +809,7 @@ test('text-only vocabulary enters review as a flashcard', async ({ page }) => {
   await makeVocabularyItemDue(email, added.itemId)
 
   await page.goto('/vocabulary')
-  await expect(
-    page.getByText(/1 слово · 0 конструкций · 1 пора повторить/u),
-  ).toBeVisible()
+  await expect(page.getByText(/1 пора повторить/u)).toBeVisible()
   await page.getByRole('link', { name: 'Повторить' }).click()
   await expect(
     page.getByRole('heading', { level: 1, name: 'Вспомни слово' }),

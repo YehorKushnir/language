@@ -35,4 +35,32 @@ describe('reviewed exercise application', () => {
       ).toEqual(reviewed)
     }
   })
+
+  it('labels only exercises that expect colloquial Finnish', () => {
+    const reviewed = reviewedLessonSentences.flatMap((wrapper) =>
+      Object.values(wrapper).flat(),
+    )
+    const colloquial = reviewed.filter((exercise) =>
+      exercise.id.includes('.register.'),
+    )
+
+    expect(colloquial.map((exercise) => exercise.id).sort()).toEqual([
+      'exercise.fi.olla.register.001',
+      'exercise.fi.olla.register.002',
+      'exercise.fi.olla.register.003',
+      'exercise.fi.olla.register.004',
+    ])
+    expect(
+      colloquial.every((exercise) =>
+        exercise.prompt.startsWith('Напишите на разговорном:'),
+      ),
+    ).toBe(true)
+    expect(
+      reviewed
+        .filter((exercise) => !exercise.id.includes('.register.'))
+        .some((exercise) =>
+          exercise.prompt.startsWith('Напишите на разговорном:'),
+        ),
+    ).toBe(false)
+  })
 })

@@ -270,7 +270,7 @@
       {
         "order": 39,
         "id": "exercise.fi.olla.register.003",
-        "prompt": "Он устал.",
+        "prompt": "Напишите на разговорном: Он устал.",
         "targetText": "Se on väsynyt.",
         "acceptedVariants": ["Se on väsynyt."]
       },
@@ -284,7 +284,7 @@
       {
         "order": 41,
         "id": "exercise.fi.olla.register.002",
-        "prompt": "Ты дома.",
+        "prompt": "Напишите на разговорном: Ты дома.",
         "targetText": "Sä oot kotona.",
         "acceptedVariants": ["Sä oot kotona."]
       },
@@ -312,7 +312,7 @@
       {
         "order": 45,
         "id": "exercise.fi.olla.register.004",
-        "prompt": "Они здесь.",
+        "prompt": "Напишите на разговорном: Они здесь.",
         "targetText": "Ne on täällä.",
         "acceptedVariants": ["Ne on täällä."]
       },
@@ -417,7 +417,7 @@
       {
         "order": 60,
         "id": "exercise.fi.olla.register.001",
-        "prompt": "Я здесь.",
+        "prompt": "Напишите на разговорном: Я здесь.",
         "targetText": "Mä oon täällä.",
         "acceptedVariants": ["Mä oon täällä."]
       }

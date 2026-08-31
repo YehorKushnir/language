@@ -111,7 +111,10 @@ describe('interactive text audio', () => {
       container
         .querySelector<HTMLElement>('[data-word-trigger]')
         ?.getAttribute('data-audio-active'),
-    ).toBe('true')
+    ).toBeNull()
+    expect(
+      container.querySelector<HTMLElement>('[data-word-trigger]')?.className,
+    ).not.toContain('bg-primary')
   })
 
   it('keeps only one mobile word translation open', async () => {
@@ -172,7 +175,7 @@ describe('interactive text audio', () => {
     ).not.toContain('первый перевод')
   })
 
-  it('starts sentence audio on a mobile word long press', async () => {
+  it('starts sentence audio on a long press over a mobile word', async () => {
     vi.useFakeTimers()
     const body = 'Minä olen opiskelija.'
     const onPlaySegment = vi.fn()
@@ -208,6 +211,46 @@ describe('interactive text audio', () => {
     expect(onPlaySegment).toHaveBeenCalledOnce()
     expect(onPlaySegment).toHaveBeenCalledWith(0)
     expect(document.querySelector('[data-slot="popover-content"]')).toBeNull()
+  })
+
+  it('starts audio on every mobile sentence long press', async () => {
+    vi.useFakeTimers()
+    const body = 'Minä olen opiskelija.'
+    const onPlaySegment = vi.fn()
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+
+    await act(async () => {
+      root?.render(
+        <InteractiveText
+          activePlaybackSegment={null}
+          addingItemId={undefined}
+          addErrorItemId={undefined}
+          body={body}
+          onAdd={vi.fn()}
+          onPlaySegment={onPlaySegment}
+          playbackSegments={getTextPlaybackSegments(body)}
+          tokens={[token('Minä', 0, 0, 4)]}
+        />,
+      )
+    })
+
+    const sentence = container?.querySelector<HTMLElement>(
+      '[data-sentence-index="0"]',
+    )
+    for (let index = 0; index < 2; index += 1) {
+      act(() => {
+        sentence?.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+        vi.advanceTimersByTime(450)
+        sentence?.dispatchEvent(new Event('pointerup', { bubbles: true }))
+        sentence?.click()
+      })
+    }
+
+    expect(onPlaySegment).toHaveBeenCalledTimes(2)
+    expect(onPlaySegment).toHaveBeenNthCalledWith(1, 0)
+    expect(onPlaySegment).toHaveBeenNthCalledWith(2, 0)
   })
 
   it('plays the word sentence on desktop click', async () => {

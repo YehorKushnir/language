@@ -634,7 +634,7 @@ function buildExercises(): PreparedExerciseSeed[] {
   const spokenExercises: Omit<PreparedExerciseSeed, 'selectionOrder'>[] = [
     createSpokenExercise({
       id: 'exercise.fi.olla.register.001',
-      prompt: 'Переведи на разговорный финский: Я здесь.',
+      prompt: 'Напишите на разговорном: Я здесь.',
       targetText: 'Mä oon täällä.',
       slots: [
         { role: 'spokenSubject', accepted: ['mä'] },
@@ -645,7 +645,7 @@ function buildExercises(): PreparedExerciseSeed[] {
     }),
     createSpokenExercise({
       id: 'exercise.fi.olla.register.002',
-      prompt: 'Переведи на разговорный финский: Ты дома.',
+      prompt: 'Напишите на разговорном: Ты дома.',
       targetText: 'Sä oot kotona.',
       slots: [
         { role: 'spokenSubject', accepted: ['sä'] },
@@ -656,7 +656,7 @@ function buildExercises(): PreparedExerciseSeed[] {
     }),
     createSpokenExercise({
       id: 'exercise.fi.olla.register.003',
-      prompt: 'Переведи разговорно: Он устал.',
+      prompt: 'Напишите на разговорном: Он устал.',
       targetText: 'Se on väsynyt.',
       slots: [
         { role: 'spokenSubject', accepted: ['se'] },
@@ -667,7 +667,7 @@ function buildExercises(): PreparedExerciseSeed[] {
     }),
     createSpokenExercise({
       id: 'exercise.fi.olla.register.004',
-      prompt: 'Переведи разговорно: Они здесь.',
+      prompt: 'Напишите на разговорном: Они здесь.',
       targetText: 'Ne on täällä.',
       slots: [
         { role: 'spokenSubject', accepted: ['ne'] },
