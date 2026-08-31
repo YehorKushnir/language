@@ -591,6 +591,8 @@ test('learner can move through the first lesson with keyboard controls', async (
   await answer.press('Enter')
   await expect(page.getByText('2 из 60', { exact: true })).toBeVisible()
   await expect(answer).toBeFocused()
+  await answer.fill('поле снова принимает ввод')
+  await expect(answer).toHaveValue('поле снова принимает ввод')
   await expect(page.locator('main')).toHaveCount(1)
 
   await page.reload()
@@ -1010,7 +1012,7 @@ test('new learner is not sent into an empty review session', async ({
 test('a grammar mistake automatically appears in the grammar section', async ({
   page,
 }) => {
-  await signUpLearner(page, 'Grammar memory learner')
+  const email = await signUpLearner(page, 'Grammar memory learner')
   const courseResponse = await page.request.get('/api/v1/courses/course.ru-fi')
   const course = (await courseResponse.json()) as { route: { id: string } }
   const routeVersionId = course.route.id
@@ -1059,6 +1061,35 @@ test('a grammar mistake automatically appears in the grammar section', async ({
     page.getByText(grammarItem!.name.ru, { exact: true }),
   ).toBeVisible()
   await expectAccessible(page)
+
+  await makeVocabularyItemDue(email, failedGrammar!.itemId)
+  await page.goto('/reviews/session')
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Вспомни конструкцию' }),
+  ).toBeVisible()
+  const reviewCard = page.locator('[data-review-card="exercise"]')
+  const reviewCardStyle = await reviewCard.evaluate((card) => {
+    const style = getComputedStyle(card)
+    return {
+      backgroundColor: style.backgroundColor,
+      borderTopStyle: style.borderTopStyle,
+      borderTopWidth: style.borderTopWidth,
+    }
+  })
+  expect(reviewCardStyle.backgroundColor).not.toBe('rgba(0, 0, 0, 0)')
+  expect(reviewCardStyle.borderTopStyle).toBe('solid')
+  expect(reviewCardStyle.borderTopWidth).not.toBe('0px')
+
+  const reviewAnswer = page.getByLabel('Твой ответ')
+  await expect(reviewAnswer).toBeFocused()
+  await reviewAnswer.fill('xyz')
+  await reviewAnswer.press('Enter')
+  const retry = page.getByRole('button', { name: 'Попробовать снова' })
+  await expect(retry).toBeVisible()
+  await retry.click()
+  await expect(reviewAnswer).toBeFocused()
+  await reviewAnswer.fill('поле снова принимает ввод')
+  await expect(reviewAnswer).toHaveValue('поле снова принимает ввод')
 })
 
 test('text catalog has no horizontal overflow on a phone', async ({ page }) => {

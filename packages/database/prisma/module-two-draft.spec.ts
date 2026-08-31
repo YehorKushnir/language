@@ -31,13 +31,17 @@ describe('module two draft', () => {
     })
   })
 
-  it('builds lessons 17 and 18 and covers every new word in its lesson', () => {
-    expect(moduleTwoDraftLessons).toHaveLength(2)
+  it('builds lessons 17 through 22 and covers every new word in its lesson', () => {
+    expect(moduleTwoDraftLessons).toHaveLength(6)
     expect(moduleTwoDraftLessons.map((lesson) => lesson.id)).toEqual([
       'fi.object.boundedness',
       'fi.object.total.forms',
+      'fi.numerals.quantities',
+      'fi.plural.partitive.formation',
+      'fi.plural.partitive.usage',
+      'fi.plural.local-cases',
     ])
-    expect(moduleTwoDraftVocabulary).toHaveLength(52)
+    expect(moduleTwoDraftVocabulary).toHaveLength(156)
 
     const allowedVocabularyIds = moduleOneLessons.flatMap((candidate) =>
       candidate.vocabulary.map((item) => item.itemId),
@@ -111,14 +115,30 @@ describe('module two draft', () => {
 })
 
 function exerciseKind(exerciseId: string) {
-  for (const kind of [
+  const kind = exerciseId.split('.').at(-2) ?? 'total'
+  return [
     'negative',
-    'partitive',
     'contrast',
+    'vowel',
+    'stem',
+    'derived',
+    'special',
+    'number',
+    'quantity',
+    'unit',
+    'subject',
+    'existential',
+    'object',
+    'inessive',
+    'elative',
+    'illative',
+    'adessive',
+    'ablative',
+    'allative',
+    'partitive',
     'singular',
     'plural',
-  ]) {
-    if (exerciseId.includes(`.${kind}.`)) return kind
-  }
-  return 'total'
+  ].includes(kind)
+    ? kind
+    : 'total'
 }

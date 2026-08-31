@@ -314,7 +314,7 @@ function LessonVocabularyPage() {
         />
 
         <article
-          className="mt-4 rounded-xl bg-card p-4 shadow-xs sm:mt-5 sm:p-7"
+          className="mt-4 rounded-xl border border-border/70 bg-card p-4 shadow-xs sm:mt-5 sm:p-7"
           data-item-id={item.itemId}
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -534,7 +534,7 @@ function VocabularySummary({
         lessonTitle={lessonTitle}
         activePart="vocabulary"
       />
-      <section className="mt-7 rounded-xl bg-card p-6 text-center shadow-xs sm:p-8">
+      <section className="mt-7 rounded-xl border border-border/70 bg-card p-6 text-center shadow-xs sm:p-8">
         <span className="motion-success mx-auto grid size-10 place-items-center rounded-full bg-primary text-primary-foreground">
           <CheckIcon className="size-5" />
         </span>

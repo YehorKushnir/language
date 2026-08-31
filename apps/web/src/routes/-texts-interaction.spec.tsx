@@ -34,6 +34,7 @@ describe('interactive text audio', () => {
   afterEach(() => {
     if (root) act(() => root?.unmount())
     container?.remove()
+    vi.useRealTimers()
     vi.unstubAllGlobals()
     root = undefined
     container = undefined
@@ -106,6 +107,107 @@ describe('interactive text audio', () => {
         .querySelector<HTMLElement>('[data-sentence-index="0"]')
         ?.getAttribute('data-audio-active'),
     ).toBe('true')
+    expect(
+      container
+        .querySelector<HTMLElement>('[data-word-trigger]')
+        ?.getAttribute('data-audio-active'),
+    ).toBe('true')
+  })
+
+  it('keeps only one mobile word translation open', async () => {
+    const body = 'Minä olen.'
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+
+    await act(async () => {
+      root?.render(
+        <InteractiveText
+          activePlaybackSegment={null}
+          addingItemId={undefined}
+          addErrorItemId={undefined}
+          body={body}
+          onAdd={vi.fn()}
+          onPlaySegment={vi.fn()}
+          playbackSegments={getTextPlaybackSegments(body)}
+          tokens={[
+            token('Minä', 0, 0, 4, 'первый перевод'),
+            token('olen', 1, 5, 9, 'второй перевод'),
+          ]}
+        />,
+      )
+    })
+
+    await act(async () => {
+      container
+        ?.querySelectorAll<HTMLButtonElement>('[data-word-trigger]')[0]
+        ?.click()
+    })
+    expect(
+      document.querySelectorAll('[data-slot="popover-content"]'),
+    ).toHaveLength(1)
+    expect(
+      document.querySelector('[data-slot="popover-content"]')?.textContent,
+    ).toContain('первый перевод')
+
+    await act(async () => {
+      container
+        ?.querySelectorAll<HTMLButtonElement>('[data-word-trigger]')[1]
+        ?.click()
+    })
+    expect(
+      Array.from(
+        container?.querySelectorAll<HTMLButtonElement>('[data-word-trigger]') ??
+          [],
+      ).map((word) => word.getAttribute('aria-expanded')),
+    ).toEqual(['false', 'true'])
+    expect(
+      document.querySelectorAll('[data-slot="popover-content"]'),
+    ).toHaveLength(1)
+    expect(
+      document.querySelector('[data-slot="popover-content"]')?.textContent,
+    ).toContain('второй перевод')
+    expect(
+      document.querySelector('[data-slot="popover-content"]')?.textContent,
+    ).not.toContain('первый перевод')
+  })
+
+  it('starts sentence audio on a mobile word long press', async () => {
+    vi.useFakeTimers()
+    const body = 'Minä olen opiskelija.'
+    const onPlaySegment = vi.fn()
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+
+    await act(async () => {
+      root?.render(
+        <InteractiveText
+          activePlaybackSegment={null}
+          addingItemId={undefined}
+          addErrorItemId={undefined}
+          body={body}
+          onAdd={vi.fn()}
+          onPlaySegment={onPlaySegment}
+          playbackSegments={getTextPlaybackSegments(body)}
+          tokens={[token('Minä', 0, 0, 4)]}
+        />,
+      )
+    })
+
+    const word = container?.querySelector<HTMLButtonElement>(
+      '[data-word-trigger]',
+    )
+    act(() => {
+      word?.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+      vi.advanceTimersByTime(450)
+      word?.dispatchEvent(new Event('pointerup', { bubbles: true }))
+      word?.click()
+    })
+
+    expect(onPlaySegment).toHaveBeenCalledOnce()
+    expect(onPlaySegment).toHaveBeenCalledWith(0)
+    expect(document.querySelector('[data-slot="popover-content"]')).toBeNull()
   })
 
   it('plays the word sentence on desktop click', async () => {
@@ -159,18 +261,19 @@ function token(
   position: number,
   charStart: number,
   charEnd: number,
+  translation = 'я',
 ): PreparedTextTokenResponse {
   return {
     position,
     surface,
     lemma: surface.toLocaleLowerCase('fi'),
-    translation: { ru: 'я' },
+    translation: { ru: translation },
     analysis: { partOfSpeech: 'pronoun' },
     analyses: [],
     charStart,
     charEnd,
     dictionary: {
-      gloss: { ru: 'я' },
+      gloss: { ru: translation },
       partOfSpeech: 'pronoun',
       forms: [],
     },

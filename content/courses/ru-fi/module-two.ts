@@ -8,15 +8,46 @@ import {
   objectTotalFormsSkills,
   objectTotalFormsVocabulary,
 } from './lessons/fi.object.total.forms.js'
+import {
+  numeralsQuantitiesContent,
+  numeralsQuantitiesSkills,
+  numeralsQuantitiesVocabulary,
+} from './lessons/fi.numerals.quantities.js'
+import {
+  pluralPartitiveFormationContent,
+  pluralPartitiveFormationSkills,
+  pluralPartitiveFormationVocabulary,
+} from './lessons/fi.plural.partitive.formation.js'
+import {
+  pluralPartitiveUsageContent,
+  pluralPartitiveUsageSkills,
+  pluralPartitiveUsageVocabulary,
+} from './lessons/fi.plural.partitive.usage.js'
+import {
+  pluralLocalCasesContent,
+  pluralLocalCasesSkills,
+  pluralLocalCasesVocabulary,
+} from './lessons/fi.plural.local-cases.js'
 import { moduleOneLessons, type CourseLessonSeed } from './module-one.js'
 import { moduleTwoLessonPlan } from './module-two-plan.js'
 import { applyReviewedExercises } from './reviewed-exercises.js'
 
 const objectBoundednessPlan = moduleTwoLessonPlan[0]
 const objectTotalFormsPlan = moduleTwoLessonPlan[1]
+const numeralsQuantitiesPlan = moduleTwoLessonPlan[2]
+const pluralPartitiveFormationPlan = moduleTwoLessonPlan[3]
+const pluralPartitiveUsagePlan = moduleTwoLessonPlan[4]
+const pluralLocalCasesPlan = moduleTwoLessonPlan[5]
 
-if (!objectBoundednessPlan || !objectTotalFormsPlan) {
-  throw new Error('Module two must declare lessons 17 and 18')
+if (
+  !objectBoundednessPlan ||
+  !objectTotalFormsPlan ||
+  !numeralsQuantitiesPlan ||
+  !pluralPartitiveFormationPlan ||
+  !pluralPartitiveUsagePlan ||
+  !pluralLocalCasesPlan
+) {
+  throw new Error('Module two must declare lessons 17 through 22')
 }
 
 const moduleTwoLessonDrafts: CourseLessonSeed[] = [
@@ -76,6 +107,130 @@ const moduleTwoLessonDrafts: CourseLessonSeed[] = [
       ],
     },
     templateId: `template.${objectTotalFormsPlan.id}.prepared-variation@1`,
+    mvpQuality: {
+      content: 'CURATED',
+      linguisticReview: 'PENDING',
+      goldenExerciseIds: [],
+    },
+  },
+  {
+    id: numeralsQuantitiesPlan.id,
+    modulePosition: 2,
+    lessonPosition: 3,
+    title: { ru: numeralsQuantitiesPlan.title },
+    summary: {
+      ru: 'Числа 0–12, партитив после количества, согласование числового подлежащего, меры и цены.',
+    },
+    content: numeralsQuantitiesContent,
+    vocabulary: numeralsQuantitiesVocabulary,
+    exercises: [],
+    skills: numeralsQuantitiesSkills,
+    template: {
+      schemaVersion: 1,
+      frame: 'prepared-variation',
+      lessonId: numeralsQuantitiesPlan.id,
+      sourceLanguage: 'ru',
+      targetLanguage: 'fi',
+      exerciseIds: [],
+      supportedItemIds: [
+        ...numeralsQuantitiesSkills.map((skill) => skill.id),
+        ...numeralsQuantitiesVocabulary.map((item) => item.itemId),
+      ],
+    },
+    templateId: `template.${numeralsQuantitiesPlan.id}.prepared-variation@1`,
+    mvpQuality: {
+      content: 'CURATED',
+      linguisticReview: 'PENDING',
+      goldenExerciseIds: [],
+    },
+  },
+  {
+    id: pluralPartitiveFormationPlan.id,
+    modulePosition: 2,
+    lessonPosition: 4,
+    title: { ru: pluralPartitiveFormationPlan.title },
+    summary: {
+      ru: 'Партитив множественного числа с показателем -i- и основные модели изменения основы.',
+    },
+    content: pluralPartitiveFormationContent,
+    vocabulary: pluralPartitiveFormationVocabulary,
+    exercises: [],
+    skills: pluralPartitiveFormationSkills,
+    template: {
+      schemaVersion: 1,
+      frame: 'prepared-variation',
+      lessonId: pluralPartitiveFormationPlan.id,
+      sourceLanguage: 'ru',
+      targetLanguage: 'fi',
+      exerciseIds: [],
+      supportedItemIds: [
+        ...pluralPartitiveFormationSkills.map((skill) => skill.id),
+        ...pluralPartitiveFormationVocabulary.map((item) => item.itemId),
+      ],
+    },
+    templateId: `template.${pluralPartitiveFormationPlan.id}.prepared-variation@1`,
+    mvpQuality: {
+      content: 'CURATED',
+      linguisticReview: 'PENDING',
+      goldenExerciseIds: [],
+    },
+  },
+  {
+    id: pluralPartitiveUsagePlan.id,
+    modulePosition: 2,
+    lessonPosition: 5,
+    title: { ru: pluralPartitiveUsagePlan.title },
+    summary: {
+      ru: 'Партитив множественного числа для неопределённой группы, процесса, отрицания и количества.',
+    },
+    content: pluralPartitiveUsageContent,
+    vocabulary: pluralPartitiveUsageVocabulary,
+    exercises: [],
+    skills: pluralPartitiveUsageSkills,
+    template: {
+      schemaVersion: 1,
+      frame: 'prepared-variation',
+      lessonId: pluralPartitiveUsagePlan.id,
+      sourceLanguage: 'ru',
+      targetLanguage: 'fi',
+      exerciseIds: [],
+      supportedItemIds: [
+        ...pluralPartitiveUsageSkills.map((skill) => skill.id),
+        ...pluralPartitiveUsageVocabulary.map((item) => item.itemId),
+      ],
+    },
+    templateId: `template.${pluralPartitiveUsagePlan.id}.prepared-variation@1`,
+    mvpQuality: {
+      content: 'CURATED',
+      linguisticReview: 'PENDING',
+      goldenExerciseIds: [],
+    },
+  },
+  {
+    id: pluralLocalCasesPlan.id,
+    modulePosition: 2,
+    lessonPosition: 6,
+    title: { ru: pluralLocalCasesPlan.title },
+    summary: {
+      ru: 'Шесть местных падежей во множественном числе: внутри, снаружи, источник и направление.',
+    },
+    content: pluralLocalCasesContent,
+    vocabulary: pluralLocalCasesVocabulary,
+    exercises: [],
+    skills: pluralLocalCasesSkills,
+    template: {
+      schemaVersion: 1,
+      frame: 'prepared-variation',
+      lessonId: pluralLocalCasesPlan.id,
+      sourceLanguage: 'ru',
+      targetLanguage: 'fi',
+      exerciseIds: [],
+      supportedItemIds: [
+        ...pluralLocalCasesSkills.map((skill) => skill.id),
+        ...pluralLocalCasesVocabulary.map((item) => item.itemId),
+      ],
+    },
+    templateId: `template.${pluralLocalCasesPlan.id}.prepared-variation@1`,
     mvpQuality: {
       content: 'CURATED',
       linguisticReview: 'PENDING',

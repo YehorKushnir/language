@@ -207,10 +207,16 @@ export function InteractiveText({
   let cursor = 0
   let tokenIndex = 0
   const hasFinePointer = useFinePointer()
+  const [openWordPosition, setOpenWordPosition] = useState<number | null>(null)
+
+  useEffect(() => {
+    setOpenWordPosition(null)
+  }, [body])
 
   return (
     <>
       {playbackSegments.map((segment, segmentIndex) => {
+        const isActive = activePlaybackSegment === segmentIndex
         const before = body.slice(cursor, segment.start)
         const segmentTokens: PreparedTextTokenResponse[] = []
         while (
@@ -228,15 +234,22 @@ export function InteractiveText({
             {before}
             <span
               className={cn(
-                'interactive-text-sentence cursor-pointer rounded-sm transition-colors duration-150',
-                activePlaybackSegment === segmentIndex &&
+                'interactive-text-sentence cursor-pointer touch-manipulation rounded-sm transition-colors duration-150',
+                isActive &&
                   '-mx-0.5 box-decoration-clone bg-primary/20 px-0.5 ring-1 ring-primary/20',
               )}
-              data-audio-active={
-                activePlaybackSegment === segmentIndex ? 'true' : undefined
-              }
+              data-audio-active={isActive ? 'true' : undefined}
               data-sentence-index={segmentIndex}
-              onClick={() => onPlaySegment(segmentIndex)}
+              onClick={(event) => {
+                if (
+                  event.target instanceof Element &&
+                  event.target.closest('[data-word-trigger]')
+                ) {
+                  return
+                }
+                setOpenWordPosition(null)
+                onPlaySegment(segmentIndex)
+              }}
             >
               <InteractiveTextSegment
                 body={body}
@@ -246,8 +259,22 @@ export function InteractiveText({
                 addingItemId={addingItemId}
                 addErrorItemId={addErrorItemId}
                 hasFinePointer={hasFinePointer}
+                isActive={isActive}
+                openWordPosition={openWordPosition}
                 onAdd={onAdd}
-                onPlaySegment={() => onPlaySegment(segmentIndex)}
+                onOpenWord={(position, open) => {
+                  setOpenWordPosition((currentPosition) =>
+                    open
+                      ? position
+                      : currentPosition === position
+                        ? null
+                        : currentPosition,
+                  )
+                }}
+                onPlaySegment={() => {
+                  setOpenWordPosition(null)
+                  onPlaySegment(segmentIndex)
+                }}
               />
             </span>
           </Fragment>
@@ -266,7 +293,10 @@ function InteractiveTextSegment({
   addingItemId,
   addErrorItemId,
   hasFinePointer,
+  isActive,
+  openWordPosition,
   onAdd,
+  onOpenWord,
   onPlaySegment,
 }: {
   body: string
@@ -276,7 +306,10 @@ function InteractiveTextSegment({
   addingItemId?: string
   addErrorItemId?: string
   hasFinePointer: boolean
+  isActive: boolean
+  openWordPosition: number | null
   onAdd: (itemId: string) => void
+  onOpenWord: (position: number, open: boolean) => void
   onPlaySegment: () => void
 }) {
   let cursor = start
@@ -286,61 +319,167 @@ function InteractiveTextSegment({
       {tokens.map((token) => {
         const before = body.slice(cursor, token.charStart)
         cursor = token.charEnd
-        const translation = localizedText(token.translation)
-        const trigger = (
-          <button
-            type="button"
-            aria-label={`${token.surface}: ${translation}`}
-            data-word-trigger="true"
-            className="interactive-text-word -mx-0.5 inline cursor-pointer rounded border-0 bg-transparent px-0.5 font-inherit text-inherit underline decoration-primary/25 decoration-1 underline-offset-4 transition-[color,background-color,text-decoration-color] duration-150 hover:decoration-primary focus-visible:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
-            onClick={(event) => {
-              event.stopPropagation()
-              if (hasFinePointer) onPlaySegment()
-            }}
-          >
-            {token.surface}
-          </button>
-        )
-        const content = (
-          <WordTooltip
-            token={token}
-            adding={addingItemId === token.lexical?.itemId}
-            addError={addErrorItemId === token.lexical?.itemId}
-            onAdd={onAdd}
-          />
-        )
 
         return (
           <Fragment key={token.position}>
             {before}
-            {hasFinePointer ? (
-              <HoverCard closeDelay={100} openDelay={140}>
-                <HoverCardTrigger asChild>{trigger}</HoverCardTrigger>
-                <HoverCardContent
-                  align="start"
-                  className="w-[min(20rem,calc(100vw-2rem))] p-4"
-                  sideOffset={8}
-                >
-                  {content}
-                </HoverCardContent>
-              </HoverCard>
-            ) : (
-              <Popover>
-                <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-                <PopoverContent
-                  align="start"
-                  className="w-[min(20rem,calc(100vw-2rem))] p-4"
-                  sideOffset={8}
-                >
-                  {content}
-                </PopoverContent>
-              </Popover>
-            )}
+            <InteractiveWord
+              active={isActive}
+              adding={addingItemId === token.lexical?.itemId}
+              addError={addErrorItemId === token.lexical?.itemId}
+              hasFinePointer={hasFinePointer}
+              open={openWordPosition === token.position}
+              token={token}
+              onAdd={onAdd}
+              onOpenChange={(open) => onOpenWord(token.position, open)}
+              onPlaySegment={onPlaySegment}
+            />
           </Fragment>
         )
       })}
       {body.slice(cursor, end)}
     </>
+  )
+}
+
+const MOBILE_LONG_PRESS_MS = 450
+const MOBILE_LONG_PRESS_MOVE_TOLERANCE = 10
+
+function InteractiveWord({
+  active,
+  adding,
+  addError,
+  hasFinePointer,
+  open,
+  token,
+  onAdd,
+  onOpenChange,
+  onPlaySegment,
+}: {
+  active: boolean
+  adding: boolean
+  addError: boolean
+  hasFinePointer: boolean
+  open: boolean
+  token: PreparedTextTokenResponse
+  onAdd: (itemId: string) => void
+  onOpenChange: (open: boolean) => void
+  onPlaySegment: () => void
+}) {
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressTriggered = useRef(false)
+  const pointerStart = useRef({ x: 0, y: 0 })
+
+  const clearLongPressTimer = () => {
+    if (longPressTimer.current !== null) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }
+
+  useEffect(
+    () => () => {
+      clearLongPressTimer()
+    },
+    [],
+  )
+
+  const translation = localizedText(token.translation)
+  const trigger = (
+    <button
+      type="button"
+      aria-label={`${token.surface}: ${translation}`}
+      data-audio-active={active ? 'true' : undefined}
+      data-word-trigger="true"
+      className={cn(
+        'interactive-text-word -mx-0.5 inline touch-manipulation select-none cursor-pointer rounded border-0 bg-transparent px-0.5 font-inherit text-inherit underline decoration-primary/25 decoration-1 underline-offset-4 transition-[color,background-color,text-decoration-color] duration-150 hover:decoration-primary focus-visible:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20',
+        active && 'bg-primary/20 decoration-primary/60',
+      )}
+      onClick={(event) => {
+        event.stopPropagation()
+        if (hasFinePointer) {
+          onPlaySegment()
+          return
+        }
+        event.preventDefault()
+        if (longPressTriggered.current) {
+          longPressTriggered.current = false
+          onOpenChange(false)
+          return
+        }
+        onOpenChange(!open)
+      }}
+      onContextMenu={(event) => {
+        if (!hasFinePointer) event.preventDefault()
+      }}
+      onPointerCancel={() => {
+        clearLongPressTimer()
+        longPressTriggered.current = false
+      }}
+      onPointerDown={(event) => {
+        if (hasFinePointer) return
+        clearLongPressTimer()
+        longPressTriggered.current = false
+        pointerStart.current = { x: event.clientX, y: event.clientY }
+        longPressTimer.current = setTimeout(() => {
+          longPressTimer.current = null
+          longPressTriggered.current = true
+          onOpenChange(false)
+          onPlaySegment()
+        }, MOBILE_LONG_PRESS_MS)
+      }}
+      onPointerMove={(event) => {
+        if (hasFinePointer || longPressTimer.current === null) return
+        if (
+          Math.abs(event.clientX - pointerStart.current.x) >
+            MOBILE_LONG_PRESS_MOVE_TOLERANCE ||
+          Math.abs(event.clientY - pointerStart.current.y) >
+            MOBILE_LONG_PRESS_MOVE_TOLERANCE
+        ) {
+          clearLongPressTimer()
+        }
+      }}
+      onPointerUp={clearLongPressTimer}
+    >
+      {token.surface}
+    </button>
+  )
+  const content = (
+    <WordTooltip
+      token={token}
+      adding={adding}
+      addError={addError}
+      onAdd={onAdd}
+    />
+  )
+
+  if (hasFinePointer) {
+    return (
+      <HoverCard closeDelay={100} openDelay={140}>
+        <HoverCardTrigger asChild>{trigger}</HoverCardTrigger>
+        <HoverCardContent
+          align="start"
+          className="w-[min(20rem,calc(100vw-2rem))] p-4"
+          sideOffset={8}
+        >
+          {content}
+        </HoverCardContent>
+      </HoverCard>
+    )
+  }
+
+  return (
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-[min(20rem,calc(100vw-2rem))] p-4"
+        onCloseAutoFocus={(event) => event.preventDefault()}
+        sideOffset={8}
+      >
+        {content}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -365,7 +504,7 @@ function TextInteractionHint() {
 
   return hasFinePointer
     ? 'Наведи на слово, чтобы увидеть перевод. Нажми на слово, чтобы озвучить его предложение.'
-    : 'Нажми на слово, чтобы увидеть перевод. Нажми на предложение вне слова, чтобы озвучить его.'
+    : 'Нажми на слово, чтобы увидеть перевод. Удерживай слово или нажми на предложение вне слова, чтобы начать аудио с этого места.'
 }
 
 function WordTooltip({

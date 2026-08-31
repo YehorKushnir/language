@@ -8122,5 +8122,1731 @@
         ]
       }
     ]
+  },
+  {
+    "19": [
+      {
+        "order": 1,
+        "id": "exercise.fi.numerals.quantities.number.one-book",
+        "prompt": "На столе одна книга.",
+        "targetText": "Pöydällä on yksi kirja.",
+        "acceptedVariants": ["Pöydällä on yksi kirja."]
+      },
+      {
+        "order": 2,
+        "id": "exercise.fi.numerals.quantities.subject.two-students",
+        "prompt": "Два студента учатся здесь.",
+        "targetText": "Kaksi opiskelijaa opiskelee täällä.",
+        "acceptedVariants": ["Kaksi opiskelijaa opiskelee täällä."]
+      },
+      {
+        "order": 3,
+        "id": "exercise.fi.numerals.quantities.unit.five-euros",
+        "prompt": "Книга стоит пять евро.",
+        "targetText": "Kirja maksaa viisi euroa.",
+        "acceptedVariants": ["Kirja maksaa viisi euroa."]
+      },
+      {
+        "order": 4,
+        "id": "exercise.fi.numerals.quantities.quantity.little-time",
+        "prompt": "У меня мало времени.",
+        "targetText": "Minulla on vähän aikaa.",
+        "acceptedVariants": ["Minulla on vähän aikaa."]
+      },
+      {
+        "order": 5,
+        "id": "exercise.fi.numerals.quantities.number.three-chairs",
+        "prompt": "В комнате три стула.",
+        "targetText": "Huoneessa on kolme tuolia.",
+        "acceptedVariants": ["Huoneessa on kolme tuolia."]
+      },
+      {
+        "order": 6,
+        "id": "exercise.fi.numerals.quantities.negative.one-book",
+        "prompt": "Я не куплю одну книгу.",
+        "targetText": "En osta yhtä kirjaa.",
+        "acceptedVariants": ["En osta yhtä kirjaa."]
+      },
+      {
+        "order": 7,
+        "id": "exercise.fi.numerals.quantities.unit.two-liters-water",
+        "prompt": "Нам нужны два литра воды.",
+        "targetText": "Me tarvitsemme kaksi litraa vettä.",
+        "acceptedVariants": [
+          "Me tarvitsemme kaksi litraa vettä.",
+          "Tarvitsemme kaksi litraa vettä."
+        ]
+      },
+      {
+        "order": 8,
+        "id": "exercise.fi.numerals.quantities.subject.four-buses",
+        "prompt": "Четыре автобуса прибудут на станцию.",
+        "targetText": "Neljä bussia tulee asemalle.",
+        "acceptedVariants": ["Neljä bussia tulee asemalle."]
+      },
+      {
+        "order": 9,
+        "id": "exercise.fi.numerals.quantities.quantity.too-much-coffee",
+        "prompt": "Она пьёт слишком много кофе.",
+        "targetText": "Hän juo liikaa kahvia.",
+        "acceptedVariants": ["Hän juo liikaa kahvia."]
+      },
+      {
+        "order": 10,
+        "id": "exercise.fi.numerals.quantities.number.six-apples",
+        "prompt": "В сумке шесть яблок.",
+        "targetText": "Laukussa on kuusi omenaa.",
+        "acceptedVariants": ["Laukussa on kuusi omenaa."]
+      },
+      {
+        "order": 11,
+        "id": "exercise.fi.numerals.quantities.unit.half-kilo-cheese",
+        "prompt": "Я куплю полкилограмма сыра.",
+        "targetText": "Ostan puoli kiloa juustoa.",
+        "acceptedVariants": ["Ostan puoli kiloa juustoa."]
+      },
+      {
+        "order": 12,
+        "id": "exercise.fi.numerals.quantities.subject.seven-children",
+        "prompt": "Семь детей играют в футбол.",
+        "targetText": "Seitsemän lasta pelaa jalkapalloa.",
+        "acceptedVariants": ["Seitsemän lasta pelaa jalkapalloa."]
+      },
+      {
+        "order": 13,
+        "id": "exercise.fi.numerals.quantities.quantity.enough-milk",
+        "prompt": "У нас достаточно молока.",
+        "targetText": "Meillä on tarpeeksi maitoa.",
+        "acceptedVariants": ["Meillä on tarpeeksi maitoa."]
+      },
+      {
+        "order": 14,
+        "id": "exercise.fi.numerals.quantities.number.eight-rooms",
+        "prompt": "В отеле восемь номеров.",
+        "targetText": "Hotellissa on kahdeksan huonetta.",
+        "acceptedVariants": ["Hotellissa on kahdeksan huonetta."]
+      },
+      {
+        "order": 15,
+        "id": "exercise.fi.numerals.quantities.negative.two-rooms",
+        "prompt": "Она не забронирует два номера.",
+        "targetText": "Hän ei varaa kahta huonetta.",
+        "acceptedVariants": ["Hän ei varaa kahta huonetta."]
+      },
+      {
+        "order": 16,
+        "id": "exercise.fi.numerals.quantities.unit.twelve-euros",
+        "prompt": "Ковёр стоит двенадцать евро.",
+        "targetText": "Matto maksaa kaksitoista euroa.",
+        "acceptedVariants": ["Matto maksaa kaksitoista euroa."]
+      },
+      {
+        "order": 17,
+        "id": "exercise.fi.numerals.quantities.subject.three-doctors",
+        "prompt": "Три врача работают в больнице.",
+        "targetText": "Kolme lääkäriä työskentelee sairaalassa.",
+        "acceptedVariants": ["Kolme lääkäriä työskentelee sairaalassa."]
+      },
+      {
+        "order": 18,
+        "id": "exercise.fi.numerals.quantities.quantity.coffee-price",
+        "prompt": "Сколько стоит кофе?",
+        "targetText": "Kuinka paljon kahvi maksaa?",
+        "acceptedVariants": ["Kuinka paljon kahvi maksaa?"]
+      },
+      {
+        "order": 19,
+        "id": "exercise.fi.numerals.quantities.number.nine-cups",
+        "prompt": "На столе девять чашек.",
+        "targetText": "Pöydällä on yhdeksän kuppia.",
+        "acceptedVariants": ["Pöydällä on yhdeksän kuppia."]
+      },
+      {
+        "order": 20,
+        "id": "exercise.fi.numerals.quantities.unit.three-meters-carpet",
+        "prompt": "Мне нужны три метра ковра.",
+        "targetText": "Tarvitsen kolme metriä mattoa.",
+        "acceptedVariants": ["Tarvitsen kolme metriä mattoa."]
+      },
+      {
+        "order": 21,
+        "id": "exercise.fi.numerals.quantities.subject.ten-students",
+        "prompt": "Десять студентов читают книгу.",
+        "targetText": "Kymmenen opiskelijaa lukee kirjaa.",
+        "acceptedVariants": ["Kymmenen opiskelijaa lukee kirjaa."]
+      },
+      {
+        "order": 22,
+        "id": "exercise.fi.numerals.quantities.quantity.how-many-books",
+        "prompt": "Сколько у тебя книг?",
+        "targetText": "Kuinka monta kirjaa sinulla on?",
+        "acceptedVariants": ["Kuinka monta kirjaa sinulla on?"]
+      },
+      {
+        "order": 23,
+        "id": "exercise.fi.numerals.quantities.number.eleven-invitations",
+        "prompt": "У меня одиннадцать приглашений.",
+        "targetText": "Minulla on yksitoista kutsua.",
+        "acceptedVariants": ["Minulla on yksitoista kutsua."]
+      },
+      {
+        "order": 24,
+        "id": "exercise.fi.numerals.quantities.negative.three-tickets",
+        "prompt": "Нам не нужны три билета.",
+        "targetText": "Me emme tarvitse kolmea lippua.",
+        "acceptedVariants": [
+          "Me emme tarvitse kolmea lippua.",
+          "Emme tarvitse kolmea lippua."
+        ]
+      },
+      {
+        "order": 25,
+        "id": "exercise.fi.numerals.quantities.unit.four-kilos-rice",
+        "prompt": "Я куплю четыре килограмма риса.",
+        "targetText": "Ostan neljä kiloa riisiä.",
+        "acceptedVariants": ["Ostan neljä kiloa riisiä."]
+      },
+      {
+        "order": 26,
+        "id": "exercise.fi.numerals.quantities.subject.five-friends",
+        "prompt": "Пять друзей придут на праздник.",
+        "targetText": "Viisi ystävää tulee juhlaan.",
+        "acceptedVariants": ["Viisi ystävää tulee juhlaan."]
+      },
+      {
+        "order": 27,
+        "id": "exercise.fi.numerals.quantities.quantity.many-days",
+        "prompt": "Она ждала много дней.",
+        "targetText": "Hän odotti monta päivää.",
+        "acceptedVariants": ["Hän odotti monta päivää."]
+      },
+      {
+        "order": 28,
+        "id": "exercise.fi.numerals.quantities.number.two-cars",
+        "prompt": "Они купят две машины.",
+        "targetText": "He ostavat kaksi autoa.",
+        "acceptedVariants": ["He ostavat kaksi autoa."]
+      },
+      {
+        "order": 29,
+        "id": "exercise.fi.numerals.quantities.unit.one-liter-water",
+        "prompt": "В бутылке один литр воды.",
+        "targetText": "Pullossa on yksi litra vettä.",
+        "acceptedVariants": ["Pullossa on yksi litra vettä."]
+      },
+      {
+        "order": 30,
+        "id": "exercise.fi.numerals.quantities.subject.six-cars",
+        "prompt": "Шесть машин стоят на улице.",
+        "targetText": "Kuusi autoa seisoo kadulla.",
+        "acceptedVariants": ["Kuusi autoa seisoo kadulla."]
+      },
+      {
+        "order": 31,
+        "id": "exercise.fi.numerals.quantities.quantity.much-time-question",
+        "prompt": "Тебе нужно много времени?",
+        "targetText": "Tarvitsetko sinä paljon aikaa?",
+        "acceptedVariants": [
+          "Tarvitsetko sinä paljon aikaa?",
+          "Tarvitsetko paljon aikaa?"
+        ]
+      },
+      {
+        "order": 32,
+        "id": "exercise.fi.numerals.quantities.number.four-rooms-object",
+        "prompt": "Мы забронируем четыре номера.",
+        "targetText": "Me varaamme neljä huonetta.",
+        "acceptedVariants": [
+          "Me varaamme neljä huonetta.",
+          "Varaamme neljä huonetta."
+        ]
+      },
+      {
+        "order": 33,
+        "id": "exercise.fi.numerals.quantities.negative.four-apples",
+        "prompt": "Ты не купишь четыре яблока.",
+        "targetText": "Sinä et osta neljää omenaa.",
+        "acceptedVariants": [
+          "Sinä et osta neljää omenaa.",
+          "Et osta neljää omenaa."
+        ]
+      },
+      {
+        "order": 34,
+        "id": "exercise.fi.numerals.quantities.unit.five-pieces",
+        "prompt": "Мне нужно пять штук.",
+        "targetText": "Tarvitsen viisi kappaletta.",
+        "acceptedVariants": ["Tarvitsen viisi kappaletta."]
+      },
+      {
+        "order": 35,
+        "id": "exercise.fi.numerals.quantities.subject.eight-teachers",
+        "prompt": "Восемь учителей работают в школе.",
+        "targetText": "Kahdeksan opettajaa työskentelee koulussa.",
+        "acceptedVariants": ["Kahdeksan opettajaa työskentelee koulussa."]
+      },
+      {
+        "order": 36,
+        "id": "exercise.fi.numerals.quantities.quantity.couple-questions",
+        "prompt": "У меня пара вопросов.",
+        "targetText": "Minulla on pari kysymystä.",
+        "acceptedVariants": ["Minulla on pari kysymystä."]
+      },
+      {
+        "order": 37,
+        "id": "exercise.fi.numerals.quantities.number.seven-forms",
+        "prompt": "Она распечатает семь форм.",
+        "targetText": "Hän tulostaa seitsemän lomaketta.",
+        "acceptedVariants": ["Hän tulostaa seitsemän lomaketta."]
+      },
+      {
+        "order": 38,
+        "id": "exercise.fi.numerals.quantities.unit.ten-meters-bridge",
+        "prompt": "Мост длиной десять метров.",
+        "targetText": "Silta on kymmenen metriä pitkä.",
+        "acceptedVariants": ["Silta on kymmenen metriä pitkä."]
+      },
+      {
+        "order": 39,
+        "id": "exercise.fi.numerals.quantities.subject.nine-tourists",
+        "prompt": "Девять туристов ждут автобус.",
+        "targetText": "Yhdeksän turistia odottaa bussia.",
+        "acceptedVariants": ["Yhdeksän turistia odottaa bussia."]
+      },
+      {
+        "order": 40,
+        "id": "exercise.fi.numerals.quantities.quantity.much-music",
+        "prompt": "Она слушает много музыки.",
+        "targetText": "Hän kuuntelee paljon musiikkia.",
+        "acceptedVariants": ["Hän kuuntelee paljon musiikkia."]
+      },
+      {
+        "order": 41,
+        "id": "exercise.fi.numerals.quantities.number.zero-euros",
+        "prompt": "У меня ноль евро.",
+        "targetText": "Minulla on nolla euroa.",
+        "acceptedVariants": ["Minulla on nolla euroa."]
+      },
+      {
+        "order": 42,
+        "id": "exercise.fi.numerals.quantities.negative.five-forms",
+        "prompt": "Они не распечатали пять форм.",
+        "targetText": "He eivät tulostaneet viittä lomaketta.",
+        "acceptedVariants": ["He eivät tulostaneet viittä lomaketta."]
+      },
+      {
+        "order": 43,
+        "id": "exercise.fi.numerals.quantities.unit.two-kilos-fish",
+        "prompt": "Я куплю два килограмма рыбы.",
+        "targetText": "Ostan kaksi kiloa kalaa.",
+        "acceptedVariants": ["Ostan kaksi kiloa kalaa."]
+      },
+      {
+        "order": 44,
+        "id": "exercise.fi.numerals.quantities.subject.eleven-students",
+        "prompt": "Одиннадцать студентов пройдут курс.",
+        "targetText": "Yksitoista opiskelijaa suorittaa kurssin.",
+        "acceptedVariants": ["Yksitoista opiskelijaa suorittaa kurssin."]
+      },
+      {
+        "order": 45,
+        "id": "exercise.fi.numerals.quantities.quantity.little-water",
+        "prompt": "У нас мало воды.",
+        "targetText": "Meillä on vähän vettä.",
+        "acceptedVariants": ["Meillä on vähän vettä."]
+      },
+      {
+        "order": 46,
+        "id": "exercise.fi.numerals.quantities.number.one-ticket-object",
+        "prompt": "Я куплю один билет завтра.",
+        "targetText": "Ostan yhden lipun huomenna.",
+        "acceptedVariants": ["Ostan yhden lipun huomenna."]
+      },
+      {
+        "order": 47,
+        "id": "exercise.fi.numerals.quantities.unit.three-liters-milk",
+        "prompt": "У нас три литра молока.",
+        "targetText": "Meillä on kolme litraa maitoa.",
+        "acceptedVariants": ["Meillä on kolme litraa maitoa."]
+      },
+      {
+        "order": 48,
+        "id": "exercise.fi.numerals.quantities.subject.twelve-teachers",
+        "prompt": "Двенадцать учителей придут на собрание.",
+        "targetText": "Kaksitoista opettajaa tulee kokoukseen.",
+        "acceptedVariants": ["Kaksitoista opettajaa tulee kokoukseen."]
+      },
+      {
+        "order": 49,
+        "id": "exercise.fi.numerals.quantities.quantity.enough-coffee-question",
+        "prompt": "У нас достаточно кофе?",
+        "targetText": "Onko meillä tarpeeksi kahvia?",
+        "acceptedVariants": ["Onko meillä tarpeeksi kahvia?"]
+      },
+      {
+        "order": 50,
+        "id": "exercise.fi.numerals.quantities.number.five-meetings",
+        "prompt": "Вы назначите пять встреч.",
+        "targetText": "Te varaatte viisi tapaamista.",
+        "acceptedVariants": [
+          "Te varaatte viisi tapaamista.",
+          "Varaatte viisi tapaamista."
+        ]
+      },
+      {
+        "order": 51,
+        "id": "exercise.fi.numerals.quantities.negative.six-days",
+        "prompt": "Я не ждал шесть дней.",
+        "targetText": "En odottanut kuutta päivää.",
+        "acceptedVariants": ["En odottanut kuutta päivää."]
+      },
+      {
+        "order": 52,
+        "id": "exercise.fi.numerals.quantities.unit.couple-liters-water",
+        "prompt": "Мне нужна пара литров воды.",
+        "targetText": "Tarvitsen pari litraa vettä.",
+        "acceptedVariants": ["Tarvitsen pari litraa vettä."]
+      },
+      {
+        "order": 53,
+        "id": "exercise.fi.numerals.quantities.subject.one-doctor",
+        "prompt": "Один врач работает здесь.",
+        "targetText": "Yksi lääkäri työskentelee täällä.",
+        "acceptedVariants": ["Yksi lääkäri työskentelee täällä."]
+      },
+      {
+        "order": 54,
+        "id": "exercise.fi.numerals.quantities.quantity.too-much-time",
+        "prompt": "Она использует слишком много времени.",
+        "targetText": "Hän käyttää liikaa aikaa.",
+        "acceptedVariants": ["Hän käyttää liikaa aikaa."]
+      },
+      {
+        "order": 55,
+        "id": "exercise.fi.numerals.quantities.number.ten-invitations",
+        "prompt": "Они отправят десять приглашений.",
+        "targetText": "He lähettävät kymmenen kutsua.",
+        "acceptedVariants": ["He lähettävät kymmenen kutsua."]
+      },
+      {
+        "order": 56,
+        "id": "exercise.fi.numerals.quantities.unit.package-rice",
+        "prompt": "В посылке два килограмма риса.",
+        "targetText": "Paketissa on kaksi kiloa riisiä.",
+        "acceptedVariants": ["Paketissa on kaksi kiloa riisiä."]
+      },
+      {
+        "order": 57,
+        "id": "exercise.fi.numerals.quantities.quantity.how-many-tasks",
+        "prompt": "Сколько у вас заданий?",
+        "targetText": "Kuinka monta tehtävää teillä on?",
+        "acceptedVariants": ["Kuinka monta tehtävää teillä on?"]
+      },
+      {
+        "order": 58,
+        "id": "exercise.fi.numerals.quantities.number.twelve-files",
+        "prompt": "Здесь двенадцать файлов.",
+        "targetText": "Tässä on kaksitoista tiedostoa.",
+        "acceptedVariants": ["Tässä on kaksitoista tiedostoa."]
+      },
+      {
+        "order": 59,
+        "id": "exercise.fi.numerals.quantities.unit.three-meters-carpet-object",
+        "prompt": "Я куплю три метра ковра.",
+        "targetText": "Ostan kolme metriä mattoa.",
+        "acceptedVariants": ["Ostan kolme metriä mattoa."]
+      },
+      {
+        "order": 60,
+        "id": "exercise.fi.numerals.quantities.quantity.much-water",
+        "prompt": "Они пьют много воды.",
+        "targetText": "He juovat paljon vettä.",
+        "acceptedVariants": ["He juovat paljon vettä."]
+      }
+    ]
+  },
+  {
+    "20": [
+      {
+        "order": 1,
+        "id": "exercise.fi.plural.partitive.formation.vowel.dogs-in-park",
+        "prompt": "В парке есть собаки.",
+        "targetText": "Puistossa on koiria.",
+        "acceptedVariants": ["Puistossa on koiria."]
+      },
+      {
+        "order": 2,
+        "id": "exercise.fi.plural.partitive.formation.derived.guests-in-hotel",
+        "prompt": "В отеле есть гости.",
+        "targetText": "Hotellissa on vieraita.",
+        "acceptedVariants": ["Hotellissa on vieraita."]
+      },
+      {
+        "order": 3,
+        "id": "exercise.fi.plural.partitive.formation.stem.medicines-in-pharmacy",
+        "prompt": "В аптеке есть лекарства.",
+        "targetText": "Apteekissa on lääkkeitä.",
+        "acceptedVariants": ["Apteekissa on lääkkeitä."]
+      },
+      {
+        "order": 4,
+        "id": "exercise.fi.plural.partitive.formation.contrast.two-cookies",
+        "prompt": "На столе два печенья.",
+        "targetText": "Pöydällä on kaksi keksiä.",
+        "acceptedVariants": ["Pöydällä on kaksi keksiä."]
+      },
+      {
+        "order": 5,
+        "id": "exercise.fi.plural.partitive.formation.special.much-work",
+        "prompt": "У меня много работы.",
+        "targetText": "Minulla on paljon töitä.",
+        "acceptedVariants": ["Minulla on paljon töitä."]
+      },
+      {
+        "order": 6,
+        "id": "exercise.fi.plural.partitive.formation.vowel.houses-from-window",
+        "prompt": "Из окна я вижу дома.",
+        "targetText": "Näen taloja ikkunasta.",
+        "acceptedVariants": ["Näen taloja ikkunasta."]
+      },
+      {
+        "order": 7,
+        "id": "exercise.fi.plural.partitive.formation.derived.people-here",
+        "prompt": "Здесь есть люди.",
+        "targetText": "Täällä on ihmisiä.",
+        "acceptedVariants": ["Täällä on ihmisiä."]
+      },
+      {
+        "order": 8,
+        "id": "exercise.fi.plural.partitive.formation.stem.read-newspapers",
+        "prompt": "Я читаю газеты дома.",
+        "targetText": "Luen lehtiä kotona.",
+        "acceptedVariants": ["Luen lehtiä kotona."]
+      },
+      {
+        "order": 9,
+        "id": "exercise.fi.plural.partitive.formation.contrast.many-fruits",
+        "prompt": "Она покупает много фруктов.",
+        "targetText": "Hän ostaa paljon hedelmiä.",
+        "acceptedVariants": ["Hän ostaa paljon hedelmiä."]
+      },
+      {
+        "order": 10,
+        "id": "exercise.fi.plural.partitive.formation.special.countries-on-map",
+        "prompt": "На карте есть страны.",
+        "targetText": "Kartalla on maita.",
+        "acceptedVariants": ["Kartalla on maita."]
+      },
+      {
+        "order": 11,
+        "id": "exercise.fi.plural.partitive.formation.vowel.toys-in-room",
+        "prompt": "В комнате есть игрушки.",
+        "targetText": "Huoneessa on leluja.",
+        "acceptedVariants": ["Huoneessa on leluja."]
+      },
+      {
+        "order": 12,
+        "id": "exercise.fi.plural.partitive.formation.derived.eat-candy",
+        "prompt": "Они едят конфеты.",
+        "targetText": "He syövät makeisia.",
+        "acceptedVariants": ["He syövät makeisia."]
+      },
+      {
+        "order": 13,
+        "id": "exercise.fi.plural.partitive.formation.stem.cottages-in-picture",
+        "prompt": "На картинке есть дачи.",
+        "targetText": "Kuvassa on mökkejä.",
+        "acceptedVariants": ["Kuvassa on mökkejä."]
+      },
+      {
+        "order": 14,
+        "id": "exercise.fi.plural.partitive.formation.contrast.how-many-dresses",
+        "prompt": "Сколько платьев в магазине?",
+        "targetText": "Kuinka monta mekkoa kaupassa on?",
+        "acceptedVariants": ["Kuinka monta mekkoa kaupassa on?"]
+      },
+      {
+        "order": 15,
+        "id": "exercise.fi.plural.partitive.formation.special.men-at-station",
+        "prompt": "Я вижу мужчин на станции.",
+        "targetText": "Näen miehiä asemalla.",
+        "acceptedVariants": ["Näen miehiä asemalla."]
+      },
+      {
+        "order": 16,
+        "id": "exercise.fi.plural.partitive.formation.vowel.buy-socks",
+        "prompt": "Я покупаю носки в магазине.",
+        "targetText": "Ostan sukkia kaupasta.",
+        "acceptedVariants": ["Ostan sukkia kaupasta."]
+      },
+      {
+        "order": 17,
+        "id": "exercise.fi.plural.partitive.formation.derived.need-gloves",
+        "prompt": "Нам нужны перчатки.",
+        "targetText": "Me tarvitsemme hansikkaita.",
+        "acceptedVariants": [
+          "Me tarvitsemme hansikkaita.",
+          "Tarvitsemme hansikkaita."
+        ]
+      },
+      {
+        "order": 18,
+        "id": "exercise.fi.plural.partitive.formation.stem.have-clothes",
+        "prompt": "У нас есть одежда.",
+        "targetText": "Meillä on vaatteita.",
+        "acceptedVariants": ["Meillä on vaatteita."]
+      },
+      {
+        "order": 19,
+        "id": "exercise.fi.plural.partitive.formation.contrast.three-socks",
+        "prompt": "Я покупаю три носка.",
+        "targetText": "Ostan kolme sukkaa.",
+        "acceptedVariants": ["Ostan kolme sukkaa."]
+      },
+      {
+        "order": 20,
+        "id": "exercise.fi.plural.partitive.formation.special.did-much-work",
+        "prompt": "Она много работала.",
+        "targetText": "Hän teki paljon töitä.",
+        "acceptedVariants": ["Hän teki paljon töitä."]
+      },
+      {
+        "order": 21,
+        "id": "exercise.fi.plural.partitive.formation.vowel.dresses-in-store",
+        "prompt": "В магазине есть платья.",
+        "targetText": "Kaupassa on mekkoja.",
+        "acceptedVariants": ["Kaupassa on mekkoja."]
+      },
+      {
+        "order": 22,
+        "id": "exercise.fi.plural.partitive.formation.derived.vegetables-in-store",
+        "prompt": "В магазине есть овощи.",
+        "targetText": "Kaupassa on vihanneksia.",
+        "acceptedVariants": ["Kaupassa on vihanneksia."]
+      },
+      {
+        "order": 23,
+        "id": "exercise.fi.plural.partitive.formation.stem.animals-in-forest",
+        "prompt": "Я вижу животных в лесу.",
+        "targetText": "Näen eläimiä metsässä.",
+        "acceptedVariants": ["Näen eläimiä metsässä."]
+      },
+      {
+        "order": 24,
+        "id": "exercise.fi.plural.partitive.formation.contrast.five-rings",
+        "prompt": "У меня пять колец.",
+        "targetText": "Minulla on viisi sormusta.",
+        "acceptedVariants": ["Minulla on viisi sormusta."]
+      },
+      {
+        "order": 25,
+        "id": "exercise.fi.plural.partitive.formation.special.see-countries",
+        "prompt": "Я вижу страны на карте.",
+        "targetText": "Näen maita kartalla.",
+        "acceptedVariants": ["Näen maita kartalla."]
+      },
+      {
+        "order": 26,
+        "id": "exercise.fi.plural.partitive.formation.vowel.prepare-meals",
+        "prompt": "Я готовлю дома еду.",
+        "targetText": "Valmistan aterioita kotona.",
+        "acceptedVariants": ["Valmistan aterioita kotona."]
+      },
+      {
+        "order": 27,
+        "id": "exercise.fi.plural.partitive.formation.derived.meet-women",
+        "prompt": "Я встречаю здесь женщин.",
+        "targetText": "Tapaan naisia täällä.",
+        "acceptedVariants": ["Tapaan naisia täällä."]
+      },
+      {
+        "order": 28,
+        "id": "exercise.fi.plural.partitive.formation.stem.eat-cookies",
+        "prompt": "Она ест печенье.",
+        "targetText": "Hän syö keksejä.",
+        "acceptedVariants": ["Hän syö keksejä."]
+      },
+      {
+        "order": 29,
+        "id": "exercise.fi.plural.partitive.formation.contrast.two-skirts",
+        "prompt": "В магазине две юбки.",
+        "targetText": "Kaupassa on kaksi hametta.",
+        "acceptedVariants": ["Kaupassa on kaksi hametta."]
+      },
+      {
+        "order": 30,
+        "id": "exercise.fi.plural.partitive.formation.special.meet-men",
+        "prompt": "Я встречаю здесь мужчин.",
+        "targetText": "Tapaan miehiä täällä.",
+        "acceptedVariants": ["Tapaan miehiä täällä."]
+      },
+      {
+        "order": 31,
+        "id": "exercise.fi.plural.partitive.formation.vowel.children-watch-cats",
+        "prompt": "Дети смотрят на кошек.",
+        "targetText": "Lapset katsovat kissoja.",
+        "acceptedVariants": ["Lapset katsovat kissoja."]
+      },
+      {
+        "order": 32,
+        "id": "exercise.fi.plural.partitive.formation.derived.rings-in-store",
+        "prompt": "В магазине есть кольца.",
+        "targetText": "Kaupassa on sormuksia.",
+        "acceptedVariants": ["Kaupassa on sormuksia."]
+      },
+      {
+        "order": 33,
+        "id": "exercise.fi.plural.partitive.formation.stem.buy-clothes-today",
+        "prompt": "Я покупаю одежду сегодня.",
+        "targetText": "Ostan vaatteita tänään.",
+        "acceptedVariants": ["Ostan vaatteita tänään."]
+      },
+      {
+        "order": 34,
+        "id": "exercise.fi.plural.partitive.formation.contrast.four-animals",
+        "prompt": "Она видит четырёх животных.",
+        "targetText": "Hän näkee neljä eläintä.",
+        "acceptedVariants": ["Hän näkee neljä eläintä."]
+      },
+      {
+        "order": 35,
+        "id": "exercise.fi.plural.partitive.formation.special.no-work",
+        "prompt": "У меня нет работы.",
+        "targetText": "Minulla ei ole töitä.",
+        "acceptedVariants": ["Minulla ei ole töitä."]
+      },
+      {
+        "order": 36,
+        "id": "exercise.fi.plural.partitive.formation.vowel.eat-berries",
+        "prompt": "Они едят ягоды.",
+        "targetText": "He syövät marjoja.",
+        "acceptedVariants": ["He syövät marjoja."]
+      },
+      {
+        "order": 37,
+        "id": "exercise.fi.plural.partitive.formation.derived.see-guests",
+        "prompt": "Я вижу гостей в отеле.",
+        "targetText": "Näen vieraita hotellissa.",
+        "acceptedVariants": ["Näen vieraita hotellissa."]
+      },
+      {
+        "order": 38,
+        "id": "exercise.fi.plural.partitive.formation.stem.need-medicines",
+        "prompt": "Мне нужны лекарства.",
+        "targetText": "Tarvitsen lääkkeitä.",
+        "acceptedVariants": ["Tarvitsen lääkkeitä."]
+      },
+      {
+        "order": 39,
+        "id": "exercise.fi.plural.partitive.formation.contrast.one-dog",
+        "prompt": "Во дворе одна собака.",
+        "targetText": "Pihalla on yksi koira.",
+        "acceptedVariants": ["Pihalla on yksi koira."]
+      },
+      {
+        "order": 40,
+        "id": "exercise.fi.plural.partitive.formation.special.many-countries",
+        "prompt": "На карте много стран.",
+        "targetText": "Kartalla on paljon maita.",
+        "acceptedVariants": ["Kartalla on paljon maita."]
+      },
+      {
+        "order": 41,
+        "id": "exercise.fi.plural.partitive.formation.vowel.fruits-on-table",
+        "prompt": "На столе есть фрукты.",
+        "targetText": "Pöydällä on hedelmiä.",
+        "acceptedVariants": ["Pöydällä on hedelmiä."]
+      },
+      {
+        "order": 42,
+        "id": "exercise.fi.plural.partitive.formation.derived.not-buy-candy",
+        "prompt": "Она не покупает конфеты.",
+        "targetText": "Hän ei osta makeisia.",
+        "acceptedVariants": ["Hän ei osta makeisia."]
+      },
+      {
+        "order": 43,
+        "id": "exercise.fi.plural.partitive.formation.stem.read-newspapers-question",
+        "prompt": "Ты читаешь газеты дома?",
+        "targetText": "Luetko sinä lehtiä kotona?",
+        "acceptedVariants": [
+          "Luetko sinä lehtiä kotona?",
+          "Luetko lehtiä kotona?"
+        ]
+      },
+      {
+        "order": 44,
+        "id": "exercise.fi.plural.partitive.formation.contrast.child-two-cookies",
+        "prompt": "Ребёнок ест два печенья.",
+        "targetText": "Lapsi syö kaksi keksiä.",
+        "acceptedVariants": ["Lapsi syö kaksi keksiä."]
+      },
+      {
+        "order": 45,
+        "id": "exercise.fi.plural.partitive.formation.special.they-meet-men",
+        "prompt": "Они встречают мужчин.",
+        "targetText": "He tapaavat miehiä.",
+        "acceptedVariants": ["He tapaavat miehiä."]
+      },
+      {
+        "order": 46,
+        "id": "exercise.fi.plural.partitive.formation.vowel.houses-and-cottages",
+        "prompt": "На картинке есть дома и дачи.",
+        "targetText": "Kuvassa on taloja ja mökkejä.",
+        "acceptedVariants": ["Kuvassa on taloja ja mökkejä."]
+      },
+      {
+        "order": 47,
+        "id": "exercise.fi.plural.partitive.formation.derived.vegetables-in-kitchen",
+        "prompt": "На кухне есть овощи.",
+        "targetText": "Keittiössä on vihanneksia.",
+        "acceptedVariants": ["Keittiössä on vihanneksia."]
+      },
+      {
+        "order": 48,
+        "id": "exercise.fi.plural.partitive.formation.stem.skirts-in-store",
+        "prompt": "В магазине есть юбки.",
+        "targetText": "Kaupassa on hameita.",
+        "acceptedVariants": ["Kaupassa on hameita."]
+      },
+      {
+        "order": 49,
+        "id": "exercise.fi.plural.partitive.formation.contrast.buy-many-clothes",
+        "prompt": "Я покупаю много одежды.",
+        "targetText": "Ostan paljon vaatteita.",
+        "acceptedVariants": ["Ostan paljon vaatteita."]
+      },
+      {
+        "order": 50,
+        "id": "exercise.fi.plural.partitive.formation.special.little-work",
+        "prompt": "У меня мало работы.",
+        "targetText": "Minulla on vähän töitä.",
+        "acceptedVariants": ["Minulla on vähän töitä."]
+      },
+      {
+        "order": 51,
+        "id": "exercise.fi.plural.partitive.formation.vowel.prepare-meals-today",
+        "prompt": "Я готовлю еду сегодня.",
+        "targetText": "Valmistan aterioita tänään.",
+        "acceptedVariants": ["Valmistan aterioita tänään."]
+      },
+      {
+        "order": 52,
+        "id": "exercise.fi.plural.partitive.formation.derived.gloves-in-store",
+        "prompt": "В магазине есть перчатки.",
+        "targetText": "Kaupassa on hansikkaita.",
+        "acceptedVariants": ["Kaupassa on hansikkaita."]
+      },
+      {
+        "order": 53,
+        "id": "exercise.fi.plural.partitive.formation.stem.cottages-at-lake",
+        "prompt": "Я вижу дачи у озера.",
+        "targetText": "Näen mökkejä järvellä.",
+        "acceptedVariants": ["Näen mökkejä järvellä."]
+      },
+      {
+        "order": 54,
+        "id": "exercise.fi.plural.partitive.formation.contrast.three-dresses",
+        "prompt": "Она покупает три платья.",
+        "targetText": "Hän ostaa kolme mekkoa.",
+        "acceptedVariants": ["Hän ostaa kolme mekkoa."]
+      },
+      {
+        "order": 55,
+        "id": "exercise.fi.plural.partitive.formation.special.women-and-men",
+        "prompt": "Здесь есть женщины и мужчины.",
+        "targetText": "Täällä on naisia ja miehiä.",
+        "acceptedVariants": ["Täällä on naisia ja miehiä."]
+      },
+      {
+        "order": 56,
+        "id": "exercise.fi.plural.partitive.formation.vowel.not-eat-berries",
+        "prompt": "Я не ем ягоды.",
+        "targetText": "Minä en syö marjoja.",
+        "acceptedVariants": ["Minä en syö marjoja.", "En syö marjoja."]
+      },
+      {
+        "order": 57,
+        "id": "exercise.fi.plural.partitive.formation.derived.people-and-dogs",
+        "prompt": "В парке есть люди и собаки.",
+        "targetText": "Puistossa on ihmisiä ja koiria.",
+        "acceptedVariants": ["Puistossa on ihmisiä ja koiria."]
+      },
+      {
+        "order": 58,
+        "id": "exercise.fi.plural.partitive.formation.stem.medicines-and-soap",
+        "prompt": "В аптеке есть лекарства и мыло.",
+        "targetText": "Apteekissa on lääkkeitä ja saippuaa.",
+        "acceptedVariants": ["Apteekissa on lääkkeitä ja saippuaa."]
+      },
+      {
+        "order": 59,
+        "id": "exercise.fi.plural.partitive.formation.contrast.how-many-cats",
+        "prompt": "Сколько кошек ты видишь?",
+        "targetText": "Kuinka monta kissaa näet?",
+        "acceptedVariants": ["Kuinka monta kissaa näet?"]
+      },
+      {
+        "order": 60,
+        "id": "exercise.fi.plural.partitive.formation.special.see-many-countries",
+        "prompt": "Они видят много стран на карте.",
+        "targetText": "He näkevät paljon maita kartalla.",
+        "acceptedVariants": ["He näkevät paljon maita kartalla."]
+      }
+    ]
+  },
+  {
+    "21": [
+      {
+        "order": 1,
+        "id": "exercise.fi.plural.partitive.usage.existential.goods-in-store",
+        "prompt": "В магазине есть товары.",
+        "targetText": "Kaupassa on tavaroita.",
+        "acceptedVariants": ["Kaupassa on tavaroita."]
+      },
+      {
+        "order": 2,
+        "id": "exercise.fi.plural.partitive.usage.object.buy-gifts",
+        "prompt": "Она покупает подарки.",
+        "targetText": "Hän ostaa lahjoja.",
+        "acceptedVariants": ["Hän ostaa lahjoja."]
+      },
+      {
+        "order": 3,
+        "id": "exercise.fi.plural.partitive.usage.negative.need-tools",
+        "prompt": "Мне не нужны инструменты.",
+        "targetText": "En tarvitse työkaluja.",
+        "acceptedVariants": ["En tarvitse työkaluja."]
+      },
+      {
+        "order": 4,
+        "id": "exercise.fi.plural.partitive.usage.quantity.many-visitors",
+        "prompt": "В отеле много посетителей.",
+        "targetText": "Hotellissa on paljon vierailijoita.",
+        "acceptedVariants": ["Hotellissa on paljon vierailijoita."]
+      },
+      {
+        "order": 5,
+        "id": "exercise.fi.plural.partitive.usage.contrast.buy-curtains",
+        "prompt": "Я куплю выбранные шторы завтра.",
+        "targetText": "Ostan verhot huomenna.",
+        "acceptedVariants": ["Ostan verhot huomenna."]
+      },
+      {
+        "order": 6,
+        "id": "exercise.fi.plural.partitive.usage.existential.dishes-in-kitchen",
+        "prompt": "На кухне есть посуда.",
+        "targetText": "Keittiössä on astioita.",
+        "acceptedVariants": ["Keittiössä on astioita."]
+      },
+      {
+        "order": 7,
+        "id": "exercise.fi.plural.partitive.usage.object.choose-furniture",
+        "prompt": "Мы выбираем мебель.",
+        "targetText": "Me valitsemme huonekaluja.",
+        "acceptedVariants": [
+          "Me valitsemme huonekaluja.",
+          "Valitsemme huonekaluja."
+        ]
+      },
+      {
+        "order": 8,
+        "id": "exercise.fi.plural.partitive.usage.negative.not-use-candles",
+        "prompt": "Она не использует свечи.",
+        "targetText": "Hän ei käytä kynttilöitä.",
+        "acceptedVariants": ["Hän ei käytä kynttilöitä."]
+      },
+      {
+        "order": 9,
+        "id": "exercise.fi.plural.partitive.usage.quantity.few-birds",
+        "prompt": "В парке мало птиц.",
+        "targetText": "Puistossa on vähän lintuja.",
+        "acceptedVariants": ["Puistossa on vähän lintuja."]
+      },
+      {
+        "order": 10,
+        "id": "exercise.fi.plural.partitive.usage.contrast.three-pillows",
+        "prompt": "Я покупаю три подушки.",
+        "targetText": "Ostan kolme tyynyä.",
+        "acceptedVariants": ["Ostan kolme tyynyä."]
+      },
+      {
+        "order": 11,
+        "id": "exercise.fi.plural.partitive.usage.existential.boats-on-lake",
+        "prompt": "На озере есть лодки.",
+        "targetText": "Järvellä on veneitä.",
+        "acceptedVariants": ["Järvellä on veneitä."]
+      },
+      {
+        "order": 12,
+        "id": "exercise.fi.plural.partitive.usage.object.look-at-products",
+        "prompt": "Они рассматривают товары.",
+        "targetText": "He katsovat tuotteita.",
+        "acceptedVariants": ["He katsovat tuotteita."]
+      },
+      {
+        "order": 13,
+        "id": "exercise.fi.plural.partitive.usage.negative.no-blankets",
+        "prompt": "В магазине нет одеял.",
+        "targetText": "Kaupassa ei ole peittoja.",
+        "acceptedVariants": ["Kaupassa ei ole peittoja."]
+      },
+      {
+        "order": 14,
+        "id": "exercise.fi.plural.partitive.usage.quantity.enough-services",
+        "prompt": "У нас достаточно услуг.",
+        "targetText": "Meillä on tarpeeksi palveluja.",
+        "acceptedVariants": ["Meillä on tarpeeksi palveluja."]
+      },
+      {
+        "order": 15,
+        "id": "exercise.fi.plural.partitive.usage.contrast.buy-gifts-all",
+        "prompt": "Она купит все выбранные подарки сегодня.",
+        "targetText": "Hän ostaa lahjat tänään.",
+        "acceptedVariants": ["Hän ostaa lahjat tänään."]
+      },
+      {
+        "order": 16,
+        "id": "exercise.fi.plural.partitive.usage.existential.employees-in-office",
+        "prompt": "В офисе есть сотрудники.",
+        "targetText": "Toimistossa on työntekijöitä.",
+        "acceptedVariants": ["Toimistossa on työntekijöitä."]
+      },
+      {
+        "order": 17,
+        "id": "exercise.fi.plural.partitive.usage.object.help-customers",
+        "prompt": "Мы помогаем клиентам.",
+        "targetText": "Autamme asiakkaita.",
+        "acceptedVariants": ["Autamme asiakkaita."]
+      },
+      {
+        "order": 18,
+        "id": "exercise.fi.plural.partitive.usage.negative.not-see-horses",
+        "prompt": "Мы не видим лошадей.",
+        "targetText": "Emme näe hevosia.",
+        "acceptedVariants": ["Emme näe hevosia."]
+      },
+      {
+        "order": 19,
+        "id": "exercise.fi.plural.partitive.usage.quantity.many-buildings",
+        "prompt": "В городе много зданий.",
+        "targetText": "Kaupungissa on paljon rakennuksia.",
+        "acceptedVariants": ["Kaupungissa on paljon rakennuksia."]
+      },
+      {
+        "order": 20,
+        "id": "exercise.fi.plural.partitive.usage.contrast.two-plants",
+        "prompt": "Во дворе два растения.",
+        "targetText": "Pihalla on kaksi kasvia.",
+        "acceptedVariants": ["Pihalla on kaksi kasvia."]
+      },
+      {
+        "order": 21,
+        "id": "exercise.fi.plural.partitive.usage.existential.travelers-in-hotel",
+        "prompt": "В отеле есть путешественники.",
+        "targetText": "Hotellissa on matkustajia.",
+        "acceptedVariants": ["Hotellissa on matkustajia."]
+      },
+      {
+        "order": 22,
+        "id": "exercise.fi.plural.partitive.usage.object.wash-dishes",
+        "prompt": "Я мою посуду.",
+        "targetText": "Pesen astioita.",
+        "acceptedVariants": ["Pesen astioita."]
+      },
+      {
+        "order": 23,
+        "id": "exercise.fi.plural.partitive.usage.negative.no-options",
+        "prompt": "У меня нет вариантов.",
+        "targetText": "Minulla ei ole vaihtoehtoja.",
+        "acceptedVariants": ["Minulla ei ole vaihtoehtoja."]
+      },
+      {
+        "order": 24,
+        "id": "exercise.fi.plural.partitive.usage.quantity.many-opportunities",
+        "prompt": "У тебя много возможностей.",
+        "targetText": "Sinulla on paljon mahdollisuuksia.",
+        "acceptedVariants": ["Sinulla on paljon mahdollisuuksia."]
+      },
+      {
+        "order": 25,
+        "id": "exercise.fi.plural.partitive.usage.contrast.choose-products-all",
+        "prompt": "Я выберу все эти товары.",
+        "targetText": "Valitsen tuotteet.",
+        "acceptedVariants": ["Valitsen tuotteet."]
+      },
+      {
+        "order": 26,
+        "id": "exercise.fi.plural.partitive.usage.existential.sheep-in-field",
+        "prompt": "На поле есть овцы.",
+        "targetText": "Pellolla on lampaita.",
+        "acceptedVariants": ["Pellolla on lampaita."]
+      },
+      {
+        "order": 27,
+        "id": "exercise.fi.plural.partitive.usage.object.care-for-plants",
+        "prompt": "Она ухаживает за растениями.",
+        "targetText": "Hän hoitaa kasveja.",
+        "acceptedVariants": ["Hän hoitaa kasveja."]
+      },
+      {
+        "order": 28,
+        "id": "exercise.fi.plural.partitive.usage.negative.not-buy-vases",
+        "prompt": "Мы не покупаем вазы.",
+        "targetText": "Me emme osta maljakoita.",
+        "acceptedVariants": [
+          "Me emme osta maljakoita.",
+          "Emme osta maljakoita."
+        ]
+      },
+      {
+        "order": 29,
+        "id": "exercise.fi.plural.partitive.usage.quantity.too-much-furniture",
+        "prompt": "В комнате слишком много мебели.",
+        "targetText": "Huoneessa on liikaa huonekaluja.",
+        "acceptedVariants": ["Huoneessa on liikaa huonekaluja."]
+      },
+      {
+        "order": 30,
+        "id": "exercise.fi.plural.partitive.usage.contrast.one-blanket",
+        "prompt": "В магазине одно одеяло.",
+        "targetText": "Kaupassa on yksi peitto.",
+        "acceptedVariants": ["Kaupassa on yksi peitto."]
+      },
+      {
+        "order": 31,
+        "id": "exercise.fi.plural.partitive.usage.existential.apartments-in-city",
+        "prompt": "В городе есть квартиры.",
+        "targetText": "Kaupungissa on huoneistoja.",
+        "acceptedVariants": ["Kaupungissa on huoneistoja."]
+      },
+      {
+        "order": 32,
+        "id": "exercise.fi.plural.partitive.usage.object.look-at-curtains",
+        "prompt": "Я рассматриваю шторы.",
+        "targetText": "Katson verhoja.",
+        "acceptedVariants": ["Katson verhoja."]
+      },
+      {
+        "order": 33,
+        "id": "exercise.fi.plural.partitive.usage.negative.no-services",
+        "prompt": "В отеле нет услуг.",
+        "targetText": "Hotellissa ei ole palveluja.",
+        "acceptedVariants": ["Hotellissa ei ole palveluja."]
+      },
+      {
+        "order": 34,
+        "id": "exercise.fi.plural.partitive.usage.quantity.how-many-customers",
+        "prompt": "Сколько клиентов в магазине?",
+        "targetText": "Kuinka monta asiakasta kaupassa on?",
+        "acceptedVariants": ["Kuinka monta asiakasta kaupassa on?"]
+      },
+      {
+        "order": 35,
+        "id": "exercise.fi.plural.partitive.usage.contrast.repair-tools-all",
+        "prompt": "Я починю все инструменты сегодня.",
+        "targetText": "Korjaan työkalut tänään.",
+        "acceptedVariants": ["Korjaan työkalut tänään."]
+      },
+      {
+        "order": 36,
+        "id": "exercise.fi.plural.partitive.usage.existential.insects-in-park",
+        "prompt": "В парке есть насекомые.",
+        "targetText": "Puistossa on hyönteisiä.",
+        "acceptedVariants": ["Puistossa on hyönteisiä."]
+      },
+      {
+        "order": 37,
+        "id": "exercise.fi.plural.partitive.usage.object.bus-brings-passengers",
+        "prompt": "Автобус привозит пассажиров на станцию.",
+        "targetText": "Bussi tuo matkustajia asemalle.",
+        "acceptedVariants": ["Bussi tuo matkustajia asemalle."]
+      },
+      {
+        "order": 38,
+        "id": "exercise.fi.plural.partitive.usage.negative.not-meet-visitors",
+        "prompt": "Она не встречает посетителей.",
+        "targetText": "Hän ei tapaa vierailijoita.",
+        "acceptedVariants": ["Hän ei tapaa vierailijoita."]
+      },
+      {
+        "order": 39,
+        "id": "exercise.fi.plural.partitive.usage.quantity.many-candles",
+        "prompt": "На столе много свечей.",
+        "targetText": "Pöydällä on paljon kynttilöitä.",
+        "acceptedVariants": ["Pöydällä on paljon kynttilöitä."]
+      },
+      {
+        "order": 40,
+        "id": "exercise.fi.plural.partitive.usage.contrast.buy-blankets",
+        "prompt": "Я покупаю сегодня одеяла.",
+        "targetText": "Ostan peittoja tänään.",
+        "acceptedVariants": ["Ostan peittoja tänään."]
+      },
+      {
+        "order": 41,
+        "id": "exercise.fi.plural.partitive.usage.existential.vases-on-table",
+        "prompt": "На столе есть вазы.",
+        "targetText": "Pöydällä on maljakoita.",
+        "acceptedVariants": ["Pöydällä on maljakoita."]
+      },
+      {
+        "order": 42,
+        "id": "exercise.fi.plural.partitive.usage.object.use-pillows",
+        "prompt": "Я использую подушки.",
+        "targetText": "Käytän tyynyjä.",
+        "acceptedVariants": ["Käytän tyynyjä."]
+      },
+      {
+        "order": 43,
+        "id": "exercise.fi.plural.partitive.usage.negative.not-choose-furniture",
+        "prompt": "Мы не выбираем мебель.",
+        "targetText": "Emme valitse huonekaluja.",
+        "acceptedVariants": ["Emme valitse huonekaluja."]
+      },
+      {
+        "order": 44,
+        "id": "exercise.fi.plural.partitive.usage.quantity.few-goods",
+        "prompt": "В магазине мало товаров.",
+        "targetText": "Kaupassa on vähän tavaroita.",
+        "acceptedVariants": ["Kaupassa on vähän tavaroita."]
+      },
+      {
+        "order": 45,
+        "id": "exercise.fi.plural.partitive.usage.contrast.choose-options-all",
+        "prompt": "Она выберет все эти варианты.",
+        "targetText": "Hän valitsee vaihtoehdot.",
+        "acceptedVariants": ["Hän valitsee vaihtoehdot."]
+      },
+      {
+        "order": 46,
+        "id": "exercise.fi.plural.partitive.usage.existential.horses-in-field",
+        "prompt": "На поле есть лошади.",
+        "targetText": "Pellolla on hevosia.",
+        "acceptedVariants": ["Pellolla on hevosia."]
+      },
+      {
+        "order": 47,
+        "id": "exercise.fi.plural.partitive.usage.object.see-buildings",
+        "prompt": "Из окна я вижу здания.",
+        "targetText": "Näen rakennuksia ikkunasta.",
+        "acceptedVariants": ["Näen rakennuksia ikkunasta."]
+      },
+      {
+        "order": 48,
+        "id": "exercise.fi.plural.partitive.usage.negative.no-employees",
+        "prompt": "Здесь нет сотрудников.",
+        "targetText": "Täällä ei ole työntekijöitä.",
+        "acceptedVariants": ["Täällä ei ole työntekijöitä."]
+      },
+      {
+        "order": 49,
+        "id": "exercise.fi.plural.partitive.usage.quantity.how-many-boats",
+        "prompt": "Сколько лодок на озере?",
+        "targetText": "Kuinka monta venettä järvellä on?",
+        "acceptedVariants": ["Kuinka monta venettä järvellä on?"]
+      },
+      {
+        "order": 50,
+        "id": "exercise.fi.plural.partitive.usage.contrast.wash-dishes-all",
+        "prompt": "Она вымоет всю посуду.",
+        "targetText": "Hän pesee astiat.",
+        "acceptedVariants": ["Hän pesee astiat."]
+      },
+      {
+        "order": 51,
+        "id": "exercise.fi.plural.partitive.usage.existential.pillows-in-room",
+        "prompt": "В комнате есть подушки.",
+        "targetText": "Huoneessa on tyynyjä.",
+        "acceptedVariants": ["Huoneessa on tyynyjä."]
+      },
+      {
+        "order": 52,
+        "id": "exercise.fi.plural.partitive.usage.object.build-apartments",
+        "prompt": "Мы строим квартиры.",
+        "targetText": "Rakennamme huoneistoja.",
+        "acceptedVariants": ["Rakennamme huoneistoja."]
+      },
+      {
+        "order": 53,
+        "id": "exercise.fi.plural.partitive.usage.negative.not-use-services",
+        "prompt": "Они не используют услуги.",
+        "targetText": "He eivät käytä palveluja.",
+        "acceptedVariants": ["He eivät käytä palveluja."]
+      },
+      {
+        "order": 54,
+        "id": "exercise.fi.plural.partitive.usage.quantity.few-options",
+        "prompt": "У нас мало вариантов.",
+        "targetText": "Meillä on vähän vaihtoehtoja.",
+        "acceptedVariants": ["Meillä on vähän vaihtoehtoja."]
+      },
+      {
+        "order": 55,
+        "id": "exercise.fi.plural.partitive.usage.contrast.buy-candles-all",
+        "prompt": "Она купит все эти свечи.",
+        "targetText": "Hän ostaa kynttilät.",
+        "acceptedVariants": ["Hän ostaa kynttilät."]
+      },
+      {
+        "order": 56,
+        "id": "exercise.fi.plural.partitive.usage.existential.opportunities-here",
+        "prompt": "Здесь есть возможности.",
+        "targetText": "Täällä on mahdollisuuksia.",
+        "acceptedVariants": ["Täällä on mahdollisuuksia."]
+      },
+      {
+        "order": 57,
+        "id": "exercise.fi.plural.partitive.usage.object.carry-things",
+        "prompt": "Я несу вещи.",
+        "targetText": "Kannan tavaroita.",
+        "acceptedVariants": ["Kannan tavaroita."]
+      },
+      {
+        "order": 58,
+        "id": "exercise.fi.plural.partitive.usage.negative.not-see-birds",
+        "prompt": "Я не вижу птиц.",
+        "targetText": "En näe lintuja.",
+        "acceptedVariants": ["En näe lintuja."]
+      },
+      {
+        "order": 59,
+        "id": "exercise.fi.plural.partitive.usage.quantity.many-employees",
+        "prompt": "В офисе много сотрудников.",
+        "targetText": "Toimistossa on paljon työntekijöitä.",
+        "acceptedVariants": ["Toimistossa on paljon työntekijöitä."]
+      },
+      {
+        "order": 60,
+        "id": "exercise.fi.plural.partitive.usage.contrast.three-products",
+        "prompt": "В магазине три товара.",
+        "targetText": "Kaupassa on kolme tuotetta.",
+        "acceptedVariants": ["Kaupassa on kolme tuotetta."]
+      }
+    ]
+  },
+  {
+    "22": [
+      {
+        "order": 1,
+        "id": "exercise.fi.plural.local-cases.inessive.live-in-villages",
+        "prompt": "Они живут в деревнях.",
+        "targetText": "He asuvat kylissä.",
+        "acceptedVariants": ["He asuvat kylissä."]
+      },
+      {
+        "order": 2,
+        "id": "exercise.fi.plural.local-cases.allative.tasks-to-pupils",
+        "prompt": "Я даю задания ученикам.",
+        "targetText": "Annan tehtäviä oppilaille.",
+        "acceptedVariants": ["Annan tehtäviä oppilaille."]
+      },
+      {
+        "order": 3,
+        "id": "exercise.fi.plural.local-cases.elative.apples-from-boxes",
+        "prompt": "Я достаю яблоки из коробок.",
+        "targetText": "Otan omenat rasioista.",
+        "acceptedVariants": ["Otan omenat rasioista."]
+      },
+      {
+        "order": 4,
+        "id": "exercise.fi.plural.local-cases.adessive.managers-have-meetings",
+        "prompt": "У руководителей есть встречи.",
+        "targetText": "Johtajilla on tapaamisia.",
+        "acceptedVariants": ["Johtajilla on tapaamisia."]
+      },
+      {
+        "order": 5,
+        "id": "exercise.fi.plural.local-cases.illative.files-to-devices",
+        "prompt": "Я сохраню файлы на устройства.",
+        "targetText": "Tallennan tiedostot laitteisiin.",
+        "acceptedVariants": ["Tallennan tiedostot laitteisiin."]
+      },
+      {
+        "order": 6,
+        "id": "exercise.fi.plural.local-cases.ablative.information-from-experts",
+        "prompt": "Я получаю информацию от специалистов.",
+        "targetText": "Saan tietoa asiantuntijoilta.",
+        "acceptedVariants": ["Saan tietoa asiantuntijoilta."]
+      },
+      {
+        "order": 7,
+        "id": "exercise.fi.plural.local-cases.inessive.employees-in-companies",
+        "prompt": "В компаниях есть сотрудники.",
+        "targetText": "Yrityksissä on työntekijöitä.",
+        "acceptedVariants": ["Yrityksissä on työntekijöitä."]
+      },
+      {
+        "order": 8,
+        "id": "exercise.fi.plural.local-cases.allative.bills-to-companies",
+        "prompt": "Я отправлю счета компаниям.",
+        "targetText": "Lähetän laskut yrityksille.",
+        "acceptedVariants": ["Lähetän laskut yrityksille."]
+      },
+      {
+        "order": 9,
+        "id": "exercise.fi.plural.local-cases.elative.products-from-packages",
+        "prompt": "Я достаю товары из упаковок.",
+        "targetText": "Otan tuotteet pakkauksista.",
+        "acceptedVariants": ["Otan tuotteet pakkauksista."]
+      },
+      {
+        "order": 10,
+        "id": "exercise.fi.plural.local-cases.adessive.things-on-surfaces",
+        "prompt": "Вещи находятся на поверхностях.",
+        "targetText": "Tavarat ovat tasoilla.",
+        "acceptedVariants": ["Tavarat ovat tasoilla."]
+      },
+      {
+        "order": 11,
+        "id": "exercise.fi.plural.local-cases.illative.apples-into-baskets",
+        "prompt": "Я кладу яблоки в корзины.",
+        "targetText": "Panen omenat koreihin.",
+        "acceptedVariants": ["Panen omenat koreihin."]
+      },
+      {
+        "order": 12,
+        "id": "exercise.fi.plural.local-cases.ablative.rise-from-sofas",
+        "prompt": "Они встают с диванов.",
+        "targetText": "He nousevat sohvilta.",
+        "acceptedVariants": ["He nousevat sohvilta."]
+      },
+      {
+        "order": 13,
+        "id": "exercise.fi.plural.local-cases.inessive.students-in-groups",
+        "prompt": "Студенты находятся в группах.",
+        "targetText": "Opiskelijat ovat ryhmissä.",
+        "acceptedVariants": ["Opiskelijat ovat ryhmissä."]
+      },
+      {
+        "order": 14,
+        "id": "exercise.fi.plural.local-cases.allative.information-to-webpages",
+        "prompt": "Я запишу информацию на веб-страницы.",
+        "targetText": "Kirjoitan tiedot verkkosivuille.",
+        "acceptedVariants": ["Kirjoitan tiedot verkkosivuille."]
+      },
+      {
+        "order": 15,
+        "id": "exercise.fi.plural.local-cases.elative.milk-from-jars",
+        "prompt": "Я беру молоко из банок.",
+        "targetText": "Otan maitoa purkeista.",
+        "acceptedVariants": ["Otan maitoa purkeista."]
+      },
+      {
+        "order": 16,
+        "id": "exercise.fi.plural.local-cases.adessive.sit-on-benches",
+        "prompt": "Они сидят на скамейках.",
+        "targetText": "He istuvat penkeillä.",
+        "acceptedVariants": ["He istuvat penkeillä."]
+      },
+      {
+        "order": 17,
+        "id": "exercise.fi.plural.local-cases.illative.move-to-teams",
+        "prompt": "Они переходят в команды.",
+        "targetText": "He siirtyvät tiimeihin.",
+        "acceptedVariants": ["He siirtyvät tiimeihin."]
+      },
+      {
+        "order": 18,
+        "id": "exercise.fi.plural.local-cases.ablative.messages-from-associations",
+        "prompt": "Я получаю сообщения от объединений.",
+        "targetText": "Saan viestejä yhdistyksiltä.",
+        "acceptedVariants": ["Saan viestejä yhdistyksiltä."]
+      },
+      {
+        "order": 19,
+        "id": "exercise.fi.plural.local-cases.inessive.things-in-bags",
+        "prompt": "Вещи находятся в пакетах.",
+        "targetText": "Tavarat ovat pusseissa.",
+        "acceptedVariants": ["Tavarat ovat pusseissa."]
+      },
+      {
+        "order": 20,
+        "id": "exercise.fi.plural.local-cases.allative.bags-onto-benches",
+        "prompt": "Я кладу сумки на скамейки.",
+        "targetText": "Panen laukut penkeille.",
+        "acceptedVariants": ["Panen laukut penkeille."]
+      },
+      {
+        "order": 21,
+        "id": "exercise.fi.plural.local-cases.elative.come-from-states",
+        "prompt": "Они приезжают из разных государств.",
+        "targetText": "He tulevat valtioista.",
+        "acceptedVariants": ["He tulevat valtioista."]
+      },
+      {
+        "order": 22,
+        "id": "exercise.fi.plural.local-cases.adessive.pupils-have-questions",
+        "prompt": "У учеников есть вопросы.",
+        "targetText": "Oppilailla on kysymyksiä.",
+        "acceptedVariants": ["Oppilailla on kysymyksiä."]
+      },
+      {
+        "order": 23,
+        "id": "exercise.fi.plural.local-cases.illative.move-to-sports-teams",
+        "prompt": "Они переходят в команды.",
+        "targetText": "He siirtyvät joukkueisiin.",
+        "acceptedVariants": ["He siirtyvät joukkueisiin."]
+      },
+      {
+        "order": 24,
+        "id": "exercise.fi.plural.local-cases.ablative.news-from-pages",
+        "prompt": "Я читаю новости со страниц.",
+        "targetText": "Luen uutisia sivuilta.",
+        "acceptedVariants": ["Luen uutisia sivuilta."]
+      },
+      {
+        "order": 25,
+        "id": "exercise.fi.plural.local-cases.inessive.products-in-packages",
+        "prompt": "Товары находятся в упаковках.",
+        "targetText": "Tuotteet ovat pakkauksissa.",
+        "acceptedVariants": ["Tuotteet ovat pakkauksissa."]
+      },
+      {
+        "order": 26,
+        "id": "exercise.fi.plural.local-cases.allative.reports-to-managers",
+        "prompt": "Я отправлю отчёты руководителям.",
+        "targetText": "Lähetän raportit johtajille.",
+        "acceptedVariants": ["Lähetän raportit johtajille."]
+      },
+      {
+        "order": 27,
+        "id": "exercise.fi.plural.local-cases.elative.things-from-bags",
+        "prompt": "Я достаю вещи из пакетов.",
+        "targetText": "Otan tavarat pusseista.",
+        "acceptedVariants": ["Otan tavarat pusseista."]
+      },
+      {
+        "order": 28,
+        "id": "exercise.fi.plural.local-cases.adessive.pictures-on-screens",
+        "prompt": "Изображения находятся на экранах.",
+        "targetText": "Kuvat ovat näytöillä.",
+        "acceptedVariants": ["Kuvat ovat näytöillä."]
+      },
+      {
+        "order": 29,
+        "id": "exercise.fi.plural.local-cases.illative.books-into-boxes",
+        "prompt": "Я кладу книги в коробки.",
+        "targetText": "Panen kirjat rasioihin.",
+        "acceptedVariants": ["Panen kirjat rasioihin."]
+      },
+      {
+        "order": 30,
+        "id": "exercise.fi.plural.local-cases.ablative.answers-from-adults",
+        "prompt": "Я получаю ответы от взрослых.",
+        "targetText": "Saan vastauksia aikuisilta.",
+        "acceptedVariants": ["Saan vastauksia aikuisilta."]
+      },
+      {
+        "order": 31,
+        "id": "exercise.fi.plural.local-cases.inessive.work-in-organizations",
+        "prompt": "Они работают в организациях.",
+        "targetText": "He työskentelevät organisaatioissa.",
+        "acceptedVariants": ["He työskentelevät organisaatioissa."]
+      },
+      {
+        "order": 32,
+        "id": "exercise.fi.plural.local-cases.allative.prizes-to-teams",
+        "prompt": "Я дам призы командам.",
+        "targetText": "Annan palkinnot joukkueille.",
+        "acceptedVariants": ["Annan palkinnot joukkueille."]
+      },
+      {
+        "order": 33,
+        "id": "exercise.fi.plural.local-cases.elative.groups-to-teams",
+        "prompt": "Они переходят из групп в команды.",
+        "targetText": "He siirtyvät ryhmistä tiimeihin.",
+        "acceptedVariants": ["He siirtyvät ryhmistä tiimeihin."]
+      },
+      {
+        "order": 34,
+        "id": "exercise.fi.plural.local-cases.adessive.companies-have-services",
+        "prompt": "У компаний есть услуги.",
+        "targetText": "Yrityksillä on palveluja.",
+        "acceptedVariants": ["Yrityksillä on palveluja."]
+      },
+      {
+        "order": 35,
+        "id": "exercise.fi.plural.local-cases.illative.travel-to-villages",
+        "prompt": "Мы путешествуем в деревни.",
+        "targetText": "Matkustamme kyliin.",
+        "acceptedVariants": ["Matkustamme kyliin."]
+      },
+      {
+        "order": 36,
+        "id": "exercise.fi.plural.local-cases.ablative.things-fall-from-surfaces",
+        "prompt": "Вещи падают с поверхностей.",
+        "targetText": "Tavarat putoavat tasoilta.",
+        "acceptedVariants": ["Tavarat putoavat tasoilta."]
+      },
+      {
+        "order": 37,
+        "id": "exercise.fi.plural.local-cases.inessive.apples-in-baskets",
+        "prompt": "Яблоки находятся в корзинах.",
+        "targetText": "Omenat ovat koreissa.",
+        "acceptedVariants": ["Omenat ovat koreissa."]
+      },
+      {
+        "order": 38,
+        "id": "exercise.fi.plural.local-cases.allative.messages-to-pages",
+        "prompt": "Я записываю сообщения на страницы.",
+        "targetText": "Kirjoitan viestejä sivuille.",
+        "acceptedVariants": ["Kirjoitan viestejä sivuille."]
+      },
+      {
+        "order": 39,
+        "id": "exercise.fi.plural.local-cases.elative.files-from-devices",
+        "prompt": "Я скопирую файлы с устройств.",
+        "targetText": "Kopioin tiedostot laitteista.",
+        "acceptedVariants": ["Kopioin tiedostot laitteista."]
+      },
+      {
+        "order": 40,
+        "id": "exercise.fi.plural.local-cases.adessive.information-on-webpages",
+        "prompt": "Информация находится на веб-страницах.",
+        "targetText": "Tiedot ovat verkkosivuilla.",
+        "acceptedVariants": ["Tiedot ovat verkkosivuilla."]
+      },
+      {
+        "order": 41,
+        "id": "exercise.fi.plural.local-cases.illative.applications-to-organizations",
+        "prompt": "Мы отправляем заявления в организации.",
+        "targetText": "Lähetämme hakemuksia organisaatioihin.",
+        "acceptedVariants": ["Lähetämme hakemuksia organisaatioihin."]
+      },
+      {
+        "order": 42,
+        "id": "exercise.fi.plural.local-cases.ablative.offers-from-companies",
+        "prompt": "Она получает предложения от компаний.",
+        "targetText": "Hän saa tarjouksia yrityksiltä.",
+        "acceptedVariants": ["Hän saa tarjouksia yrityksiltä."]
+      },
+      {
+        "order": 43,
+        "id": "exercise.fi.plural.local-cases.inessive.play-in-teams",
+        "prompt": "Они играют в командах.",
+        "targetText": "He pelaavat joukkueissa.",
+        "acceptedVariants": ["He pelaavat joukkueissa."]
+      },
+      {
+        "order": 44,
+        "id": "exercise.fi.plural.local-cases.allative.tell-adults",
+        "prompt": "Я рассказываю об этом взрослым.",
+        "targetText": "Kerron asian aikuisille.",
+        "acceptedVariants": ["Kerron asian aikuisille."]
+      },
+      {
+        "order": 45,
+        "id": "exercise.fi.plural.local-cases.elative.information-from-organizations",
+        "prompt": "Она получает информацию из организаций.",
+        "targetText": "Hän saa tietoa organisaatioista.",
+        "acceptedVariants": ["Hän saa tietoa organisaatioista."]
+      },
+      {
+        "order": 46,
+        "id": "exercise.fi.plural.local-cases.adessive.pictures-on-platforms",
+        "prompt": "На платформах есть изображения.",
+        "targetText": "Kuvia on alustoilla.",
+        "acceptedVariants": ["Kuvia on alustoilla."]
+      },
+      {
+        "order": 47,
+        "id": "exercise.fi.plural.local-cases.illative.things-into-bags",
+        "prompt": "Я кладу вещи в пакеты.",
+        "targetText": "Panen tavarat pusseihin.",
+        "acceptedVariants": ["Panen tavarat pusseihin."]
+      },
+      {
+        "order": 48,
+        "id": "exercise.fi.plural.local-cases.ablative.pictures-disappear-from-screens",
+        "prompt": "Изображения исчезают с экранов.",
+        "targetText": "Kuvat katoavat näytöiltä.",
+        "acceptedVariants": ["Kuvat katoavat näytöiltä."]
+      },
+      {
+        "order": 49,
+        "id": "exercise.fi.plural.local-cases.inessive.milk-in-jars",
+        "prompt": "Молоко находится в банках.",
+        "targetText": "Maito on purkeissa.",
+        "acceptedVariants": ["Maito on purkeissa."]
+      },
+      {
+        "order": 50,
+        "id": "exercise.fi.plural.local-cases.allative.plans-to-experts",
+        "prompt": "Я отправлю планы специалистам.",
+        "targetText": "Lähetän suunnitelmat asiantuntijoille.",
+        "acceptedVariants": ["Lähetän suunnitelmat asiantuntijoille."]
+      },
+      {
+        "order": 51,
+        "id": "exercise.fi.plural.local-cases.elative.companies-to-organizations",
+        "prompt": "Они переходят из компаний в организации.",
+        "targetText": "He siirtyvät yrityksistä organisaatioihin.",
+        "acceptedVariants": ["He siirtyvät yrityksistä organisaatioihin."]
+      },
+      {
+        "order": 52,
+        "id": "exercise.fi.plural.local-cases.adessive.adults-have-opportunities",
+        "prompt": "У взрослых есть возможности.",
+        "targetText": "Aikuisilla on mahdollisuuksia.",
+        "acceptedVariants": ["Aikuisilla on mahdollisuuksia."]
+      },
+      {
+        "order": 53,
+        "id": "exercise.fi.plural.local-cases.illative.travel-to-states",
+        "prompt": "Они путешествуют в разные государства.",
+        "targetText": "He matkustavat valtioihin.",
+        "acceptedVariants": ["He matkustavat valtioihin."]
+      },
+      {
+        "order": 54,
+        "id": "exercise.fi.plural.local-cases.ablative.prizes-from-teams",
+        "prompt": "Я получаю призы от команд.",
+        "targetText": "Saan palkinnot joukkueilta.",
+        "acceptedVariants": ["Saan palkinnot joukkueilta."]
+      },
+      {
+        "order": 55,
+        "id": "exercise.fi.plural.local-cases.inessive.groups-in-associations",
+        "prompt": "В объединениях есть группы.",
+        "targetText": "Yhdistyksissä on ryhmiä.",
+        "acceptedVariants": ["Yhdistyksissä on ryhmiä."]
+      },
+      {
+        "order": 56,
+        "id": "exercise.fi.plural.local-cases.allative.pictures-to-teams",
+        "prompt": "Я показываю изображения командам.",
+        "targetText": "Näytän kuvat tiimeille.",
+        "acceptedVariants": ["Näytän kuvat tiimeille."]
+      },
+      {
+        "order": 57,
+        "id": "exercise.fi.plural.local-cases.elative.books-from-baskets",
+        "prompt": "Я достаю книги из корзин.",
+        "targetText": "Otan kirjat koreista.",
+        "acceptedVariants": ["Otan kirjat koreista."]
+      },
+      {
+        "order": 58,
+        "id": "exercise.fi.plural.local-cases.adessive.buildings-in-areas",
+        "prompt": "В районах есть здания.",
+        "targetText": "Alueilla on rakennuksia.",
+        "acceptedVariants": ["Alueilla on rakennuksia."]
+      },
+      {
+        "order": 59,
+        "id": "exercise.fi.plural.local-cases.illative.products-into-packages",
+        "prompt": "Я кладу товары в упаковки.",
+        "targetText": "Panen tuotteet pakkauksiin.",
+        "acceptedVariants": ["Panen tuotteet pakkauksiin."]
+      },
+      {
+        "order": 60,
+        "id": "exercise.fi.plural.local-cases.ablative.decisions-from-managers",
+        "prompt": "Я получу решения от руководителей.",
+        "targetText": "Saan päätökset johtajilta.",
+        "acceptedVariants": ["Saan päätökset johtajilta."]
+      }
+    ]
   }
 ]

@@ -18,7 +18,7 @@ export interface LessonVocabularySeed {
   conceptId: string
   lexicalEntryId: string
   lemma: string
-  partOfSpeech: 'noun' | 'verb' | 'adjective' | 'adverb' | 'pronoun'
+  partOfSpeech: 'noun' | 'verb' | 'adjective' | 'adverb' | 'pronoun' | 'numeral'
   gloss: string
   example: {
     target: string

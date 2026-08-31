@@ -332,6 +332,31 @@ function inferSpecificSkillIds(
     if (skill.id.endsWith('.plural') && reviewed.id.includes('.plural.')) {
       return [skill.id]
     }
+    for (const marker of [
+      'number',
+      'quantity',
+      'unit',
+      'subject',
+      'vowel',
+      'stem',
+      'derived',
+      'special',
+      'existential',
+      'object',
+      'inessive',
+      'elative',
+      'illative',
+      'adessive',
+      'ablative',
+      'allative',
+    ]) {
+      if (
+        skill.id.endsWith(`.${marker}`) &&
+        reviewed.id.includes(`.${marker}.`)
+      ) {
+        return [skill.id]
+      }
+    }
     if (skill.id.endsWith('.contrast')) {
       if (
         reviewed.id.includes('.contrast.') ||

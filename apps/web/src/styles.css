@@ -135,6 +135,23 @@
   .motion-success {
     animation: success-pop 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
+
+  .interactive-text-sentence[data-audio-active='true'] {
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    background: color-mix(in oklab, var(--primary) 20%, transparent);
+  }
+
+  .interactive-text-sentence[data-audio-active='true'] .interactive-text-word {
+    background: color-mix(in oklab, var(--primary) 20%, transparent);
+    text-decoration-color: color-mix(in oklab, var(--primary) 60%, transparent);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .interactive-text-word {
+    -webkit-touch-callout: none;
+  }
 }
 
 @media (hover: hover) and (pointer: fine) {

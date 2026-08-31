@@ -53,6 +53,7 @@ const partOfSpeechLabels: Record<string, string> = {
   adposition: 'Послелог',
   negativeVerb: 'Отрицательный глагол',
   noun: 'Существительное',
+  numeral: 'Числительное',
   properNoun: 'Имя собственное',
   pronoun: 'Местоимение',
   verb: 'Глагол',

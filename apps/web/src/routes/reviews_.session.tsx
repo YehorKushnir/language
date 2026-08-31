@@ -124,8 +124,15 @@ function ReviewSessionPage() {
   })
 
   useEffect(() => {
-    if (!attempt.data && !review.isFetching) answerInput.current?.focus()
-  }, [attempt.data, review.data?.exercise?.id, review.isFetching])
+    if (!attempt.data?.isCorrect && !attempt.isPending && !review.isFetching) {
+      answerInput.current?.focus({ preventScroll: true })
+    }
+  }, [
+    attempt.data?.isCorrect,
+    attempt.isPending,
+    review.data?.exercise?.id,
+    review.isFetching,
+  ])
 
   if (course.isPending || review.isPending) {
     return <PageState loading />
@@ -159,11 +166,15 @@ function ReviewSessionPage() {
       !attempt.isPending &&
       !exerciseCompleted
     ) {
+      if (attempt.data && !attempt.data.isCorrect) {
+        attempt.reset()
+      }
       attempt.mutate()
     }
   }
 
   function retry() {
+    answerInput.current?.focus({ preventScroll: true })
     setAnswer('')
     attempt.reset()
   }
@@ -289,7 +300,10 @@ function ReviewSessionPage() {
         />
       </header>
 
-      <section className="mt-5 sm:mt-7">
+      <section
+        className="mt-5 rounded-xl border border-border/70 bg-card p-4 shadow-xs sm:mt-7 sm:p-6"
+        data-review-card="exercise"
+      >
         <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <span>Перевод на финский</span>
           <span>{exercise.targetLanguage}</span>
@@ -309,9 +323,13 @@ function ReviewSessionPage() {
               className="h-11 text-base"
               placeholder="Напиши фразу по-фински"
               value={answer}
-              disabled={attempt.isPending || exerciseCompleted}
+              aria-readonly={attempt.isPending || exerciseCompleted}
               aria-invalid={result ? !result.isCorrect : undefined}
-              onChange={(event) => setAnswer(event.target.value)}
+              onChange={(event) => {
+                if (!attempt.isPending && !exerciseCompleted) {
+                  setAnswer(event.target.value)
+                }
+              }}
             />
             <Button
               className="h-11 w-full"
@@ -319,6 +337,10 @@ function ReviewSessionPage() {
               disabled={
                 !answer.trim() || attempt.isPending || exerciseCompleted
               }
+              onPointerDown={(event) => {
+                event.preventDefault()
+                answerInput.current?.focus({ preventScroll: true })
+              }}
             >
               {attempt.isPending ? (
                 <LoaderCircleIcon className="animate-spin" />
@@ -329,70 +351,76 @@ function ReviewSessionPage() {
             </Button>
           </div>
         </form>
+        {result ? (
+          <Alert
+            className="motion-feedback mt-5"
+            variant={result.isCorrect ? 'default' : 'destructive'}
+          >
+            {result.isCorrect ? <CheckCircle2Icon /> : <XCircleIcon />}
+            <AlertTitle>
+              {result.isCorrect ? 'Вспомнил' : 'Нужно закрепить'}
+            </AlertTitle>
+            <AlertDescription>
+              {result.diagnostics.map((diagnostic) => (
+                <p key={diagnostic.code}>{localizedText(diagnostic.message)}</p>
+              ))}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
+        {result ? (
+          <ExerciseReport
+            className="motion-feedback mt-3"
+            exerciseId={exercise.id}
+            attemptId={result.attemptId}
+          />
+        ) : null}
+
+        {result && exercise.audioUrl ? (
+          <AudioButton
+            className="mt-3"
+            label="Прослушать ответ"
+            src={exercise.audioUrl}
+          />
+        ) : null}
+
+        {attempt.isError ? (
+          <div className="mt-5">
+            <QueryError message={attempt.error.message} />
+          </div>
+        ) : null}
+
+        {result ? (
+          <div className="motion-feedback mt-5 flex justify-end">
+            {!result.isCorrect ? (
+              <Button
+                variant="outline"
+                onPointerDown={(event) => {
+                  event.preventDefault()
+                  answerInput.current?.focus({ preventScroll: true })
+                }}
+                onClick={retry}
+              >
+                <RotateCcwIcon /> Попробовать снова
+              </Button>
+            ) : null}
+            {exerciseCompleted ? (
+              <Button
+                autoFocus
+                disabled={isAdvancing}
+                onClick={() => void nextExercise()}
+              >
+                {isAdvancing ? (
+                  <LoaderCircleIcon className="animate-spin" />
+                ) : (
+                  <ArrowRightIcon />
+                )}
+                Продолжить
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
       </section>
-
-      {result ? (
-        <Alert
-          className="motion-feedback mt-5"
-          variant={result.isCorrect ? 'default' : 'destructive'}
-        >
-          {result.isCorrect ? <CheckCircle2Icon /> : <XCircleIcon />}
-          <AlertTitle>
-            {result.isCorrect ? 'Вспомнил' : 'Нужно закрепить'}
-          </AlertTitle>
-          <AlertDescription>
-            {result.diagnostics.map((diagnostic) => (
-              <p key={diagnostic.code}>{localizedText(diagnostic.message)}</p>
-            ))}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
-      {result ? (
-        <ExerciseReport
-          className="motion-feedback mt-3"
-          exerciseId={exercise.id}
-          attemptId={result.attemptId}
-        />
-      ) : null}
-
-      {result && exercise.audioUrl ? (
-        <AudioButton
-          className="mt-3"
-          label="Прослушать ответ"
-          src={exercise.audioUrl}
-        />
-      ) : null}
-
-      {attempt.isError ? (
-        <div className="mt-5">
-          <QueryError message={attempt.error.message} />
-        </div>
-      ) : null}
-
-      {result ? (
-        <div className="motion-feedback mt-5 flex justify-end">
-          {!result.isCorrect ? (
-            <Button autoFocus variant="outline" onClick={retry}>
-              <RotateCcwIcon /> Попробовать снова
-            </Button>
-          ) : null}
-          {exerciseCompleted ? (
-            <Button
-              autoFocus
-              disabled={isAdvancing}
-              onClick={() => void nextExercise()}
-            >
-              {isAdvancing ? (
-                <LoaderCircleIcon className="animate-spin" />
-              ) : (
-                <ArrowRightIcon />
-              )}
-              Продолжить
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
     </PageShell>
   )
 }
@@ -456,7 +484,10 @@ function ReviewFlashcard({
         />
       </header>
 
-      <section className="mt-5 rounded-xl bg-card p-5 text-center shadow-xs sm:mt-7 sm:p-8">
+      <section
+        className="mt-5 rounded-xl border border-border/70 bg-card p-5 text-center shadow-xs sm:mt-7 sm:p-8"
+        data-review-card="flashcard"
+      >
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Финский
         </p>

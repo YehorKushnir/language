@@ -71,7 +71,14 @@ export const lessonVocabularyItemSchema = z.object({
   conceptId: identifierSchema,
   lexicalEntryId: identifierSchema,
   lemma: z.string().trim().min(1),
-  partOfSpeech: z.enum(['noun', 'adjective', 'adverb', 'pronoun', 'verb']),
+  partOfSpeech: z.enum([
+    'noun',
+    'adjective',
+    'adverb',
+    'pronoun',
+    'numeral',
+    'verb',
+  ]),
   gloss: z.string().trim().min(1),
   example: z.object({
     target: z.string().trim().min(1),

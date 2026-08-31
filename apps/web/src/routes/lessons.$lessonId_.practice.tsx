@@ -435,6 +435,10 @@ function LessonPracticePage() {
     pendingSessionUpdate.current = null
     idempotencyKey.current = crypto.randomUUID()
     openedAt.current = Date.now()
+
+    queueMicrotask(() => {
+      answerInput.current?.focus({ preventScroll: true })
+    })
   }
 
   const feedback = result
@@ -504,7 +508,7 @@ function LessonPracticePage() {
               : 'Следующий урок сейчас откроется.'
             : 'Заверши практику, чтобы открыть следующий урок.'}
         </p>
-        <article className="mt-4 rounded-xl bg-card p-4 shadow-xs sm:mt-5 sm:p-7">
+        <article className="mt-4 rounded-xl border border-border/70 bg-card p-4 shadow-xs sm:mt-5 sm:p-7">
           <h2
             key={activeExerciseId}
             className={`motion-feedback font-serif text-2xl font-semibold leading-snug transition-opacity sm:text-3xl ${
@@ -526,10 +530,13 @@ function LessonPracticePage() {
                 className="h-11 text-base"
                 placeholder="Ответ на финском"
                 value={answer}
-                readOnly={Boolean(localResult)}
-                disabled={exercise.isFetching}
+                aria-readonly={Boolean(localResult) || exercise.isFetching}
                 aria-invalid={localResult ? !localResult.isCorrect : undefined}
-                onChange={(event) => setAnswer(event.target.value)}
+                onChange={(event) => {
+                  if (!localResult && !exercise.isFetching) {
+                    setAnswer(event.target.value)
+                  }
+                }}
                 onKeyDown={(event) => {
                   if (event.key !== 'Enter') return
                   event.preventDefault()
@@ -541,6 +548,10 @@ function LessonPracticePage() {
                 type="submit"
                 disabled={!canSubmit}
                 aria-busy={attempt.isPending || completion.isPending}
+                onPointerDown={(event) => {
+                  event.preventDefault()
+                  answerInput.current?.focus({ preventScroll: true })
+                }}
               >
                 {localResult
                   ? attempt.isPending
