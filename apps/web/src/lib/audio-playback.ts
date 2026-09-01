@@ -42,7 +42,11 @@ export function createAudioPlayback(
       stopped = true
       if (activePlayback === playback) activePlayback = undefined
       audio.pause()
-      audio.currentTime = 0
+      try {
+        audio.currentTime = 0
+      } catch {
+        // Mobile browsers can reject a seek before media metadata is ready.
+      }
       audio.src = ''
       onStop?.()
     },

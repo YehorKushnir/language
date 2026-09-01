@@ -156,15 +156,87 @@ describe('AudioButton', () => {
     })
     expect(audio.currentTime).toBe(20)
     expect(audio.play).toHaveBeenCalledTimes(2)
-    expect(audio.pause).toHaveBeenCalledOnce()
+    expect(audio.pause).not.toHaveBeenCalled()
 
     act(() => audioButtonRef.current?.pause())
-    expect(audio.pause).toHaveBeenCalledTimes(2)
+    expect(audio.pause).toHaveBeenCalledOnce()
 
     await act(async () => {
       audioButtonRef.current?.play()
       await Promise.resolve()
     })
     expect(audio.play).toHaveBeenCalledTimes(3)
+  })
+
+  it('applies an exact position after mobile metadata loads with an infinite duration', async () => {
+    const listeners = new Map<string, EventListener>()
+    let canSeek = false
+    let currentTime = 0
+    const audio = {
+      addEventListener: vi.fn((event: string, listener: EventListener) => {
+        listeners.set(event, listener)
+      }),
+      get currentTime() {
+        return currentTime
+      },
+      set currentTime(value: number) {
+        if (canSeek) currentTime = value
+      },
+      duration: Number.POSITIVE_INFINITY,
+      pause: vi.fn(),
+      play: vi.fn().mockResolvedValue(undefined),
+      playbackRate: 1,
+      preload: '',
+      get readyState() {
+        return canSeek ? 2 : 0
+      },
+      src: '',
+    }
+    const AudioConstructor = vi.fn(() => audio)
+    vi.stubGlobal('Audio', AudioConstructor)
+    const onPlaybackProgress = vi.fn()
+    const audioButtonRef = createRef<AudioButtonHandle>()
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+
+    await act(async () => {
+      root?.render(
+        <AudioButton
+          ref={audioButtonRef}
+          onPlaybackProgress={onPlaybackProgress}
+          renderControl={false}
+          src="/api/v1/media/audio/text.mp3"
+        />,
+      )
+    })
+    await act(async () => {
+      audioButtonRef.current?.playFrom(32)
+      await Promise.resolve()
+    })
+    expect(currentTime).toBe(0)
+    expect(audio.play).toHaveBeenCalledOnce()
+
+    act(() => listeners.get('loadedmetadata')?.(new Event('loadedmetadata')))
+    expect(currentTime).toBe(0)
+
+    canSeek = true
+    act(() => listeners.get('canplay')?.(new Event('canplay')))
+
+    expect(currentTime).toBe(32)
+    expect(onPlaybackProgress).toHaveBeenLastCalledWith({
+      currentTime: 32,
+      duration: Number.POSITIVE_INFINITY,
+    })
+
+    await act(async () => {
+      audioButtonRef.current?.playFrom(64)
+      await Promise.resolve()
+    })
+
+    expect(currentTime).toBe(64)
+    expect(audio.play).toHaveBeenCalledTimes(2)
+    expect(audio.pause).not.toHaveBeenCalled()
+    expect(AudioConstructor).toHaveBeenCalledOnce()
   })
 })
