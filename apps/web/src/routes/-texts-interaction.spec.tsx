@@ -40,7 +40,7 @@ describe('interactive text audio', () => {
     container = undefined
   })
 
-  it('plays a sentence without turning word clicks into audio clicks', async () => {
+  it('plays the current sentence on a mobile word tap', async () => {
     const body = 'Minä olen opiskelija.'
     const onPlaySegment = vi.fn()
     container = document.createElement('div')
@@ -67,8 +67,9 @@ describe('interactive text audio', () => {
         ?.querySelector<HTMLButtonElement>('[data-word-trigger]')
         ?.click()
     })
-    expect(onPlaySegment).not.toHaveBeenCalled()
-    expect(document.body.textContent).toContain('Начальная форма')
+    expect(onPlaySegment).toHaveBeenCalledOnce()
+    expect(onPlaySegment).toHaveBeenCalledWith(0)
+    expect(document.querySelector('[data-slot="popover-content"]')).toBeNull()
 
     act(() => {
       container
@@ -117,7 +118,8 @@ describe('interactive text audio', () => {
     ).not.toContain('bg-primary')
   })
 
-  it('keeps only one mobile word translation open', async () => {
+  it('keeps only one mobile long-press translation open', async () => {
+    vi.useFakeTimers()
     const body = 'Minä olen.'
     container = document.createElement('div')
     document.body.append(container)
@@ -141,10 +143,12 @@ describe('interactive text audio', () => {
       )
     })
 
-    await act(async () => {
-      container
-        ?.querySelectorAll<HTMLButtonElement>('[data-word-trigger]')[0]
-        ?.click()
+    act(() => {
+      longPress(
+        container?.querySelectorAll<HTMLButtonElement>(
+          '[data-word-trigger]',
+        )[0],
+      )
     })
     expect(
       document.querySelectorAll('[data-slot="popover-content"]'),
@@ -153,10 +157,12 @@ describe('interactive text audio', () => {
       document.querySelector('[data-slot="popover-content"]')?.textContent,
     ).toContain('первый перевод')
 
-    await act(async () => {
-      container
-        ?.querySelectorAll<HTMLButtonElement>('[data-word-trigger]')[1]
-        ?.click()
+    act(() => {
+      longPress(
+        container?.querySelectorAll<HTMLButtonElement>(
+          '[data-word-trigger]',
+        )[1],
+      )
     })
     expect(
       Array.from(
@@ -175,7 +181,7 @@ describe('interactive text audio', () => {
     ).not.toContain('первый перевод')
   })
 
-  it('starts sentence audio on a long press over a mobile word', async () => {
+  it('opens a translation without audio on a mobile word long press', async () => {
     vi.useFakeTimers()
     const body = 'Minä olen opiskelija.'
     const onPlaySegment = vi.fn()
@@ -208,13 +214,11 @@ describe('interactive text audio', () => {
       word?.click()
     })
 
-    expect(onPlaySegment).toHaveBeenCalledOnce()
-    expect(onPlaySegment).toHaveBeenCalledWith(0)
-    expect(document.querySelector('[data-slot="popover-content"]')).toBeNull()
+    expect(onPlaySegment).not.toHaveBeenCalled()
+    expect(document.body.textContent).toContain('Начальная форма')
   })
 
-  it('seeks on every mobile long press while another sentence is active', async () => {
-    vi.useFakeTimers()
+  it('seeks on every mobile word tap while another sentence is active', async () => {
     const body = 'Minä olen opiskelija. Sinä olet kotona.'
     const onPlaySegment = vi.fn()
     container = document.createElement('div')
@@ -236,15 +240,12 @@ describe('interactive text audio', () => {
       )
     })
 
-    const sentence = container?.querySelector<HTMLElement>(
-      '[data-sentence-index="0"]',
+    const word = container?.querySelector<HTMLButtonElement>(
+      '[data-word-trigger]',
     )
     for (let index = 0; index < 2; index += 1) {
       act(() => {
-        sentence?.dispatchEvent(new Event('pointerdown', { bubbles: true }))
-        vi.advanceTimersByTime(450)
-        sentence?.dispatchEvent(new Event('pointerup', { bubbles: true }))
-        sentence?.click()
+        word?.click()
       })
     }
 
@@ -298,6 +299,17 @@ describe('interactive text audio', () => {
     ).toBe('hover-card-trigger')
   })
 })
+
+function longPress(word: HTMLButtonElement | undefined) {
+  word?.dispatchEvent(
+    new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+  )
+  vi.advanceTimersByTime(450)
+  word?.dispatchEvent(
+    new MouseEvent('pointerup', { bubbles: true, clientX: 10, clientY: 10 }),
+  )
+  word?.click()
+}
 
 function token(
   surface: string,

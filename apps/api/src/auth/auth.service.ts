@@ -19,13 +19,15 @@ export class AuthService {
     @Inject(PasswordResetMailer) resetMailer: PasswordResetMailer,
   ) {
     const configuredSecret = config.get<string>('BETTER_AUTH_SECRET')
+    const googleClientId = config.get<string>('GOOGLE_CLIENT_ID')
+    const googleClientSecret = config.get<string>('GOOGLE_CLIENT_SECRET')
 
     if (config.get('NODE_ENV') === 'production' && !configuredSecret) {
       throw new Error('BETTER_AUTH_SECRET is required in production')
     }
 
     this.auth = betterAuth({
-      appName: 'Language Learning',
+      appName: 'Morpho',
       basePath: this.basePath,
       baseURL: config.get<string>('BETTER_AUTH_URL', 'http://localhost:3000'),
       database: prismaAdapter(prisma, {
@@ -44,10 +46,25 @@ export class AuthService {
         enabled: true,
         resetPasswordTokenExpiresIn: 60 * 60,
         revokeSessionsOnPasswordReset: true,
-        sendResetPassword: async ({ user, url }) => {
-          await resetMailer.send(user.email, url)
+        sendResetPassword: ({ user, url }) => {
+          // Keep the public response timing independent from the SMTP relay.
+          // The mailer logs delivery failures without exposing the reset link.
+          void resetMailer
+            .send({ email: user.email, name: user.name }, url)
+            .catch(() => undefined)
+          return Promise.resolve()
         },
       },
+      socialProviders:
+        googleClientId && googleClientSecret
+          ? {
+              google: {
+                clientId: googleClientId,
+                clientSecret: googleClientSecret,
+                prompt: 'select_account',
+              },
+            }
+          : {},
       rateLimit: {
         enabled: config.get('NODE_ENV') === 'production',
         window: 60,

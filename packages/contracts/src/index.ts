@@ -324,6 +324,7 @@ export interface UserVocabularyItemResponse extends LessonVocabularyItemResponse
   memory: {
     state: ReviewMemoryState
     status: VocabularyKnowledgeStatus
+    progressPercent: number
     dueAt: string | null
     isDue: boolean
     repetitions: number
@@ -350,6 +351,7 @@ export interface UserGrammarItemResponse {
   memory: {
     state: ReviewMemoryState
     status: VocabularyKnowledgeStatus
+    progressPercent: number
     dueAt: string | null
     isDue: boolean
     repetitions: number

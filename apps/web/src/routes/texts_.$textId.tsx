@@ -243,29 +243,10 @@ export function InteractiveText({
   let tokenIndex = 0
   const hasFinePointer = useFinePointer()
   const [openWordPosition, setOpenWordPosition] = useState<number | null>(null)
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const longPressTriggeredSegment = useRef<number | null>(null)
-  const pointerStart = useRef({ x: 0, y: 0 })
-
-  const clearLongPressTimer = () => {
-    if (longPressTimer.current !== null) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
-  }
 
   useEffect(() => {
     setOpenWordPosition(null)
-    longPressTriggeredSegment.current = null
-    clearLongPressTimer()
   }, [body])
-
-  useEffect(
-    () => () => {
-      clearLongPressTimer()
-    },
-    [],
-  )
 
   return (
     <>
@@ -295,11 +276,6 @@ export function InteractiveText({
               data-audio-active={isActive ? 'true' : undefined}
               data-sentence-index={segmentIndex}
               onClick={(event) => {
-                if (longPressTriggeredSegment.current === segmentIndex) {
-                  longPressTriggeredSegment.current = null
-                  event.preventDefault()
-                  return
-                }
                 if (
                   event.target instanceof Element &&
                   event.target.closest('[data-word-trigger]')
@@ -312,37 +288,6 @@ export function InteractiveText({
               onContextMenu={(event) => {
                 if (!hasFinePointer) event.preventDefault()
               }}
-              onPointerCancel={() => {
-                clearLongPressTimer()
-                longPressTriggeredSegment.current = null
-              }}
-              onPointerDown={(event) => {
-                if (hasFinePointer) return
-                clearLongPressTimer()
-                longPressTriggeredSegment.current = null
-                pointerStart.current = {
-                  x: event.clientX,
-                  y: event.clientY,
-                }
-                longPressTimer.current = setTimeout(() => {
-                  longPressTimer.current = null
-                  longPressTriggeredSegment.current = segmentIndex
-                  setOpenWordPosition(null)
-                  onPlaySegment(segmentIndex)
-                }, MOBILE_LONG_PRESS_MS)
-              }}
-              onPointerMove={(event) => {
-                if (hasFinePointer || longPressTimer.current === null) return
-                if (
-                  Math.abs(event.clientX - pointerStart.current.x) >
-                    MOBILE_LONG_PRESS_MOVE_TOLERANCE ||
-                  Math.abs(event.clientY - pointerStart.current.y) >
-                    MOBILE_LONG_PRESS_MOVE_TOLERANCE
-                ) {
-                  clearLongPressTimer()
-                }
-              }}
-              onPointerUp={clearLongPressTimer}
             >
               <InteractiveTextSegment
                 body={body}
@@ -354,13 +299,6 @@ export function InteractiveText({
                 hasFinePointer={hasFinePointer}
                 openWordPosition={openWordPosition}
                 onAdd={onAdd}
-                onConsumeLongPress={() => {
-                  if (longPressTriggeredSegment.current !== segmentIndex) {
-                    return false
-                  }
-                  longPressTriggeredSegment.current = null
-                  return true
-                }}
                 onOpenWord={(position, open) => {
                   setOpenWordPosition((currentPosition) =>
                     open
@@ -394,7 +332,6 @@ function InteractiveTextSegment({
   hasFinePointer,
   openWordPosition,
   onAdd,
-  onConsumeLongPress,
   onOpenWord,
   onPlaySegment,
 }: {
@@ -407,7 +344,6 @@ function InteractiveTextSegment({
   hasFinePointer: boolean
   openWordPosition: number | null
   onAdd: (itemId: string) => void
-  onConsumeLongPress: () => boolean
   onOpenWord: (position: number, open: boolean) => void
   onPlaySegment: () => void
 }) {
@@ -429,7 +365,6 @@ function InteractiveTextSegment({
               open={openWordPosition === token.position}
               token={token}
               onAdd={onAdd}
-              onConsumeLongPress={onConsumeLongPress}
               onOpenChange={(open) => onOpenWord(token.position, open)}
               onPlaySegment={onPlaySegment}
             />
@@ -451,7 +386,6 @@ function InteractiveWord({
   open,
   token,
   onAdd,
-  onConsumeLongPress,
   onOpenChange,
   onPlaySegment,
 }: {
@@ -461,11 +395,27 @@ function InteractiveWord({
   open: boolean
   token: PreparedTextTokenResponse
   onAdd: (itemId: string) => void
-  onConsumeLongPress: () => boolean
   onOpenChange: (open: boolean) => void
   onPlaySegment: () => void
 }) {
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressTriggered = useRef(false)
+  const pointerStart = useRef({ x: 0, y: 0 })
   const translation = localizedText(token.translation)
+
+  const clearLongPressTimer = () => {
+    if (longPressTimer.current === null) return
+    clearTimeout(longPressTimer.current)
+    longPressTimer.current = null
+  }
+
+  useEffect(
+    () => () => {
+      clearLongPressTimer()
+    },
+    [],
+  )
+
   const trigger = (
     <button
       type="button"
@@ -479,12 +429,43 @@ function InteractiveWord({
           return
         }
         event.preventDefault()
-        if (onConsumeLongPress()) {
-          onOpenChange(false)
+        if (longPressTriggered.current) {
+          longPressTriggered.current = false
           return
         }
-        onOpenChange(!open)
+        onOpenChange(false)
+        onPlaySegment()
       }}
+      onContextMenu={(event) => {
+        if (!hasFinePointer) event.preventDefault()
+      }}
+      onPointerCancel={() => {
+        clearLongPressTimer()
+        longPressTriggered.current = false
+      }}
+      onPointerDown={(event) => {
+        if (hasFinePointer) return
+        clearLongPressTimer()
+        longPressTriggered.current = false
+        pointerStart.current = { x: event.clientX, y: event.clientY }
+        longPressTimer.current = setTimeout(() => {
+          longPressTimer.current = null
+          longPressTriggered.current = true
+          onOpenChange(true)
+        }, MOBILE_LONG_PRESS_MS)
+      }}
+      onPointerMove={(event) => {
+        if (hasFinePointer || longPressTimer.current === null) return
+        if (
+          Math.abs(event.clientX - pointerStart.current.x) >
+            MOBILE_LONG_PRESS_MOVE_TOLERANCE ||
+          Math.abs(event.clientY - pointerStart.current.y) >
+            MOBILE_LONG_PRESS_MOVE_TOLERANCE
+        ) {
+          clearLongPressTimer()
+        }
+      }}
+      onPointerUp={clearLongPressTimer}
     >
       {token.surface}
     </button>
@@ -505,6 +486,7 @@ function InteractiveWord({
         <HoverCardContent
           align="start"
           className="w-[min(20rem,calc(100vw-2rem))] p-4"
+          collisionPadding={{ top: 16, right: 16, bottom: 136, left: 16 }}
           sideOffset={8}
         >
           {content}
@@ -519,6 +501,7 @@ function InteractiveWord({
       <PopoverContent
         align="start"
         className="w-[min(20rem,calc(100vw-2rem))] p-4"
+        collisionPadding={{ top: 16, right: 16, bottom: 136, left: 16 }}
         onCloseAutoFocus={(event) => event.preventDefault()}
         sideOffset={8}
       >
@@ -549,7 +532,7 @@ function TextInteractionHint() {
 
   return hasFinePointer
     ? 'Наведи на слово, чтобы увидеть перевод. Нажми на слово, чтобы озвучить его предложение.'
-    : 'Нажми на слово, чтобы увидеть перевод. Удерживай предложение в любом месте, чтобы начать аудио с него.'
+    : 'Нажми на слово, чтобы озвучить его предложение. Удерживай слово, чтобы увидеть перевод.'
 }
 
 function WordTooltip({

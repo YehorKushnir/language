@@ -79,6 +79,13 @@ export function validateEnvironment(
   if (hasSmtpUser !== hasSmtpPassword) {
     throw new Error('SMTP_USER and SMTP_PASSWORD must be provided together')
   }
+  const hasGoogleClientId = hasText(environment.GOOGLE_CLIENT_ID)
+  const hasGoogleClientSecret = hasText(environment.GOOGLE_CLIENT_SECRET)
+  if (hasGoogleClientId !== hasGoogleClientSecret) {
+    throw new Error(
+      'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be provided together',
+    )
+  }
 
   if (environment.NODE_ENV !== 'production') return result
 
@@ -87,6 +94,8 @@ export function validateEnvironment(
     'WEB_ORIGIN',
     'BETTER_AUTH_URL',
     'BETTER_AUTH_SECRET',
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET',
     'SMTP_HOST',
     'MAIL_FROM',
   ] as const

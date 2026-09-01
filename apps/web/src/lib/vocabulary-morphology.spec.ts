@@ -248,6 +248,7 @@ function vocabularyItem(input: {
     memory: {
       state: 'LEARNING',
       status: 'LEARNING',
+      progressPercent: 0,
       dueAt: null,
       isDue: false,
       repetitions: 0,

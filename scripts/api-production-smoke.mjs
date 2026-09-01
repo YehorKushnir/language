@@ -16,6 +16,8 @@ const child = spawn(process.execPath, ['apps/api/dist/main.js'], {
     BETTER_AUTH_SECRET:
       process.env.BETTER_AUTH_SECRET ??
       'production-smoke-secret-with-at-least-32-characters',
+    GOOGLE_CLIENT_ID: 'production-smoke.apps.googleusercontent.com',
+    GOOGLE_CLIENT_SECRET: 'production-smoke-google-secret',
     SMTP_HOST: '127.0.0.1',
     SMTP_PORT: '2525',
     MAIL_FROM: 'smoke@example.test',

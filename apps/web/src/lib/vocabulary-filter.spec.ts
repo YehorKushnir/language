@@ -34,6 +34,7 @@ const item: UserVocabularyItemResponse = {
   memory: {
     state: 'RELEARNING',
     status: 'LEARNING',
+    progressPercent: 12,
     dueAt: '2026-08-23T00:00:00.000Z',
     isDue: true,
     repetitions: 2,
@@ -54,6 +55,7 @@ const grammarItem: UserGrammarItemResponse = {
   memory: {
     state: 'RELEARNING',
     status: 'LEARNING',
+    progressPercent: 5,
     dueAt: '2026-08-23T00:00:00.000Z',
     isDue: true,
     repetitions: 1,

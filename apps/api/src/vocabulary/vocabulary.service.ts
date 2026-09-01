@@ -11,6 +11,7 @@ import {
 import {
   changeWordMemoryStatus,
   createInitialMemory,
+  getMemoryProgressPercent,
   isMemoryLearned,
   recordReview,
 } from '@language/domain'
@@ -181,6 +182,9 @@ export class VocabularyService {
               status: isMemoryLearned(toReviewMemorySnapshot(memory))
                 ? 'LEARNED'
                 : 'LEARNING',
+              progressPercent: getMemoryProgressPercent(
+                toReviewMemorySnapshot(memory),
+              ),
               dueAt: memory.dueAt.toISOString(),
               isDue: memory.dueAt <= now,
               repetitions: memory.repetitions,
@@ -226,6 +230,9 @@ export class VocabularyService {
             status: isMemoryLearned(toReviewMemorySnapshot(memory))
               ? 'LEARNED'
               : 'LEARNING',
+            progressPercent: getMemoryProgressPercent(
+              toReviewMemorySnapshot(memory),
+            ),
             dueAt: memory.dueAt.toISOString(),
             isDue: memory.dueAt <= now,
             repetitions: memory.repetitions,

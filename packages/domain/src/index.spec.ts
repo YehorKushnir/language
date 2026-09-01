@@ -7,6 +7,7 @@ import {
   checkStructuredAnswer,
   checkStructuredAnswerItems,
   createInitialMemory,
+  getMemoryProgressPercent,
   isMemoryLearned,
   isReviewDue,
   normalizeExactAnswer,
@@ -14,6 +15,43 @@ import {
   scheduleReview,
   type UserMemory,
 } from './index.js'
+
+describe('memory progress', () => {
+  const baseMemory = {
+    difficulty: 5,
+    stability: 1,
+    state: 'REVIEW' as const,
+    dueAt: new Date('2026-08-31T00:00:00.000Z'),
+    lastReviewAt: new Date('2026-08-01T00:00:00.000Z'),
+    elapsedDays: 0,
+    scheduledDays: 0,
+    learningSteps: 0,
+    repetitions: 1,
+    lapses: 0,
+  }
+
+  it.each([
+    [0, 0],
+    [1, 2],
+    [30, 50],
+    [60, 99],
+    [120, 99],
+  ])('maps a %d-day interval to %d%% before confirmation', (days, percent) => {
+    expect(
+      getMemoryProgressPercent({ ...baseMemory, scheduledDays: days }),
+    ).toBe(percent)
+  })
+
+  it('returns 100% only after a successful review following 60 days', () => {
+    expect(
+      getMemoryProgressPercent({
+        ...baseMemory,
+        elapsedDays: 60,
+        scheduledDays: 120,
+      }),
+    ).toBe(100)
+  })
+})
 
 const memory: UserMemory = {
   userId: 'user.local',

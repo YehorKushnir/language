@@ -116,6 +116,24 @@ export function isMemoryLearned(memory: ReviewMemorySnapshot): boolean {
   )
 }
 
+/**
+ * Turns the current review interval into user-facing learning progress.
+ * A 60-day interval is the maturity target, but 100% is reserved for a
+ * successful scheduled review after that interval has actually elapsed.
+ */
+export function getMemoryProgressPercent(memory: ReviewMemorySnapshot): number {
+  if (isMemoryLearned(memory)) return 100
+  if (memory.repetitions === 0 || memory.scheduledDays <= 0) return 0
+
+  return Math.min(
+    99,
+    Math.max(
+      1,
+      Math.round((memory.scheduledDays / KNOWN_REVIEW_INTERVAL_DAYS) * 100),
+    ),
+  )
+}
+
 export function changeWordMemoryStatus(
   memory: ReviewMemorySnapshot,
   status: WordMemoryStatus,

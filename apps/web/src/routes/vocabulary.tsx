@@ -72,16 +72,6 @@ interface VocabularySearch {
 
 type VocabularySection = 'words' | 'grammar'
 
-const stateLabels: Record<VocabularyKnowledgeStatus, string> = {
-  LEARNING: 'Изучается',
-  LEARNED: 'Выучено',
-}
-
-const stateClasses: Record<VocabularyKnowledgeStatus, string> = {
-  LEARNING: 'border-primary/20 bg-primary/10 text-primary',
-  LEARNED: 'border-primary/20 bg-primary/12 text-primary',
-}
-
 function VocabularyPage() {
   const queryClient = useQueryClient()
   const searchParams = Route.useSearch()
@@ -342,7 +332,7 @@ function VocabularyList({
       <div className="hidden grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto_1.25rem] gap-5 bg-muted/35 px-4 py-2 text-xs font-medium text-muted-foreground sm:grid">
         <span>Слово</span>
         <span>Перевод</span>
-        <span>Статус</span>
+        <span>Прогресс</span>
         <span className="sr-only">Раскрыть</span>
       </div>
       <ul className="grid gap-0.5 p-1">
@@ -375,12 +365,7 @@ function VocabularyList({
                   {localizedText(item.gloss)}
                 </span>
                 <span className="flex items-center justify-end">
-                  <Badge
-                    className={stateClasses[item.memory.status]}
-                    variant="outline"
-                  >
-                    {stateLabels[item.memory.status]}
-                  </Badge>
+                  <MemoryProgress value={item.memory.progressPercent} />
                 </span>
                 <ChevronDownIcon
                   className={cn(
@@ -421,7 +406,7 @@ function GrammarList({ items }: { items: UserGrammarItemResponse[] }) {
       <div className="hidden grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)_auto] gap-5 bg-muted/35 px-4 py-2 text-xs font-medium text-muted-foreground sm:grid">
         <span>Конструкция</span>
         <span>Что нужно знать</span>
-        <span>Статус</span>
+        <span>Прогресс</span>
       </div>
       <ul className="grid gap-0.5 p-1">
         {items.map((item) => (
@@ -444,17 +429,34 @@ function GrammarList({ items }: { items: UserGrammarItemResponse[] }) {
                 : 'Описание появится в материале урока.'}
             </p>
             <span className="flex items-center justify-end">
-              <Badge
-                className={stateClasses[item.memory.status]}
-                variant="outline"
-              >
-                {stateLabels[item.memory.status]}
-              </Badge>
+              <MemoryProgress value={item.memory.progressPercent} />
             </span>
           </li>
         ))}
       </ul>
     </section>
+  )
+}
+
+function MemoryProgress({ value }: { value: number }) {
+  return (
+    <span
+      aria-label={`Прогресс изучения: ${value}%`}
+      className="flex min-w-24 items-center justify-end gap-2"
+    >
+      <span
+        aria-hidden="true"
+        className="h-1.5 w-12 overflow-hidden rounded-full bg-primary/10"
+      >
+        <span
+          className="block h-full rounded-full bg-primary transition-[width] duration-300"
+          style={{ width: `${value}%` }}
+        />
+      </span>
+      <span className="min-w-9 text-right text-sm font-semibold tabular-nums text-primary">
+        {value}%
+      </span>
+    </span>
   )
 }
 

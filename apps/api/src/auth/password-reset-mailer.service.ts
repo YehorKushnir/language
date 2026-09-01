@@ -1,9 +1,21 @@
-import { Inject, Injectable, Logger } from '@nestjs/common'
+import {
+  Inject,
+  Injectable,
+  Logger,
+  type OnModuleDestroy,
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import nodemailer, { type Transporter } from 'nodemailer'
 
+import { buildPasswordResetEmail } from './password-reset-email'
+
+interface PasswordResetRecipient {
+  email: string
+  name?: string | null
+}
+
 @Injectable()
-export class PasswordResetMailer {
+export class PasswordResetMailer implements OnModuleDestroy {
   private readonly logger = new Logger(PasswordResetMailer.name)
   private readonly from: string
   private readonly transport: Transporter | null
@@ -27,42 +39,52 @@ export class PasswordResetMailer {
       port: config.get<number>('SMTP_PORT', 587),
       secure: config.get<boolean>('SMTP_SECURE', false),
       auth: user && password ? { user, pass: password } : undefined,
+      pool: true,
+      maxConnections: 5,
+      maxMessages: 100,
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 30_000,
     })
   }
 
-  async send(email: string, resetUrl: string): Promise<void> {
+  onModuleDestroy(): void {
+    this.transport?.close()
+  }
+
+  async send(
+    recipient: PasswordResetRecipient,
+    resetUrl: string,
+  ): Promise<void> {
     if (!this.transport) {
       this.logger.warn(
         JSON.stringify({
           event: 'password_reset_development_link',
-          email,
+          email: recipient.email,
           resetUrl,
         }),
       )
       return
     }
 
-    await this.transport.sendMail({
-      from: this.from,
-      to: email,
-      subject: 'Восстановление пароля',
-      text: [
-        'Вы запросили восстановление пароля.',
-        '',
-        `Откройте ссылку в течение часа: ${resetUrl}`,
-        '',
-        'Если это были не вы, просто проигнорируйте письмо.',
-      ].join('\n'),
-      html: `<p>Вы запросили восстановление пароля.</p><p><a href="${escapeHtml(resetUrl)}">Задать новый пароль</a></p><p>Ссылка действует один час. Если это были не вы, просто проигнорируйте письмо.</p>`,
+    const message = buildPasswordResetEmail({
+      name: recipient.name,
+      resetUrl,
     })
-  }
-}
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
+    try {
+      await this.transport.sendMail({
+        from: this.from,
+        to: recipient.email,
+        ...message,
+        headers: { 'X-Auto-Response-Suppress': 'All' },
+      })
+    } catch (error) {
+      this.logger.error(
+        JSON.stringify({ event: 'password_reset_delivery_failed' }),
+        error instanceof Error ? error.stack : undefined,
+      )
+      throw error
+    }
+  }
 }

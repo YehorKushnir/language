@@ -47,6 +47,8 @@ IMAGE_TAG=<последний успешно развернутый commit SHA>
 EDGE_NETWORK=framed_default
 POSTGRES_PASSWORD=<openssl rand -hex 32>
 BETTER_AUTH_SECRET=<другой openssl rand -hex 32>
+GOOGLE_CLIENT_ID=<OAuth 2.0 Web Client ID>
+GOOGLE_CLIENT_SECRET=<OAuth 2.0 Client Secret>
 SMTP_HOST=<smtp relay>
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -61,6 +63,11 @@ GOOGLE_TTS_CREDENTIALS_FILE=/secure/path/google-tts-service-account.json
 AUDIO_STORAGE_PROVIDER=local
 AUDIO_LOCAL_DIRECTORY=/app/.data
 ```
+
+В Google Cloud OAuth client нужно добавить redirect URI
+`https://morpho-learning.duckdns.org/api/v1/auth/callback/google`. Для
+локальной разработки используется
+`http://localhost:3000/api/v1/auth/callback/google`.
 
 Проверка env и Compose не раскрывает значения:
 

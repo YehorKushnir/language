@@ -9,6 +9,8 @@ const productionEnvironment = {
   WEB_ORIGIN: 'https://learn.example.com',
   BETTER_AUTH_URL: 'https://api.example.com',
   BETTER_AUTH_SECRET: 'a-unique-secret-with-more-than-32-characters',
+  GOOGLE_CLIENT_ID: 'google-client-id.apps.googleusercontent.com',
+  GOOGLE_CLIENT_SECRET: 'google-client-secret',
   SMTP_HOST: 'smtp.example.com',
   SMTP_PORT: '587',
   MAIL_FROM: 'Language Learning <hello@example.com>',
@@ -86,6 +88,15 @@ describe('validateEnvironment', () => {
     expect(
       validateEnvironment({ SMTP_PORT: '465', SMTP_SECURE: 'true' }),
     ).toMatchObject({ SMTP_PORT: 465, SMTP_SECURE: true })
+  })
+
+  it('requires both Google OAuth credentials together', () => {
+    expect(() =>
+      validateEnvironment({ GOOGLE_CLIENT_ID: 'client-id' }),
+    ).toThrow(/GOOGLE_CLIENT_SECRET/u)
+    expect(() =>
+      validateEnvironment({ GOOGLE_CLIENT_SECRET: 'client-secret' }),
+    ).toThrow(/GOOGLE_CLIENT_ID/u)
   })
 
   it('accepts a complete production environment', () => {

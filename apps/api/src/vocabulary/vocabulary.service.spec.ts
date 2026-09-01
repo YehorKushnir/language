@@ -153,6 +153,7 @@ describe('VocabularyService', () => {
           memory: {
             state: MemoryState.REVIEW,
             status: 'LEARNED',
+            progressPercent: 100,
             dueAt: '2020-01-01T00:00:00.000Z',
             isDue: true,
             repetitions: 2,
@@ -253,6 +254,7 @@ describe('VocabularyService', () => {
           memory: {
             state: MemoryState.RELEARNING,
             status: 'LEARNING',
+            progressPercent: 0,
             dueAt: '2020-01-01T00:00:00.000Z',
             isDue: true,
             repetitions: 3,

@@ -11,6 +11,7 @@
 - `WEB_ORIGIN` — HTTPS-origin frontend без пути;
 - `BETTER_AUTH_URL` — HTTPS-origin API без пути;
 - `BETTER_AUTH_SECRET` — отдельный случайный секрет длиной не менее 32 символов;
+- `GOOGLE_CLIENT_ID` и `GOOGLE_CLIENT_SECRET` — данные OAuth 2.0 Web Client;
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` и `MAIL_FROM` — SMTP-доставка писем восстановления пароля; `SMTP_USER` и `SMTP_PASSWORD` указываются вместе, если relay требует авторизацию;
 - `API_PORT` и `API_HOST`;
 - `TRUST_PROXY_HOPS` — число доверенных reverse-proxy между клиентом и API, обычно `1`; оставлять `0`, если API доступен напрямую;

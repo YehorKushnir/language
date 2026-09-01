@@ -1046,6 +1046,65 @@ test('password recovery keeps account existence private', async ({ page }) => {
   await expectAccessible(page)
 })
 
+test('account settings update profile and password while hiding destructive actions', async ({
+  page,
+}) => {
+  const email = await signUpLearner(page, 'Settings learner')
+  await page.goto('/settings')
+
+  await expect(page.getByText('Выгрузить данные')).toHaveCount(0)
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Удалить аккаунт' }),
+  ).toBeHidden()
+
+  await page.getByLabel('Имя').fill('Обновлённое имя')
+  await page.getByRole('button', { name: 'Сохранить имя' }).click()
+  await expect(page.getByText('Сохранено').first()).toBeVisible()
+
+  await page.getByLabel('Текущий пароль').fill('e2e-password-2026')
+  await page
+    .getByLabel('Новый пароль', { exact: true })
+    .fill('e2e-password-updated-2026')
+  await page
+    .getByLabel('Повторите новый пароль')
+    .fill('e2e-password-updated-2026')
+  await page.getByRole('button', { name: 'Изменить пароль' }).click()
+  await expect(page.getByText('Сохранено').last()).toBeVisible()
+
+  await page.getByText('Дополнительные действия').click()
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Удалить аккаунт' }),
+  ).toBeVisible()
+  await expect(page.getByLabel('Подтверждение удаления')).toBeVisible()
+
+  await page.locator('main').getByRole('button', { name: 'Выйти' }).click()
+  await page.goto('/sign-in')
+  await page.getByLabel('Email').fill(email)
+  await page
+    .getByLabel('Пароль', { exact: true })
+    .fill('e2e-password-updated-2026')
+  await page.getByRole('button', { name: 'Войти', exact: true }).click()
+  await expect(page).toHaveURL(/\/lessons\/?$/u)
+  await expect(page.getByText('Обновлённое имя', { exact: true })).toBeVisible()
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/settings')
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Настройки' }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Удалить аккаунт' }),
+  ).toBeHidden()
+  expect(
+    await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
+    ),
+  ).toBe(true)
+  await expectAccessible(page)
+})
+
 test('new learner is not sent into an empty review session', async ({
   page,
 }) => {

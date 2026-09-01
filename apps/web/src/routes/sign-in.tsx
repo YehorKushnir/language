@@ -3,6 +3,7 @@ import { AlertCircleIcon, LogInIcon } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 
 import { PageShell } from '@/components/page-shell'
+import { GoogleAuthButton } from '@/components/google-auth-button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -27,6 +28,15 @@ function SignInPage() {
   const session = authClient.useSession()
   const [error, setError] = useState<string>()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const oauthError = new URLSearchParams(window.location.search).get('error')
+  const visibleError =
+    error ??
+    (oauthError
+      ? authErrorMessage(
+          { code: oauthError.toUpperCase() },
+          'Вход через Google не завершён. Попробуйте снова.',
+        )
+      : undefined)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -96,12 +106,17 @@ function SignInPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="grid gap-5">
-            {error ? (
+            {visibleError ? (
               <Alert className="motion-feedback" variant="destructive">
                 <AlertCircleIcon />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{visibleError}</AlertDescription>
               </Alert>
             ) : null}
+            <GoogleAuthButton
+              errorCallbackURL="/sign-in"
+              label="Войти через Google"
+              onError={(message) => setError(message || undefined)}
+            />
             <div className="grid gap-2">
               <label className="text-sm font-medium" htmlFor="email">
                 Email
