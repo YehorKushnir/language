@@ -62,6 +62,7 @@ export const AudioButton = forwardRef<AudioButtonHandle, AudioButtonProps>(
   ) {
     const [state, setState] = useState<AudioPlaybackState>('idle')
     const playbackRef = useRef<AudioPlayback | null>(null)
+    const playbackRateRef = useRef(playbackRate)
     const operationRef = useRef(0)
 
     useEffect(
@@ -77,7 +78,14 @@ export const AudioButton = forwardRef<AudioButtonHandle, AudioButtonProps>(
       playbackRef.current?.stop()
       playbackRef.current = null
       setState('idle')
-    }, [playbackRate, src])
+    }, [src])
+
+    useEffect(() => {
+      playbackRateRef.current = playbackRate
+      if (playbackRef.current) {
+        playbackRef.current.audio.playbackRate = playbackRate
+      }
+    }, [playbackRate])
 
     useEffect(() => {
       onPlaybackStateChange?.(state)
@@ -85,7 +93,7 @@ export const AudioButton = forwardRef<AudioButtonHandle, AudioButtonProps>(
 
     function createPlayback(startTime: AudioStartTime = 0) {
       const playback = createAudioPlayback(src!, {
-        playbackRate,
+        playbackRate: playbackRateRef.current,
         onStop: () => {
           if (playbackRef.current !== playback) return
           playbackRef.current = null
@@ -175,32 +183,10 @@ export const AudioButton = forwardRef<AudioButtonHandle, AudioButtonProps>(
     function playFrom(startTime: AudioStartTime) {
       if (!src) return
       onActivate?.()
-      const existingPlayback = playbackRef.current
-      const playback = existingPlayback ?? createPlayback(startTime)
-      if (existingPlayback) {
-        const { audio } = playback
-        const seek = () => {
-          if (!Number.isFinite(audio.duration) || audio.duration <= 0) return
-          const requestedTime =
-            typeof startTime === 'function'
-              ? startTime(audio.duration)
-              : startTime
-          if (!Number.isFinite(requestedTime)) return
-          audio.currentTime = Math.min(
-            Math.max(requestedTime, 0),
-            Math.max(audio.duration - 0.01, 0),
-          )
-          onPlaybackProgress?.({
-            currentTime: audio.currentTime,
-            duration: audio.duration,
-          })
-        }
-        if (Number.isFinite(audio.duration) && audio.duration > 0) {
-          seek()
-        } else if (playbackRef.current === playback) {
-          audio.addEventListener('loadedmetadata', seek, { once: true })
-        }
-      }
+      operationRef.current += 1
+      playbackRef.current?.stop()
+      playbackRef.current = null
+      const playback = createPlayback(startTime)
       void startPlayback(playback)
     }
 

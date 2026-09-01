@@ -63,4 +63,17 @@ describe('reviewed exercise application', () => {
         ),
     ).toBe(false)
   })
+
+  it('accepts both common greetings in the lesson two sentence', () => {
+    const exercise = moduleOneLessons[1]?.exercises.find(
+      (candidate) =>
+        candidate.id === 'exercise.fi.present.common.third-plural-now.004',
+    )
+
+    expect(exercise?.acceptedVariants).toEqual([
+      'He sanovat hei.',
+      'He sanovat moi.',
+    ])
+    expect(exercise?.slots.at(-1)?.accepted).toEqual(['hei', 'moi'])
+  })
 })

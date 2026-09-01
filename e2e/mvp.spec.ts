@@ -707,6 +707,8 @@ test('learner can move through the first lesson with keyboard controls', async (
     ),
   ).toBe('fixed')
   const textAudioToggle = textAudioControls.locator('[data-text-audio-toggle]')
+  const playbackSpeed = textAudioControls.getByLabel('Скорость воспроизведения')
+  await expect(playbackSpeed).toHaveValue('1')
   await expect(textAudioToggle).toHaveAttribute('aria-label', 'Запустить аудио')
   await textAudioToggle.click()
   await expect(textAudioToggle).toHaveAttribute(
@@ -719,6 +721,12 @@ test('learner can move through the first lesson with keyboard controls', async (
   await expect(
     page.locator('[data-word-trigger][data-audio-active="true"]'),
   ).toHaveCount(0)
+  await playbackSpeed.selectOption('1.25')
+  await expect(playbackSpeed).toHaveValue('1.25')
+  await expect(textAudioToggle).toHaveAttribute(
+    'aria-label',
+    'Поставить аудио на паузу',
+  )
   await textAudioToggle.click()
   await expect(textAudioToggle).toHaveAttribute(
     'aria-label',

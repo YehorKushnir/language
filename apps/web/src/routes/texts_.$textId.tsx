@@ -86,6 +86,7 @@ function PreparedTextPage() {
     number | null
   >(null)
   const [audioState, setAudioState] = useState<AudioPlaybackState>('idle')
+  const [playbackRate, setPlaybackRate] = useState(1)
   const audioRef = useRef<AudioButtonHandle>(null)
   const playbackSegments = useMemo(
     () =>
@@ -153,6 +154,7 @@ function PreparedTextPage() {
         ref={audioRef}
         onPlaybackProgress={handlePlaybackProgress}
         onPlaybackStateChange={setAudioState}
+        playbackRate={playbackRate}
         renderControl={false}
         src={textData.audioUrl}
       />
@@ -178,6 +180,7 @@ function PreparedTextPage() {
       <TextAudioControls
         available={Boolean(textData.audioUrl)}
         currentSegmentIndex={currentSegmentIndex}
+        playbackRate={playbackRate}
         playbackState={audioState}
         segmentCount={playbackSegments.length}
         onNext={() =>
@@ -185,6 +188,7 @@ function PreparedTextPage() {
             Math.min(currentSegmentIndex + 1, playbackSegments.length - 1),
           )
         }
+        onPlaybackRateChange={setPlaybackRate}
         onToggle={() => {
           if (audioState === 'loading' || audioState === 'playing') {
             audioRef.current?.pause()

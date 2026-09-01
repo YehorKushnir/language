@@ -213,9 +213,9 @@ describe('interactive text audio', () => {
     expect(document.querySelector('[data-slot="popover-content"]')).toBeNull()
   })
 
-  it('starts audio on every mobile sentence long press', async () => {
+  it('seeks on every mobile long press while another sentence is active', async () => {
     vi.useFakeTimers()
-    const body = 'Minä olen opiskelija.'
+    const body = 'Minä olen opiskelija. Sinä olet kotona.'
     const onPlaySegment = vi.fn()
     container = document.createElement('div')
     document.body.append(container)
@@ -224,7 +224,7 @@ describe('interactive text audio', () => {
     await act(async () => {
       root?.render(
         <InteractiveText
-          activePlaybackSegment={null}
+          activePlaybackSegment={1}
           addingItemId={undefined}
           addErrorItemId={undefined}
           body={body}

@@ -710,7 +710,7 @@
         "id": "exercise.fi.present.common.third-plural-now.004",
         "prompt": "Они произносят «привет».",
         "targetText": "He sanovat hei.",
-        "acceptedVariants": ["He sanovat hei."]
+        "acceptedVariants": ["He sanovat hei.", "He sanovat moi."]
       },
       {
         "order": 42,

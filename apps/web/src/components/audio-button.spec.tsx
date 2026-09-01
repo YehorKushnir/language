@@ -36,7 +36,7 @@ describe('AudioButton', () => {
     vi.unstubAllGlobals()
   })
 
-  it('sets the requested client-side playback rate before playing', async () => {
+  it('changes the client-side playback rate without restarting audio', async () => {
     const listeners = new Map<string, EventListener>()
     const audio = {
       addEventListener: vi.fn((event: string, listener: EventListener) => {
@@ -84,6 +84,21 @@ describe('AudioButton', () => {
       currentTime: 5,
       duration: 20,
     })
+
+    await act(async () => {
+      root?.render(
+        <AudioButton
+          label="Медленно"
+          onPlaybackProgress={onPlaybackProgress}
+          playbackRate={1.25}
+          src="/api/v1/media/audio/test.mp3"
+        />,
+      )
+    })
+    expect(audio.playbackRate).toBe(1.25)
+    expect(audio.currentTime).toBe(5)
+    expect(audio.pause).not.toHaveBeenCalled()
+    expect(audio.play).toHaveBeenCalledOnce()
 
     act(() => container?.querySelector('button')?.click())
     expect(audio.pause).toHaveBeenCalledOnce()
@@ -135,13 +150,21 @@ describe('AudioButton', () => {
     expect(audio.currentTime).toBe(40)
     expect(audio.play).toHaveBeenCalledOnce()
 
-    act(() => audioButtonRef.current?.pause())
+    await act(async () => {
+      audioButtonRef.current?.playFrom((duration) => duration * 0.2)
+      await Promise.resolve()
+    })
+    expect(audio.currentTime).toBe(20)
+    expect(audio.play).toHaveBeenCalledTimes(2)
     expect(audio.pause).toHaveBeenCalledOnce()
+
+    act(() => audioButtonRef.current?.pause())
+    expect(audio.pause).toHaveBeenCalledTimes(2)
 
     await act(async () => {
       audioButtonRef.current?.play()
       await Promise.resolve()
     })
-    expect(audio.play).toHaveBeenCalledTimes(2)
+    expect(audio.play).toHaveBeenCalledTimes(3)
   })
 })
