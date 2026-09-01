@@ -14,7 +14,7 @@ import {
   LanguagesIcon,
   SearchIcon,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import { changeVocabularyMemoryStatus } from '@/api/language-api'
 import { courseQuery, userVocabularyQuery } from '@/api/queries'
@@ -76,6 +76,9 @@ type VocabularySection = 'words' | 'grammar'
 
 function VocabularyPage() {
   const queryClient = useQueryClient()
+  const previousWordMemory = useRef(
+    new Map<string, UserVocabularyItemResponse['memory']>(),
+  )
   const searchParams = Route.useSearch()
   const navigate = Route.useNavigate()
   const search = searchParams.q ?? ''
@@ -102,16 +105,44 @@ function VocabularyPage() {
         vocabularyQuery.queryKey,
       )
       if (previous) {
+        const currentMemory = previous.items.find(
+          (item) => item.itemId === itemId,
+        )?.memory
+        if (
+          status === 'KNOWN' &&
+          currentMemory &&
+          currentMemory.status !== 'LEARNED'
+        ) {
+          previousWordMemory.current.set(itemId, currentMemory)
+        }
+        const restoredMemory =
+          status === 'LEARNING'
+            ? previousWordMemory.current.get(itemId)
+            : undefined
         queryClient.setQueryData(
           vocabularyQuery.queryKey,
-          applyOptimisticWordMemoryStatus(previous, itemId, status),
+          applyOptimisticWordMemoryStatus(
+            previous,
+            itemId,
+            status,
+            new Date(),
+            restoredMemory,
+          ),
         )
       }
       return { previous }
     },
-    onError: (_error, _variables, context) => {
+    onError: (_error, variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(vocabularyQuery.queryKey, context.previous)
+      }
+      if (variables.status === 'KNOWN') {
+        previousWordMemory.current.delete(variables.itemId)
+      }
+    },
+    onSuccess: (_data, variables) => {
+      if (variables.status === 'LEARNING') {
+        previousWordMemory.current.delete(variables.itemId)
       }
     },
     onSettled: () =>

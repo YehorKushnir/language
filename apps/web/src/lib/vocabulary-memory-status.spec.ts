@@ -27,7 +27,7 @@ describe('optimistic vocabulary memory status', () => {
     expect(changed.dueCount).toBe(0)
   })
 
-  it('returns a manually reset word to zero-percent learning', () => {
+  it('restores the progress that preceded a manual known status', () => {
     const learned = applyOptimisticWordMemoryStatus(
       vocabulary,
       'word.fi.asua',
@@ -38,16 +38,36 @@ describe('optimistic vocabulary memory status', () => {
       'word.fi.asua',
       'LEARNING',
       new Date('2026-09-01T12:00:00.000Z'),
+      vocabulary.items[0]?.memory,
     )
 
     expect(changed.items[0]?.memory).toMatchObject({
-      state: 'LEARNING',
+      state: 'RELEARNING',
       status: 'LEARNING',
-      progressPercent: 0,
-      dueAt: '2026-09-01T12:10:00.000Z',
-      isDue: false,
+      progressPercent: 12,
+      dueAt: '2026-08-31T12:00:00.000Z',
+      isDue: true,
+      repetitions: 4,
+      lapses: 1,
     })
-    expect(changed.counts).toMatchObject({ learning: 1, learned: 0 })
+    expect(changed.counts).toMatchObject({
+      due: 1,
+      learning: 1,
+      learned: 0,
+    })
+    expect(changed.dueCount).toBe(1)
+  })
+
+  it('waits for the server instead of optimistically resetting without a snapshot', () => {
+    const learned = applyOptimisticWordMemoryStatus(
+      vocabulary,
+      'word.fi.asua',
+      'KNOWN',
+    )
+
+    expect(
+      applyOptimisticWordMemoryStatus(learned, 'word.fi.asua', 'LEARNING'),
+    ).toBe(learned)
   })
 })
 

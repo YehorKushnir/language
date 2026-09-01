@@ -3,31 +3,45 @@ import type {
   WordMemoryStatus,
 } from '@language/contracts'
 
-const MINUTE_MS = 60_000
-const DAY_MS = 24 * 60 * MINUTE_MS
+const DAY_MS = 24 * 60 * 60_000
 
 export function applyOptimisticWordMemoryStatus(
   vocabulary: UserVocabularyResponse,
   itemId: string,
   status: WordMemoryStatus,
   changedAt = new Date(),
+  restoredMemory?: UserVocabularyResponse['items'][number]['memory'],
 ): UserVocabularyResponse {
   const item = vocabulary.items.find((candidate) => candidate.itemId === itemId)
   if (!item) return vocabulary
 
-  const nextStatus = status === 'KNOWN' ? 'LEARNED' : 'LEARNING'
+  let nextMemory: UserVocabularyResponse['items'][number]['memory']
+  if (status === 'KNOWN') {
+    nextMemory = {
+      ...item.memory,
+      state: 'REVIEW',
+      status: 'LEARNED',
+      progressPercent: 100,
+      dueAt: new Date(changedAt.getTime() + 60 * DAY_MS).toISOString(),
+      isDue: false,
+      repetitions: Math.max(item.memory.repetitions, 1),
+    }
+  } else {
+    if (!restoredMemory) return vocabulary
+    nextMemory = restoredMemory
+  }
+  const nextStatus = nextMemory.status
   const wasDue = item.memory.isDue
+  const isDue = nextMemory.isDue
   const statusChanged = item.memory.status !== nextStatus
-  const dueAt = new Date(
-    changedAt.getTime() + (status === 'KNOWN' ? 60 * DAY_MS : 10 * MINUTE_MS),
-  ).toISOString()
+  const dueDelta = Number(isDue) - Number(wasDue)
 
   return {
     ...vocabulary,
-    dueCount: Math.max(0, vocabulary.dueCount - (wasDue ? 1 : 0)),
+    dueCount: Math.max(0, vocabulary.dueCount + dueDelta),
     counts: {
       ...vocabulary.counts,
-      due: Math.max(0, vocabulary.counts.due - (wasDue ? 1 : 0)),
+      due: Math.max(0, vocabulary.counts.due + dueDelta),
       learning:
         vocabulary.counts.learning +
         (statusChanged ? (nextStatus === 'LEARNING' ? 1 : -1) : 0),
@@ -39,19 +53,7 @@ export function applyOptimisticWordMemoryStatus(
       candidate.itemId === itemId
         ? {
             ...candidate,
-            memory: {
-              ...candidate.memory,
-              state: status === 'KNOWN' ? 'REVIEW' : 'LEARNING',
-              status: nextStatus,
-              progressPercent: status === 'KNOWN' ? 100 : 0,
-              dueAt,
-              isDue: false,
-              repetitions:
-                status === 'KNOWN'
-                  ? Math.max(candidate.memory.repetitions, 1)
-                  : 1,
-              lapses: status === 'KNOWN' ? candidate.memory.lapses : 0,
-            },
+            memory: nextMemory,
           }
         : candidate,
     ),

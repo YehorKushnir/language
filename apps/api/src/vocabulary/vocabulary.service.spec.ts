@@ -501,7 +501,7 @@ describe('VocabularyService', () => {
     )
   })
 
-  it('persists known as a long interval that still remains scheduled', async () => {
+  it('restores the exact progress saved before a manual known status', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-08-26T12:00:00.000Z'))
     prisma.knowledgeItem.findFirst.mockResolvedValue({
@@ -520,6 +520,8 @@ describe('VocabularyService', () => {
       learningSteps: 0,
       repetitions: 0,
       lapses: 0,
+      manuallyKnown: false,
+      manualStatusSnapshot: null,
     }
     let persisted = initial
     prisma.userMemory.findUnique.mockImplementation(() =>
@@ -545,14 +547,93 @@ describe('VocabularyService', () => {
     })
     expect(prisma.userMemory.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        update: expect.objectContaining({ manuallyKnown: true }),
+        update: expect.objectContaining({
+          manuallyKnown: true,
+          manualStatusSnapshot: expect.any(String),
+        }),
       }),
     )
 
-    prisma.userMemory.update.mockClear()
+    const restored = await service.changeMemoryStatus(
+      'user.1',
+      'route.1',
+      'word.fi.opiskelija',
+      'LEARNING',
+    )
+    expect(restored).toEqual({
+      itemId: 'word.fi.opiskelija',
+      state: MemoryState.NEW,
+      dueAt: '2026-08-26T12:20:00.000Z',
+      repetitions: 0,
+      lapses: 0,
+    })
+    expect(persisted).toMatchObject({
+      difficulty: 0,
+      stability: 0,
+      state: MemoryState.NEW,
+      dueAt: new Date('2026-08-26T12:20:00.000Z'),
+      lastReviewAt: null,
+      elapsedDays: 0,
+      scheduledDays: 0,
+      learningSteps: 0,
+      repetitions: 0,
+      lapses: 0,
+      manuallyKnown: false,
+      manualStatusSnapshot: null,
+    })
+  })
+
+  it('does not reset legacy manual progress when no snapshot exists', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-26T12:00:00.000Z'))
+    prisma.knowledgeItem.findFirst.mockResolvedValue({
+      id: 'word.fi.opiskelija',
+    })
+    const existing = {
+      userId: 'user.1',
+      itemId: 'word.fi.opiskelija',
+      difficulty: 4,
+      stability: 60,
+      state: MemoryState.REVIEW,
+      dueAt: new Date('2026-10-25T12:00:00.000Z'),
+      lastReviewAt: new Date('2026-08-26T12:00:00.000Z'),
+      elapsedDays: 0,
+      scheduledDays: 60,
+      learningSteps: 0,
+      repetitions: 3,
+      lapses: 1,
+      manuallyKnown: true,
+      manualStatusSnapshot: null,
+    }
+    prisma.userMemory.findUnique.mockResolvedValue(existing)
+    prisma.userMemory.upsert.mockImplementation(({ update }) =>
+      Promise.resolve({ ...existing, ...update }),
+    )
+
     await expect(
-      service.reviewItem('user.1', 'route.1', 'word.fi.opiskelija', 'SUCCESS'),
-    ).resolves.toEqual(changed)
-    expect(prisma.userMemory.update).not.toHaveBeenCalled()
+      service.changeMemoryStatus(
+        'user.1',
+        'route.1',
+        'word.fi.opiskelija',
+        'LEARNING',
+      ),
+    ).resolves.toEqual({
+      itemId: 'word.fi.opiskelija',
+      state: MemoryState.REVIEW,
+      dueAt: '2026-10-25T12:00:00.000Z',
+      repetitions: 3,
+      lapses: 1,
+    })
+    expect(prisma.userMemory.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({
+          state: MemoryState.REVIEW,
+          repetitions: 3,
+          lapses: 1,
+          manuallyKnown: false,
+          manualStatusSnapshot: null,
+        }),
+      }),
+    )
   })
 })

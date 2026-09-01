@@ -14,6 +14,7 @@ import {
   getMemoryProgressPercent,
   isMemoryLearned,
   recordReview,
+  type ReviewMemorySnapshot,
 } from '@language/domain'
 import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 
@@ -337,14 +338,27 @@ export class VocabularyService {
     const existing = await this.prisma.userMemory.findUnique({
       where: { userId_itemId: { userId, itemId } },
     })
-    const changed = changeWordMemoryStatus(
-      existing ? toReviewMemorySnapshot(existing) : createInitialMemory(now),
-      status,
-      now,
-    )
+
+    if (status === 'KNOWN' && existing?.manuallyKnown) {
+      return toStudyResponse(existing)
+    }
+
+    const previous = existing
+      ? toReviewMemorySnapshot(existing)
+      : createInitialMemory(now)
+    const restoresManualStatus =
+      status === 'LEARNING' && existing?.manuallyKnown
+    const restored = restoresManualStatus
+      ? parseManualStatusSnapshot(existing.manualStatusSnapshot)
+      : null
+    const changed = restoresManualStatus
+      ? (restored ?? previous)
+      : changeWordMemoryStatus(previous, status, now)
     const data = {
       ...toUserMemoryData(changed),
       manuallyKnown: status === 'KNOWN',
+      manualStatusSnapshot:
+        status === 'KNOWN' ? serializeManualStatusSnapshot(previous) : null,
     }
     const memory = await this.prisma.userMemory.upsert({
       where: { userId_itemId: { userId, itemId } },
@@ -397,6 +411,57 @@ export class VocabularyService {
       },
       select: { id: true },
     })
+  }
+}
+
+type SerializedMemorySnapshot = Omit<
+  ReviewMemorySnapshot,
+  'dueAt' | 'lastReviewAt'
+> & {
+  dueAt: string
+  lastReviewAt: string | null
+}
+
+function serializeManualStatusSnapshot(memory: ReviewMemorySnapshot): string {
+  return JSON.stringify({
+    ...memory,
+    dueAt: memory.dueAt.toISOString(),
+    lastReviewAt: memory.lastReviewAt?.toISOString() ?? null,
+  } satisfies SerializedMemorySnapshot)
+}
+
+function parseManualStatusSnapshot(
+  value: string | null,
+): ReviewMemorySnapshot | null {
+  if (!value) return null
+
+  try {
+    const parsed = JSON.parse(value) as SerializedMemorySnapshot
+    const dueAt = new Date(parsed.dueAt)
+    const lastReviewAt = parsed.lastReviewAt
+      ? new Date(parsed.lastReviewAt)
+      : null
+    const numericFields = [
+      parsed.difficulty,
+      parsed.stability,
+      parsed.elapsedDays,
+      parsed.scheduledDays,
+      parsed.learningSteps,
+      parsed.repetitions,
+      parsed.lapses,
+    ]
+    if (
+      !['NEW', 'LEARNING', 'REVIEW', 'RELEARNING'].includes(parsed.state) ||
+      !Number.isFinite(dueAt.getTime()) ||
+      (lastReviewAt !== null && !Number.isFinite(lastReviewAt.getTime())) ||
+      numericFields.some((number) => !Number.isFinite(number))
+    ) {
+      return null
+    }
+
+    return { ...parsed, dueAt, lastReviewAt }
+  } catch {
+    return null
   }
 }
 

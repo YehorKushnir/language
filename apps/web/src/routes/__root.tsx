@@ -88,10 +88,7 @@ function RootLayout() {
   const visibleNavigationItems = isAdmin
     ? [...navigationItems, adminNavigationItem]
     : navigationItems
-  const mobileNavigationItems = [
-    ...visibleNavigationItems,
-    settingsNavigationItem,
-  ]
+  const mobileNavigationItems = [...navigationItems, settingsNavigationItem]
   const isSignInPage = pathname === '/sign-in'
   const isSignUpPage = pathname === '/sign-up'
 
@@ -195,12 +192,7 @@ function RootLayout() {
           className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden"
           aria-label="Мобильная навигация"
         >
-          <div
-            className={cn(
-              'mx-auto grid h-16 max-w-lg gap-1 px-2 pt-1.5',
-              isAdmin ? 'grid-cols-6' : 'grid-cols-5',
-            )}
-          >
+          <div className="mx-auto grid h-16 max-w-lg grid-cols-5 gap-1 px-2 pt-1.5">
             {mobileNavigationItems.map((item) => {
               const Icon = item.icon
               return (

@@ -522,20 +522,21 @@ model UserLessonVocabularyAttempt {
 }
 
 model UserMemory {
-  userId        String
-  itemId        String
-  difficulty    Float
-  stability     Float
-  state         MemoryState @default(NEW)
-  dueAt         DateTime
-  lastReviewAt  DateTime?
-  elapsedDays   Int         @default(0)
-  scheduledDays Int         @default(0)
-  learningSteps Int         @default(0)
-  repetitions   Int         @default(0)
-  lapses        Int         @default(0)
-  manuallyKnown Boolean     @default(false)
-  updatedAt     DateTime    @updatedAt
+  userId               String
+  itemId               String
+  difficulty           Float
+  stability            Float
+  state                MemoryState @default(NEW)
+  dueAt                DateTime
+  lastReviewAt         DateTime?
+  elapsedDays          Int         @default(0)
+  scheduledDays        Int         @default(0)
+  learningSteps        Int         @default(0)
+  repetitions          Int         @default(0)
+  lapses               Int         @default(0)
+  manuallyKnown        Boolean     @default(false)
+  manualStatusSnapshot String?
+  updatedAt            DateTime    @updatedAt
 
   user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   item KnowledgeItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
