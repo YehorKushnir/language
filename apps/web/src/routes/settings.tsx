@@ -1,10 +1,12 @@
-import { useQueryClient } from '@tanstack/react-query'
+import type { AccountAuthMethodsResponse } from '@language/contracts'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import {
   AlertTriangleIcon,
   CheckCircle2Icon,
   ChevronDownIcon,
   KeyRoundIcon,
+  LinkIcon,
   LoaderCircleIcon,
   LogOutIcon,
   SaveIcon,
@@ -14,7 +16,12 @@ import {
 } from 'lucide-react'
 import { type FormEvent, useEffect, useState } from 'react'
 
-import { deleteAccount } from '@/api/language-api'
+import {
+  deleteAccount,
+  getAccountAuthMethods,
+  setAccountPassword,
+} from '@/api/language-api'
+import { GoogleIcon } from '@/components/google-auth-button'
 import { LearningPageHeader } from '@/components/learning-page-header'
 import { PageShell } from '@/components/page-shell'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -35,10 +42,17 @@ export const Route = createFileRoute('/settings')({
   component: SettingsPage,
 })
 
+const authMethodsQueryKey = ['account', 'auth-methods'] as const
+
 function SettingsPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const session = authClient.useSession()
+  const authMethods = useQuery({
+    queryKey: authMethodsQueryKey,
+    queryFn: getAccountAuthMethods,
+    enabled: Boolean(session.data?.user.id),
+  })
   const [name, setName] = useState('')
   const [profilePending, setProfilePending] = useState(false)
   const [profileError, setProfileError] = useState<string>()
@@ -46,6 +60,8 @@ function SettingsPage() {
   const [passwordPending, setPasswordPending] = useState(false)
   const [passwordError, setPasswordError] = useState<string>()
   const [passwordSaved, setPasswordSaved] = useState(false)
+  const [googlePending, setGooglePending] = useState(false)
+  const [googleError, setGoogleError] = useState<string>()
   const [confirmation, setConfirmation] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string>()
@@ -55,6 +71,18 @@ function SettingsPage() {
   useEffect(() => {
     if (session.data?.user.name) setName(session.data.user.name)
   }, [session.data?.user.name])
+
+  useEffect(() => {
+    const search = new URLSearchParams(window.location.search)
+    if (search.get('googleLink') !== 'error') return
+    const code = search.get('error') ?? undefined
+    setGoogleError(
+      authErrorMessage(
+        code ? { code } : null,
+        'Не удалось подключить Google-аккаунт.',
+      ),
+    )
+  }, [])
 
   async function updateName(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -126,6 +154,67 @@ function SettingsPage() {
     }
   }
 
+  async function addPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setPasswordError(undefined)
+    setPasswordSaved(false)
+    const form = event.currentTarget
+    const data = new FormData(form)
+    const newPassword = String(data.get('newPassword') ?? '')
+    const confirmation = String(data.get('passwordConfirmation') ?? '')
+
+    if (newPassword !== confirmation) {
+      setPasswordError('Пароли не совпадают.')
+      return
+    }
+
+    setPasswordPending(true)
+    try {
+      await setAccountPassword({ newPassword })
+      form.reset()
+      queryClient.setQueryData<AccountAuthMethodsResponse>(
+        authMethodsQueryKey,
+        (current) =>
+          current ? { ...current, passwordEnabled: true } : current,
+      )
+      setPasswordSaved(true)
+    } catch (caught) {
+      setPasswordError(
+        caught instanceof Error
+          ? caught.message
+          : 'Не удалось установить пароль.',
+      )
+    } finally {
+      setPasswordPending(false)
+    }
+  }
+
+  async function linkGoogle() {
+    setGoogleError(undefined)
+    setGooglePending(true)
+    try {
+      const result = await authClient.linkSocial({
+        provider: 'google',
+        callbackURL: '/settings',
+        errorCallbackURL: '/settings?googleLink=error',
+      })
+      if (result.error) {
+        setGoogleError(
+          authErrorMessage(
+            result.error,
+            'Не удалось подключить Google-аккаунт.',
+          ),
+        )
+      }
+    } catch {
+      setGoogleError(
+        'Не удалось связаться с Google. Проверьте интернет и повторите.',
+      )
+    } finally {
+      setGooglePending(false)
+    }
+  }
+
   async function removeAccount() {
     setDeleteError(undefined)
     setDeleting(true)
@@ -169,7 +258,7 @@ function SettingsPage() {
             </>
           }
           title="Настройки"
-          description="Профиль, пароль и управление аккаунтом."
+          description="Профиль, способы входа и управление аккаунтом."
         />
 
         <div className="mt-6 grid items-start gap-5 lg:grid-cols-2">
@@ -229,47 +318,134 @@ function SettingsPage() {
                 <KeyRoundIcon className="size-4" />
               </span>
               <CardTitle as="h2" className="font-serif text-2xl">
-                Пароль
+                Вход и безопасность
               </CardTitle>
               <CardDescription>
-                После смены остальные активные сессии завершатся.
+                Управляйте способами входа в аккаунт.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <form className="grid gap-4" onSubmit={changePassword}>
-                <PasswordField
-                  autoComplete="current-password"
-                  id="current-password"
-                  label="Текущий пароль"
-                  name="currentPassword"
-                />
-                <PasswordField
-                  autoComplete="new-password"
-                  id="new-password"
-                  label="Новый пароль"
-                  name="newPassword"
-                />
-                <PasswordField
-                  autoComplete="new-password"
-                  id="password-confirmation"
-                  label="Повторите новый пароль"
-                  name="passwordConfirmation"
-                />
-                <InlineStatus error={passwordError} saved={passwordSaved} />
-                <Button
-                  className="w-fit"
-                  disabled={passwordPending}
-                  size="sm"
-                  type="submit"
-                >
-                  {passwordPending ? (
-                    <LoaderCircleIcon className="animate-spin" />
-                  ) : (
-                    <KeyRoundIcon />
-                  )}
-                  {passwordPending ? 'Меняем…' : 'Изменить пароль'}
-                </Button>
-              </form>
+            <CardContent className="grid gap-6">
+              <section className="grid gap-3">
+                <div className="flex items-center justify-between gap-4 rounded-lg border border-border/70 p-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-background shadow-xs">
+                      <GoogleIcon />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-semibold">Google</h3>
+                        {authMethods.data?.googleLinked ? (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                            Подключён
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                        {googleMethodDescription(authMethods)}
+                      </p>
+                    </div>
+                  </div>
+                  {!authMethods.data?.googleLinked ? (
+                    <Button
+                      className="shrink-0"
+                      disabled={
+                        authMethods.isPending ||
+                        !authMethods.data?.googleAvailable ||
+                        googlePending
+                      }
+                      onClick={() => void linkGoogle()}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      {googlePending ? (
+                        <LoaderCircleIcon className="animate-spin" />
+                      ) : (
+                        <LinkIcon />
+                      )}
+                      {googlePending ? 'Подключаем…' : 'Подключить'}
+                    </Button>
+                  ) : null}
+                </div>
+                {googleError ? (
+                  <Alert className="motion-feedback py-2" variant="destructive">
+                    <AlertTriangleIcon />
+                    <AlertDescription>{googleError}</AlertDescription>
+                  </Alert>
+                ) : null}
+                {authMethods.isError ? (
+                  <Alert className="motion-feedback py-2" variant="destructive">
+                    <AlertTriangleIcon />
+                    <AlertDescription>
+                      Не удалось загрузить способы входа.
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
+              </section>
+
+              <section className="border-t border-border/70 pt-5">
+                <h3 className="text-sm font-semibold">Пароль</h3>
+                <p className="mt-1 mb-4 text-xs leading-5 text-muted-foreground">
+                  {authMethods.data?.passwordEnabled
+                    ? 'После смены остальные активные сессии завершатся.'
+                    : 'Добавьте пароль, чтобы входить также через email.'}
+                </p>
+
+                {authMethods.isPending ? (
+                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <LoaderCircleIcon className="size-4 animate-spin" />
+                    Проверяем настройки…
+                  </p>
+                ) : authMethods.data?.passwordEnabled ? (
+                  <form className="grid gap-4" onSubmit={changePassword}>
+                    <PasswordField
+                      autoComplete="current-password"
+                      id="current-password"
+                      label="Текущий пароль"
+                      name="currentPassword"
+                    />
+                    <PasswordField
+                      autoComplete="new-password"
+                      id="new-password"
+                      label="Новый пароль"
+                      name="newPassword"
+                    />
+                    <PasswordField
+                      autoComplete="new-password"
+                      id="password-confirmation"
+                      label="Повторите новый пароль"
+                      name="passwordConfirmation"
+                    />
+                    <InlineStatus error={passwordError} saved={passwordSaved} />
+                    <PasswordSubmitButton
+                      pending={passwordPending}
+                      pendingLabel="Меняем…"
+                      readyLabel="Изменить пароль"
+                    />
+                  </form>
+                ) : authMethods.data ? (
+                  <form className="grid gap-4" onSubmit={addPassword}>
+                    <PasswordField
+                      autoComplete="new-password"
+                      id="new-password"
+                      label="Новый пароль"
+                      name="newPassword"
+                    />
+                    <PasswordField
+                      autoComplete="new-password"
+                      id="password-confirmation"
+                      label="Повторите пароль"
+                      name="passwordConfirmation"
+                    />
+                    <InlineStatus error={passwordError} saved={passwordSaved} />
+                    <PasswordSubmitButton
+                      pending={passwordPending}
+                      pendingLabel="Добавляем…"
+                      readyLabel="Добавить пароль"
+                    />
+                  </form>
+                ) : null}
+              </section>
             </CardContent>
           </Card>
         </div>
@@ -373,6 +549,40 @@ function PasswordField({
       />
     </div>
   )
+}
+
+function PasswordSubmitButton({
+  pending,
+  pendingLabel,
+  readyLabel,
+}: {
+  pending: boolean
+  pendingLabel: string
+  readyLabel: string
+}) {
+  return (
+    <Button className="w-fit" disabled={pending} size="sm" type="submit">
+      {pending ? (
+        <LoaderCircleIcon className="animate-spin" />
+      ) : (
+        <KeyRoundIcon />
+      )}
+      {pending ? pendingLabel : readyLabel}
+    </Button>
+  )
+}
+
+function googleMethodDescription({
+  data,
+  isPending,
+}: {
+  data?: AccountAuthMethodsResponse
+  isPending: boolean
+}) {
+  if (isPending) return 'Проверяем подключение…'
+  if (data?.googleLinked) return 'Можно входить через Google.'
+  if (!data?.googleAvailable) return 'Вход через Google пока не настроен.'
+  return 'Подключите аккаунт для быстрого входа.'
 }
 
 function InlineStatus({ error, saved }: { error?: string; saved: boolean }) {

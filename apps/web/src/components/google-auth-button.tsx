@@ -60,7 +60,7 @@ export function GoogleAuthButton({
   )
 }
 
-function GoogleIcon() {
+export function GoogleIcon() {
   return (
     <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24">
       <path

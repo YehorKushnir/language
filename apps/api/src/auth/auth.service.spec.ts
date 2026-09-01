@@ -32,6 +32,7 @@ describe('AuthService', () => {
     )
 
     const options = authMocks.betterAuth.mock.calls[0]?.[0] as {
+      account: Record<string, unknown>
       emailAndPassword: {
         sendResetPassword: (input: {
           user: { email: string; name: string }
@@ -46,6 +47,9 @@ describe('AuthService', () => {
         clientSecret: 'google-client-secret',
         prompt: 'select_account',
       },
+    })
+    expect(options.account).toEqual({
+      accountLinking: { enabled: true },
     })
 
     await options.emailAndPassword.sendResetPassword({

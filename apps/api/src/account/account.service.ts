@@ -1,11 +1,75 @@
-import type { AccountDataExportResponse } from '@language/contracts'
-import { Inject, Injectable, NotFoundException } from '@nestjs/common'
+import type {
+  AccountAuthMethodsResponse,
+  AccountDataExportResponse,
+} from '@language/contracts'
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
+import type { IncomingHttpHeaders } from 'node:http'
 
+import { AuthService } from '../auth/auth.service'
 import { PrismaService } from '../database/prisma.service'
 
 @Injectable()
 export class AccountService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(AuthService) private readonly auth: AuthService,
+  ) {}
+
+  async getAuthMethods(userId: string): Promise<AccountAuthMethodsResponse> {
+    const accounts = await this.prisma.account.findMany({
+      where: {
+        userId,
+        OR: [
+          { providerId: 'google' },
+          { providerId: 'credential', password: { not: null } },
+        ],
+      },
+      select: { providerId: true },
+    })
+
+    return {
+      passwordEnabled: accounts.some(
+        (account) => account.providerId === 'credential',
+      ),
+      googleLinked: accounts.some((account) => account.providerId === 'google'),
+      googleAvailable: this.auth.googleEnabled,
+    }
+  }
+
+  async setPassword(
+    headers: IncomingHttpHeaders,
+    newPassword: string,
+  ): Promise<void> {
+    try {
+      await this.auth.setPassword(headers, newPassword)
+    } catch (error) {
+      const code = getAuthErrorCode(error)
+      if (code === 'PASSWORD_ALREADY_SET') {
+        throw new ConflictException('Для аккаунта уже установлен пароль')
+      }
+      if (code === 'SESSION_NOT_FRESH') {
+        throw new ForbiddenException(
+          'Для установки пароля выйдите из аккаунта, войдите снова и повторите попытку',
+        )
+      }
+      if (code === 'PASSWORD_TOO_SHORT') {
+        throw new BadRequestException(
+          'Пароль должен содержать не менее 8 символов',
+        )
+      }
+      if (code === 'PASSWORD_TOO_LONG') {
+        throw new BadRequestException('Пароль должен быть короче 129 символов')
+      }
+      throw error
+    }
+  }
 
   async exportData(userId: string): Promise<AccountDataExportResponse> {
     const user = await this.prisma.user.findUnique({
@@ -119,4 +183,12 @@ export class AccountService {
     const result = await this.prisma.user.deleteMany({ where: { id: userId } })
     if (result.count === 0) throw new NotFoundException('User was not found')
   }
+}
+
+function getAuthErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') return undefined
+  const body = (error as { body?: unknown }).body
+  if (!body || typeof body !== 'object') return undefined
+  const code = (body as { code?: unknown }).code
+  return typeof code === 'string' ? code : undefined
 }

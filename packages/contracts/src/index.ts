@@ -514,6 +514,16 @@ export interface UpdateExerciseReportStatusRequest {
   status: ExerciseReportStatus
 }
 
+export interface AccountAuthMethodsResponse {
+  passwordEnabled: boolean
+  googleLinked: boolean
+  googleAvailable: boolean
+}
+
+export interface SetAccountPasswordRequest {
+  newPassword: string
+}
+
 export interface AccountDataExportResponse {
   exportedAt: string
   user: {

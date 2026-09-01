@@ -1,4 +1,5 @@
 import type {
+  AccountAuthMethodsResponse,
   AccountDataExportResponse,
   AdminExerciseReportExportResponse,
   AdminExerciseReportListResponse,
@@ -22,6 +23,7 @@ import type {
   PreparedExerciseResponse,
   PreparedTextCatalogResponse,
   PreparedTextDetailResponse,
+  SetAccountPasswordRequest,
   UserVocabularyResponse,
   UpdateExerciseReportStatusRequest,
   WordMemoryStatus,
@@ -254,6 +256,18 @@ export async function loadAudioFile(audioUrl: string): Promise<Blob> {
 
 export function exportAccountData() {
   return request<AccountDataExportResponse>('/me/data-export')
+}
+
+export function getAccountAuthMethods() {
+  return request<AccountAuthMethodsResponse>('/me/auth-methods')
+}
+
+export function setAccountPassword(input: SetAccountPasswordRequest) {
+  return request<void>('/me/password', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  })
 }
 
 export function deleteAccount() {

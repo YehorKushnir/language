@@ -2,6 +2,8 @@ import { prismaAdapter } from '@better-auth/prisma-adapter'
 import { Inject, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { betterAuth } from 'better-auth'
+import { fromNodeHeaders } from 'better-auth/node'
+import type { IncomingHttpHeaders } from 'node:http'
 
 import { PrismaService } from '../database/prisma.service'
 import { PasswordResetMailer } from './password-reset-mailer.service'
@@ -12,6 +14,7 @@ const DEVELOPMENT_AUTH_SECRET = 'development-only-change-me-32-characters'
 export class AuthService {
   readonly auth
   readonly basePath = '/api/v1/auth'
+  readonly googleEnabled: boolean
 
   constructor(
     @Inject(PrismaService) prisma: PrismaService,
@@ -21,6 +24,7 @@ export class AuthService {
     const configuredSecret = config.get<string>('BETTER_AUTH_SECRET')
     const googleClientId = config.get<string>('GOOGLE_CLIENT_ID')
     const googleClientSecret = config.get<string>('GOOGLE_CLIENT_SECRET')
+    this.googleEnabled = Boolean(googleClientId && googleClientSecret)
 
     if (config.get('NODE_ENV') === 'production' && !configuredSecret) {
       throw new Error('BETTER_AUTH_SECRET is required in production')
@@ -56,7 +60,7 @@ export class AuthService {
         },
       },
       socialProviders:
-        googleClientId && googleClientSecret
+        this.googleEnabled && googleClientId && googleClientSecret
           ? {
               google: {
                 clientId: googleClientId,
@@ -65,6 +69,11 @@ export class AuthService {
               },
             }
           : {},
+      account: {
+        accountLinking: {
+          enabled: true,
+        },
+      },
       rateLimit: {
         enabled: config.get('NODE_ENV') === 'production',
         window: 60,
@@ -74,6 +83,16 @@ export class AuthService {
       trustedOrigins: [
         config.get<string>('WEB_ORIGIN', 'http://localhost:5173'),
       ],
+    })
+  }
+
+  async setPassword(
+    headers: IncomingHttpHeaders,
+    newPassword: string,
+  ): Promise<void> {
+    await this.auth.api.setPassword({
+      body: { newPassword },
+      headers: fromNodeHeaders(headers),
     })
   }
 }
