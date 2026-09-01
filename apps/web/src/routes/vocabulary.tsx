@@ -1,6 +1,7 @@
 import type {
   UserGrammarItemResponse,
   UserVocabularyItemResponse,
+  UserVocabularyResponse,
   VocabularyKnowledgeStatus,
   WordMemoryStatus,
 } from '@language/contracts'
@@ -27,6 +28,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { localizedText } from '@/lib/localized-text'
 import { cn } from '@/lib/utils'
+import { applyOptimisticWordMemoryStatus } from '@/lib/vocabulary-memory-status'
 import {
   matchesGrammarSearch,
   matchesVocabularyFilter,
@@ -81,8 +83,9 @@ function VocabularyPage() {
   const section = searchParams.section ?? 'words'
   const course = useQuery(courseQuery)
   const routeVersionId = course.data?.route?.id ?? ''
+  const vocabularyQuery = userVocabularyQuery(routeVersionId)
   const vocabulary = useQuery({
-    ...userVocabularyQuery(routeVersionId),
+    ...vocabularyQuery,
     enabled: Boolean(routeVersionId),
   })
   const statusChange = useMutation({
@@ -93,9 +96,27 @@ function VocabularyPage() {
       itemId: string
       status: WordMemoryStatus
     }) => changeVocabularyMemoryStatus(routeVersionId, itemId, status),
-    onSuccess: () =>
+    onMutate: async ({ itemId, status }) => {
+      await queryClient.cancelQueries({ queryKey: vocabularyQuery.queryKey })
+      const previous = queryClient.getQueryData<UserVocabularyResponse>(
+        vocabularyQuery.queryKey,
+      )
+      if (previous) {
+        queryClient.setQueryData(
+          vocabularyQuery.queryKey,
+          applyOptimisticWordMemoryStatus(previous, itemId, status),
+        )
+      }
+      return { previous }
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(vocabularyQuery.queryKey, context.previous)
+      }
+    },
+    onSettled: () =>
       queryClient.invalidateQueries({
-        queryKey: userVocabularyQuery(routeVersionId).queryKey,
+        queryKey: vocabularyQuery.queryKey,
       }),
   })
   const visibleItems = useMemo(

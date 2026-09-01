@@ -146,6 +146,8 @@ export class VocabularyService {
         const lesson = memory.item.lessonItems[0]?.lesson
         const text = memory.item.textItems[0]?.text
         if (!sense || (!lesson && !text)) return []
+        const snapshot = toReviewMemorySnapshot(memory)
+        const learned = memory.manuallyKnown || isMemoryLearned(snapshot)
 
         return [
           {
@@ -179,12 +181,10 @@ export class VocabularyService {
                 },
             memory: {
               state: memory.state,
-              status: isMemoryLearned(toReviewMemorySnapshot(memory))
-                ? 'LEARNED'
-                : 'LEARNING',
-              progressPercent: getMemoryProgressPercent(
-                toReviewMemorySnapshot(memory),
-              ),
+              status: learned ? 'LEARNED' : 'LEARNING',
+              progressPercent: learned
+                ? 100
+                : getMemoryProgressPercent(snapshot),
               dueAt: memory.dueAt.toISOString(),
               isDue: memory.dueAt <= now,
               repetitions: memory.repetitions,
@@ -205,6 +205,8 @@ export class VocabularyService {
       const lesson = memory.item.lessonItems[0]?.lesson
       const text = memory.item.textItems[0]?.text
       if (!skill || (!lesson && !text)) return []
+      const snapshot = toReviewMemorySnapshot(memory)
+      const learned = memory.manuallyKnown || isMemoryLearned(snapshot)
 
       return [
         {
@@ -227,12 +229,8 @@ export class VocabularyService {
               },
           memory: {
             state: memory.state,
-            status: isMemoryLearned(toReviewMemorySnapshot(memory))
-              ? 'LEARNED'
-              : 'LEARNING',
-            progressPercent: getMemoryProgressPercent(
-              toReviewMemorySnapshot(memory),
-            ),
+            status: learned ? 'LEARNED' : 'LEARNING',
+            progressPercent: learned ? 100 : getMemoryProgressPercent(snapshot),
             dueAt: memory.dueAt.toISOString(),
             isDue: memory.dueAt <= now,
             repetitions: memory.repetitions,
@@ -344,7 +342,10 @@ export class VocabularyService {
       status,
       now,
     )
-    const data = toUserMemoryData(changed)
+    const data = {
+      ...toUserMemoryData(changed),
+      manuallyKnown: status === 'KNOWN',
+    }
     const memory = await this.prisma.userMemory.upsert({
       where: { userId_itemId: { userId, itemId } },
       update: data,

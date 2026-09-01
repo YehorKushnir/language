@@ -50,13 +50,14 @@ describe('VocabularyService', () => {
         state: MemoryState.REVIEW,
         dueAt: new Date('2020-01-01T00:00:00.000Z'),
         lastReviewAt: new Date('2026-08-01T00:00:00.000Z'),
-        elapsedDays: 60,
-        scheduledDays: 120,
+        elapsedDays: 0,
+        scheduledDays: 60,
         difficulty: 5,
-        stability: 120,
+        stability: 60,
         learningSteps: 0,
         repetitions: 2,
         lapses: 1,
+        manuallyKnown: true,
         item: {
           lessonItems: [
             {
@@ -407,6 +408,49 @@ describe('VocabularyService', () => {
     expect(prisma.userMemory.update).not.toHaveBeenCalled()
   })
 
+  it('preserves a manual known override when a scheduled review is recorded', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-26T12:00:00.000Z'))
+    prisma.knowledgeItem.findFirst.mockResolvedValue({
+      id: 'word.fi.reader.aamu',
+    })
+    prisma.userMemory.findUnique.mockResolvedValue({
+      userId: 'user.1',
+      itemId: 'word.fi.reader.aamu',
+      difficulty: 5,
+      stability: 60,
+      state: MemoryState.REVIEW,
+      dueAt: new Date('2026-08-26T12:00:00.000Z'),
+      lastReviewAt: new Date('2026-06-27T12:00:00.000Z'),
+      elapsedDays: 0,
+      scheduledDays: 60,
+      learningSteps: 0,
+      repetitions: 1,
+      lapses: 0,
+      manuallyKnown: true,
+    })
+    prisma.userMemory.update.mockImplementation(({ data }) =>
+      Promise.resolve({
+        itemId: 'word.fi.reader.aamu',
+        manuallyKnown: true,
+        ...data,
+      }),
+    )
+
+    await service.reviewItem(
+      'user.1',
+      'route.1',
+      'word.fi.reader.aamu',
+      'FAILURE',
+    )
+
+    expect(prisma.userMemory.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.not.objectContaining({ manuallyKnown: expect.anything() }),
+      }),
+    )
+  })
+
   it('manually returns a mature word to active learning', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-08-26T12:00:00.000Z'))
@@ -451,6 +495,7 @@ describe('VocabularyService', () => {
           state: MemoryState.LEARNING,
           dueAt: new Date('2026-08-26T12:10:00.000Z'),
           repetitions: 1,
+          manuallyKnown: false,
         }),
       }),
     )
@@ -498,6 +543,11 @@ describe('VocabularyService', () => {
       repetitions: 1,
       lapses: 0,
     })
+    expect(prisma.userMemory.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({ manuallyKnown: true }),
+      }),
+    )
 
     prisma.userMemory.update.mockClear()
     await expect(

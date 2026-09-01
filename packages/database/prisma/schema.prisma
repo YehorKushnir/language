@@ -534,6 +534,7 @@ model UserMemory {
   learningSteps Int         @default(0)
   repetitions   Int         @default(0)
   lapses        Int         @default(0)
+  manuallyKnown Boolean     @default(false)
   updatedAt     DateTime    @updatedAt
 
   user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
