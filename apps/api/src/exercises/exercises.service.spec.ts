@@ -375,11 +375,28 @@ describe('ExercisesService morphology diagnostics', () => {
       },
       checkerVersion: 'structured-v5-split-lexical-grammar-evidence-voikko',
     })
+    expect(prisma.userMemory.createMany).not.toHaveBeenCalled()
+  })
+
+  it('activates exercise vocabulary and grammar only after it is shown', async () => {
+    await service.encounterExercise(
+      'user.1',
+      'route.1',
+      'lesson.1',
+      'exercise.1',
+    )
+
     expect(prisma.userMemory.createMany).toHaveBeenCalledWith({
       data: [
         expect.objectContaining({
           userId: 'user.1',
-          itemId: 'word.fi.second',
+          itemId: 'grammar.fi.olla',
+          state: 'NEW',
+          dueAt: expect.any(Date),
+        }),
+        expect.objectContaining({
+          userId: 'user.1',
+          itemId: 'word.fi.opiskelija',
           state: 'NEW',
           dueAt: expect.any(Date),
         }),

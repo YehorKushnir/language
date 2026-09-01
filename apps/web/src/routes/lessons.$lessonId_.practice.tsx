@@ -12,7 +12,11 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { CheckCircle2Icon, CircleXIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-import { completePractice, submitExerciseAttempt } from '@/api/language-api'
+import {
+  completePractice,
+  encounterExercise,
+  submitExerciseAttempt,
+} from '@/api/language-api'
 import {
   courseProgressQuery,
   courseQuery,
@@ -104,6 +108,7 @@ function LessonPracticePage() {
   const automaticPlayback = useRef<AudioPlayback | null>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
   const continueAfterSave = useRef(false)
+  const encounteredExerciseIds = useRef(new Set<string>())
   const openedAt = useRef(Date.now())
   const recoveredSessionCompletionStartedAt = useRef<string | null>(null)
   const pendingSessionUpdate = useRef<PracticeSessionResponse | null>(null)
@@ -151,6 +156,54 @@ function LessonPracticePage() {
   const exercise = effectiveCorrectionExerciseId
     ? correctionExercise
     : primaryExercise
+
+  useEffect(() => {
+    const exerciseId = exercise.data?.id
+    if (
+      !exerciseId ||
+      !routeVersionId ||
+      lesson.isPending ||
+      course.isPending ||
+      practiceSession.isPending ||
+      exercise.isPending ||
+      exercise.isFetching ||
+      lesson.isError ||
+      course.isError ||
+      practiceSession.isError ||
+      exercise.isError ||
+      encounteredExerciseIds.current.has(exerciseId)
+    ) {
+      return
+    }
+
+    encounteredExerciseIds.current.add(exerciseId)
+    void encounterExercise(lessonId, exerciseId, routeVersionId)
+      .then(() =>
+        Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: userVocabularyQuery(routeVersionId).queryKey,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: courseProgressQuery(routeVersionId).queryKey,
+          }),
+        ]),
+      )
+      .catch(() => encounteredExerciseIds.current.delete(exerciseId))
+  }, [
+    course.isPending,
+    course.isError,
+    exercise.data?.id,
+    exercise.isError,
+    exercise.isFetching,
+    exercise.isPending,
+    lesson.isPending,
+    lesson.isError,
+    lessonId,
+    practiceSession.isPending,
+    practiceSession.isError,
+    queryClient,
+    routeVersionId,
+  ])
   const completion = useMutation({
     mutationFn: () => completePractice(routeVersionId, lessonId),
     onSuccess: (result) => {

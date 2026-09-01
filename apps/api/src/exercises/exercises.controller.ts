@@ -11,11 +11,13 @@ import {
   HttpStatus,
   Param,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common'
 import {
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -77,6 +79,26 @@ export class ExercisesController {
       lessonId,
       exerciseId,
       sourceLanguage,
+    )
+  }
+
+  @Put('lessons/:lessonId/exercises/:exerciseId/encounter')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Отметить упражнение как показанное пользователю' })
+  @ApiNoContentResponse({
+    description: 'Знания упражнения добавлены в изучаемое',
+  })
+  encounterExercise(
+    @CurrentUserId() userId: string,
+    @Param('lessonId') lessonId: string,
+    @Param('exerciseId') exerciseId: string,
+    @Query('routeVersionId') routeVersionId: string,
+  ): Promise<void> {
+    return this.exercises.encounterExercise(
+      userId,
+      routeVersionId,
+      lessonId,
+      exerciseId,
     )
   }
 

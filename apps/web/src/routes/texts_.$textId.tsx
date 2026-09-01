@@ -10,6 +10,7 @@ import {
   courseQuery,
   preparedTextQuery,
   preparedTextsQuery,
+  textAudioFileQuery,
   userVocabularyQuery,
 } from '@/api/queries'
 import { preloadCourseRoute } from '@/api/route-preload'
@@ -40,6 +41,7 @@ import {
   getTextPlaybackSegmentStartTime,
   getTextPlaybackSegments,
 } from '@/lib/text-playback'
+import { useObjectUrl } from '@/lib/use-object-url'
 import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/texts_/$textId')({
@@ -61,6 +63,11 @@ function PreparedTextPage() {
     ...preparedTextQuery(routeVersionId, textId),
     enabled: Boolean(routeVersionId),
   })
+  const audioFile = useQuery({
+    ...textAudioFileQuery(text.data?.audioUrl ?? ''),
+    enabled: Boolean(text.data?.audioUrl),
+  })
+  const localAudioUrl = useObjectUrl(audioFile.data)
   const addWord = useMutation({
     mutationFn: (itemId: string) => addVocabularyItem(routeVersionId, itemId),
     onSuccess: async () => {
@@ -118,7 +125,7 @@ function PreparedTextPage() {
     setRequestedPlaybackSegment(null)
   }
   const playSentence = (segmentIndex: number) => {
-    if (!textData.audioUrl) return
+    if (!localAudioUrl) return
     const exactStartTime = getTextPlaybackSegmentStartTime(
       playbackSegments,
       segmentIndex,
@@ -155,8 +162,9 @@ function PreparedTextPage() {
         onPlaybackProgress={handlePlaybackProgress}
         onPlaybackStateChange={setAudioState}
         playbackRate={playbackRate}
+        preparePlayback
         renderControl={false}
-        src={textData.audioUrl}
+        src={localAudioUrl}
       />
 
       <article className="mt-6 w-full rounded-xl bg-card px-5 py-6 shadow-xs sm:px-8 sm:py-8">
@@ -178,10 +186,18 @@ function PreparedTextPage() {
       </article>
 
       <TextAudioControls
-        available={Boolean(textData.audioUrl)}
+        available={Boolean(localAudioUrl)}
         currentSegmentIndex={currentSegmentIndex}
+        currentTime={playbackProgress?.currentTime ?? 0}
+        duration={playbackProgress?.duration ?? 0}
         playbackRate={playbackRate}
-        playbackState={audioState}
+        playbackState={
+          audioFile.isPending && textData.audioUrl
+            ? 'loading'
+            : audioFile.isError
+              ? 'error'
+              : audioState
+        }
         segmentCount={playbackSegments.length}
         onNext={() =>
           playSentence(
@@ -198,6 +214,7 @@ function PreparedTextPage() {
           audioRef.current?.play()
         }}
         onPrevious={() => playSentence(Math.max(currentSegmentIndex - 1, 0))}
+        onSeek={(time) => audioRef.current?.seekTo(time)}
       />
     </PageShell>
   )

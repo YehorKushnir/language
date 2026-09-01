@@ -7,6 +7,7 @@ import {
   getExercise,
   getLesson,
   getLessonVocabulary,
+  loadAudioFile,
   getNextExercise,
   getNextReview,
   getPreparedText,
@@ -123,6 +124,16 @@ export function preparedTextQuery(routeVersionId: string, textId: string) {
   return queryOptions({
     queryKey: ['prepared-text', routeVersionId, textId],
     queryFn: () => getPreparedText(routeVersionId, textId),
+  })
+}
+
+export function textAudioFileQuery(audioUrl: string) {
+  return queryOptions({
+    queryKey: ['text-audio-file', audioUrl],
+    queryFn: () => loadAudioFile(audioUrl),
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 30 * 60_000,
+    retry: 1,
   })
 }
 

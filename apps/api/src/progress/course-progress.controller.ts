@@ -17,7 +17,12 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common'
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
+import {
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger'
 
 import { CurrentUserId } from '../identity/current-user.decorator'
 import { SessionIdentityGuard } from '../identity/session-identity.guard'
@@ -114,6 +119,24 @@ export class CourseProgressController {
       userId,
       routeVersionId,
       lessonId,
+    )
+  }
+
+  @Put(':routeVersionId/lessons/:lessonId/vocabulary/:itemId/encounter')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Отметить слово урока как показанное пользователю' })
+  @ApiNoContentResponse({ description: 'Слово добавлено в изучаемое' })
+  encounterVocabularyItem(
+    @CurrentUserId() userId: string,
+    @Param('routeVersionId') routeVersionId: string,
+    @Param('lessonId') lessonId: string,
+    @Param('itemId') itemId: string,
+  ): Promise<void> {
+    return this.courseProgress.encounterVocabularyItem(
+      userId,
+      routeVersionId,
+      lessonId,
+      itemId,
     )
   }
 

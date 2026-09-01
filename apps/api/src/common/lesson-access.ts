@@ -7,17 +7,13 @@ export async function assertLessonAvailable(
   routeVersionId: string,
   lessonId: string,
 ): Promise<void> {
+  if (process.env.NODE_ENV === 'development') return
+
   const dependencies = await prisma.courseRouteDependency.findMany({
     where: { routeVersionId, lessonId },
     select: { prerequisiteLessonId: true },
   })
   if (dependencies.length === 0) return
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  })
-  if (user?.role === 'ADMIN') return
 
   const prerequisiteIds = dependencies.map(
     (dependency) => dependency.prerequisiteLessonId,

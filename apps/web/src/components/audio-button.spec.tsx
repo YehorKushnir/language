@@ -168,6 +168,84 @@ describe('AudioButton', () => {
     expect(audio.play).toHaveBeenCalledTimes(3)
   })
 
+  it('seeks on the timeline without starting paused audio', async () => {
+    const audio = {
+      addEventListener: vi.fn(),
+      currentTime: 0,
+      duration: 100,
+      pause: vi.fn(),
+      play: vi.fn().mockResolvedValue(undefined),
+      playbackRate: 1,
+      preload: '',
+      readyState: 2,
+      src: '',
+    }
+    vi.stubGlobal(
+      'Audio',
+      vi.fn(() => audio),
+    )
+    const audioButtonRef = createRef<AudioButtonHandle>()
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+
+    await act(async () => {
+      root?.render(
+        <AudioButton
+          ref={audioButtonRef}
+          renderControl={false}
+          src="blob:text-audio"
+        />,
+      )
+    })
+    act(() => audioButtonRef.current?.seekTo(35))
+
+    expect(audio.currentTime).toBe(35)
+    expect(audio.play).not.toHaveBeenCalled()
+  })
+
+  it('prepares shared text audio so its timeline is ready before playback', async () => {
+    const listeners = new Map<string, EventListener>()
+    const audio = {
+      addEventListener: vi.fn((event: string, listener: EventListener) => {
+        listeners.set(event, listener)
+      }),
+      currentTime: 0,
+      duration: 75,
+      pause: vi.fn(),
+      play: vi.fn().mockResolvedValue(undefined),
+      playbackRate: 1,
+      preload: '',
+      readyState: 2,
+      src: '',
+    }
+    const AudioConstructor = vi.fn(() => audio)
+    const onPlaybackProgress = vi.fn()
+    vi.stubGlobal('Audio', AudioConstructor)
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+
+    await act(async () => {
+      root?.render(
+        <AudioButton
+          onPlaybackProgress={onPlaybackProgress}
+          preparePlayback
+          renderControl={false}
+          src="blob:text-audio-ready"
+        />,
+      )
+    })
+
+    expect(AudioConstructor).toHaveBeenCalledOnce()
+    act(() => listeners.get('loadedmetadata')?.(new Event('loadedmetadata')))
+    expect(onPlaybackProgress).toHaveBeenLastCalledWith({
+      currentTime: 0,
+      duration: 75,
+    })
+    expect(audio.play).not.toHaveBeenCalled()
+  })
+
   it('applies an exact position after mobile metadata loads with an infinite duration', async () => {
     const listeners = new Map<string, EventListener>()
     let canSeek = false

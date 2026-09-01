@@ -84,11 +84,37 @@ describe('CourseProgressService vocabulary study', () => {
         { itemId: 'word.2', correctAnswers: 0 },
       ],
     })
-    expect(prisma.userMemory.upsert).toHaveBeenCalledTimes(2)
-    expect(prisma.userMemory.upsert).toHaveBeenCalledWith({
+    expect(prisma.userMemory.upsert).not.toHaveBeenCalled()
+  })
+
+  it('adds only the vocabulary card that was actually shown', async () => {
+    await service.encounterVocabularyItem(
+      'user.1',
+      'route.1',
+      'lesson.1',
+      'word.1',
+    )
+
+    expect(prisma.lessonKnowledgeItem.findFirst).toHaveBeenCalledWith({
       where: {
-        userId_itemId: { userId: 'user.1', itemId: 'word.1' },
+        lessonId: 'lesson.1',
+        itemId: 'word.1',
+        item: { kind: 'LEXICAL_SENSE' },
+        lesson: {
+          status: 'CURATED',
+          routeEntries: {
+            some: {
+              routeVersionId: 'route.1',
+              routeVersion: { status: 'CURATED' },
+            },
+          },
+        },
       },
+      select: { itemId: true },
+    })
+    expect(prisma.userMemory.upsert).toHaveBeenCalledOnce()
+    expect(prisma.userMemory.upsert).toHaveBeenCalledWith({
+      where: { userId_itemId: { userId: 'user.1', itemId: 'word.1' } },
       update: {},
       create: expect.objectContaining({
         userId: 'user.1',

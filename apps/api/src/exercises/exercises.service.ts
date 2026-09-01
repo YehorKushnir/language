@@ -121,8 +121,6 @@ export class ExercisesService {
       )
     }
 
-    await this.ensureExerciseMemories(userId, exercise.items)
-
     return {
       id: exercise.id,
       lessonId,
@@ -177,8 +175,6 @@ export class ExercisesService {
       )
     }
 
-    await this.ensureExerciseMemories(userId, exercise.items)
-
     return {
       id: exercise.id,
       lessonId,
@@ -189,6 +185,55 @@ export class ExercisesService {
       answerSpec: toPreparedAnswerSpec(exercise.answerSpec),
       checkerVersion: EXERCISE_CHECKER_VERSION,
     }
+  }
+
+  async encounterExercise(
+    userId: string,
+    routeVersionId: string,
+    lessonId: string,
+    exerciseId: string,
+  ): Promise<void> {
+    if (!routeVersionId) {
+      throw new BadRequestException('routeVersionId is required')
+    }
+    await assertLessonAvailable(this.prisma, userId, routeVersionId, lessonId)
+
+    const [routeEntry, exercise] = await Promise.all([
+      this.prisma.courseRouteEntry.findFirst({
+        where: {
+          routeVersionId,
+          lessonId,
+          routeVersion: { status: ContentStatus.CURATED },
+          lesson: { status: ContentStatus.CURATED },
+        },
+        select: { lessonId: true },
+      }),
+      this.prisma.exercise.findFirst({
+        where: {
+          id: exerciseId,
+          lessonId,
+          kind: ExerciseKind.PREPARED,
+          status: ContentStatus.CURATED,
+        },
+        include: {
+          items: {
+            where: { role: { not: ExerciseItemRole.CONTEXT } },
+            select: {
+              itemId: true,
+              item: { select: { kind: true } },
+            },
+          },
+        },
+      }),
+    ])
+
+    if (!routeEntry || !exercise) {
+      throw new NotFoundException(
+        `Exercise ${exerciseId} was not found in lesson ${lessonId}`,
+      )
+    }
+
+    await this.ensureExerciseMemories(userId, exercise.items)
   }
 
   async submitAttempt(

@@ -349,6 +349,15 @@ function inferSpecificSkillIds(
       'adessive',
       'ablative',
       'allative',
+      'jen',
+      'ien',
+      'iden',
+      'ten',
+      'usage',
+      'genitive',
+      'internal',
+      'external',
+      'pluralgenitive',
     ]) {
       if (
         skill.id.endsWith(`.${marker}`) &&

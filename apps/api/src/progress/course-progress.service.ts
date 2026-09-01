@@ -418,29 +418,16 @@ export class CourseProgressService {
     )
     const now = new Date()
 
-    await Promise.all([
-      this.prisma.userCourseProgress.upsert({
-        where: { userId_routeVersionId: { userId, routeVersionId } },
-        update: { currentLessonId: lessonId, lastActivityAt: now },
-        create: {
-          userId,
-          routeVersionId,
-          currentLessonId: lessonId,
-          lastActivityAt: now,
-        },
-      }),
-      ...vocabularyItems.map(({ itemId }) =>
-        this.prisma.userMemory.upsert({
-          where: { userId_itemId: { userId, itemId } },
-          update: {},
-          create: {
-            userId,
-            itemId,
-            ...initialUserMemoryData(now),
-          },
-        }),
-      ),
-    ])
+    await this.prisma.userCourseProgress.upsert({
+      where: { userId_routeVersionId: { userId, routeVersionId } },
+      update: { currentLessonId: lessonId, lastActivityAt: now },
+      create: {
+        userId,
+        routeVersionId,
+        currentLessonId: lessonId,
+        lastActivityAt: now,
+      },
+    })
 
     const progress = await this.prisma.userLessonVocabularyProgress.findMany({
       where: { userId, routeVersionId, lessonId },
@@ -451,6 +438,48 @@ export class CourseProgressService {
       vocabularyItems.map((item) => item.itemId),
       progress,
     )
+  }
+
+  async encounterVocabularyItem(
+    userId: string,
+    routeVersionId: string,
+    lessonId: string,
+    itemId: string,
+  ): Promise<void> {
+    await assertLessonAvailable(this.prisma, userId, routeVersionId, lessonId)
+    const vocabularyItem = await this.prisma.lessonKnowledgeItem.findFirst({
+      where: {
+        lessonId,
+        itemId,
+        item: { kind: KnowledgeItemKind.LEXICAL_SENSE },
+        lesson: {
+          status: ContentStatus.CURATED,
+          routeEntries: {
+            some: {
+              routeVersionId,
+              routeVersion: { status: ContentStatus.CURATED },
+            },
+          },
+        },
+      },
+      select: { itemId: true },
+    })
+    if (!vocabularyItem) {
+      throw new NotFoundException(
+        `Vocabulary item ${itemId} is not part of lesson ${lessonId}`,
+      )
+    }
+
+    const encounteredAt = new Date()
+    await this.prisma.userMemory.upsert({
+      where: { userId_itemId: { userId, itemId } },
+      update: {},
+      create: {
+        userId,
+        itemId,
+        ...initialUserMemoryData(encounteredAt),
+      },
+    })
   }
 
   async submitVocabularyAnswer(

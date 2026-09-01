@@ -26,6 +26,7 @@ export interface AudioButtonHandle {
   pause: () => void
   play: () => void
   playFrom: (startTime: AudioStartTime) => void
+  seekTo: (startTime: AudioStartTime) => void
 }
 
 export interface AudioPlaybackProgress {
@@ -39,6 +40,7 @@ interface AudioButtonProps {
   className?: string
   compact?: boolean
   renderControl?: boolean
+  preparePlayback?: boolean
   playbackRate?: number
   onActivate?: () => void
   onPlaybackProgress?: (progress: AudioPlaybackProgress | null) => void
@@ -53,6 +55,7 @@ export const AudioButton = forwardRef<AudioButtonHandle, AudioButtonProps>(
       className,
       compact = false,
       renderControl = true,
+      preparePlayback = false,
       playbackRate = 1,
       onActivate,
       onPlaybackProgress,
@@ -67,6 +70,9 @@ export const AudioButton = forwardRef<AudioButtonHandle, AudioButtonProps>(
       seek: (startTime: AudioStartTime) => boolean
     } | null>(null)
     const playbackRateRef = useRef(playbackRate)
+    const createPlaybackRef = useRef<
+      ((startTime?: AudioStartTime) => AudioPlayback) | null
+    >(null)
     const operationRef = useRef(0)
 
     useEffect(
@@ -200,6 +206,13 @@ export const AudioButton = forwardRef<AudioButtonHandle, AudioButtonProps>(
       return playback
     }
 
+    createPlaybackRef.current = createPlayback
+
+    useEffect(() => {
+      if (!src || !preparePlayback) return
+      createPlaybackRef.current?.()
+    }, [preparePlayback, src])
+
     async function startPlayback(playback: AudioPlayback) {
       const operation = ++operationRef.current
       setState('loading')
@@ -245,6 +258,18 @@ export const AudioButton = forwardRef<AudioButtonHandle, AudioButtonProps>(
       void startPlayback(playback)
     }
 
+    function seekTo(startTime: AudioStartTime) {
+      if (!src) return
+      onActivate?.()
+      const existingPlayback = playbackRef.current
+      const seekPlayback = seekPlaybackRef.current
+      if (existingPlayback && seekPlayback?.playback === existingPlayback) {
+        seekPlayback.seek(startTime)
+        return
+      }
+      createPlayback(startTime)
+    }
+
     function pause() {
       const playback = playbackRef.current
       if (!playback || (state !== 'loading' && state !== 'playing')) return
@@ -253,7 +278,7 @@ export const AudioButton = forwardRef<AudioButtonHandle, AudioButtonProps>(
       setState('paused')
     }
 
-    useImperativeHandle(ref, () => ({ pause, play, playFrom }))
+    useImperativeHandle(ref, () => ({ pause, play, playFrom, seekTo }))
 
     function toggle() {
       if (!src) return

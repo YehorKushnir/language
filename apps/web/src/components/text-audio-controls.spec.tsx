@@ -40,6 +40,7 @@ describe('TextAudioControls', () => {
       onNext: vi.fn(),
       onPlaybackRateChange: vi.fn(),
       onPrevious: vi.fn(),
+      onSeek: vi.fn(),
       onToggle: vi.fn(),
     }
     const testContainer = document.createElement('div')
@@ -52,6 +53,8 @@ describe('TextAudioControls', () => {
         <TextAudioControls
           available
           currentSegmentIndex={1}
+          currentTime={12}
+          duration={90}
           playbackRate={1}
           playbackState="playing"
           segmentCount={3}
@@ -65,23 +68,13 @@ describe('TextAudioControls', () => {
     )
     expect(controls?.parentElement?.className).toContain('fixed')
     expect(controls?.parentElement?.className).toContain('z-[60]')
-    expect(
-      Array.from(controls?.children ?? []).map((element) =>
-        element.hasAttribute('data-text-audio-rate')
-          ? 'rate'
-          : element.hasAttribute('data-text-audio-navigation')
-            ? 'navigation'
-            : element.hasAttribute('data-text-audio-position')
-              ? 'position'
-              : 'unknown',
-      ),
-    ).toEqual(['rate', 'navigation', 'position'])
+    expect(controls?.querySelector('[data-text-audio-track]')).not.toBeNull()
     expect(
       controls?.querySelector('[data-text-audio-rate]')?.className,
-    ).toContain('h-9 w-16')
+    ).toContain('h-9 w-[4.5rem]')
     expect(
       controls?.querySelector('[data-text-audio-position]')?.className,
-    ).toContain('h-9 w-16')
+    ).toContain('h-9 w-[4.5rem]')
     expect(controls?.textContent).toContain('2/3')
     expect(
       testContainer.querySelector<HTMLButtonElement>(
@@ -95,6 +88,11 @@ describe('TextAudioControls', () => {
       '[aria-label="Скорость воспроизведения"]',
     )
     expect(speed?.value).toBe('1')
+    const track = testContainer.querySelector<HTMLInputElement>(
+      '[aria-label="Аудиодорожка текста"]',
+    )
+    expect(track?.value).toBe('12')
+    expect(track?.max).toBe('90')
 
     act(() => {
       testContainer
@@ -105,6 +103,13 @@ describe('TextAudioControls', () => {
       if (speed) {
         speed.value = '1.25'
         speed.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+      if (track) {
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value',
+        )?.set?.call(track, '30')
+        track.dispatchEvent(new Event('input', { bubbles: true }))
       }
       testContainer
         .querySelector<HTMLButtonElement>(
@@ -122,5 +127,6 @@ describe('TextAudioControls', () => {
     expect(handlers.onToggle).toHaveBeenCalledOnce()
     expect(handlers.onNext).toHaveBeenCalledOnce()
     expect(handlers.onPlaybackRateChange).toHaveBeenCalledWith(1.25)
+    expect(handlers.onSeek).toHaveBeenCalledWith(30)
   })
 })

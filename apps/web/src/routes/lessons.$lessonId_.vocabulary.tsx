@@ -13,7 +13,10 @@ import {
 } from 'lucide-react'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 
-import { submitVocabularyAnswer } from '@/api/language-api'
+import {
+  encounterVocabularyItem,
+  submitVocabularyAnswer,
+} from '@/api/language-api'
 import {
   courseProgressQuery,
   courseQuery,
@@ -60,6 +63,7 @@ function LessonVocabularyPage() {
   const automaticPlayback = useRef<AudioPlayback | null>(null)
   const idempotencyKey = useRef(crypto.randomUUID())
   const continueAfterSave = useRef(false)
+  const encounteredItemIds = useRef(new Set<string>())
   const [activeItemId, setActiveItemId] = useState<string | null>(null)
   const [answer, setAnswer] = useState('')
   const [localFeedback, setLocalFeedback] =
@@ -135,6 +139,53 @@ function LessonVocabularyPage() {
       ),
     )
   }, [activeItemId, localFeedback, session.data, vocabulary.data])
+
+  useEffect(() => {
+    const itemId = activeItemId ?? vocabulary.data?.items[0]?.itemId ?? null
+    if (
+      !itemId ||
+      !routeVersionId ||
+      lesson.isPending ||
+      vocabulary.isPending ||
+      course.isPending ||
+      session.isPending ||
+      lesson.isError ||
+      vocabulary.isError ||
+      course.isError ||
+      session.isError ||
+      encounteredItemIds.current.has(itemId)
+    ) {
+      return
+    }
+
+    encounteredItemIds.current.add(itemId)
+    void encounterVocabularyItem(routeVersionId, lessonId, itemId)
+      .then(() =>
+        Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: userVocabularyQuery(routeVersionId).queryKey,
+          }),
+          queryClient.invalidateQueries({
+            queryKey: courseProgressQuery(routeVersionId).queryKey,
+          }),
+        ]),
+      )
+      .catch(() => encounteredItemIds.current.delete(itemId))
+  }, [
+    activeItemId,
+    course.isPending,
+    course.isError,
+    lesson.isError,
+    lesson.isPending,
+    lessonId,
+    queryClient,
+    routeVersionId,
+    session.isPending,
+    session.isError,
+    vocabulary.data,
+    vocabulary.isError,
+    vocabulary.isPending,
+  ])
 
   useEffect(() => {
     if (!localFeedback) answerInput.current?.focus()

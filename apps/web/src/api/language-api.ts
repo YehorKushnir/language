@@ -109,6 +109,18 @@ export function getExercise(
   )
 }
 
+export function encounterExercise(
+  lessonId: string,
+  exerciseId: string,
+  routeVersionId: string,
+) {
+  const search = new URLSearchParams({ routeVersionId })
+  return request<void>(
+    `/lessons/${lessonId}/exercises/${exerciseId}/encounter?${search.toString()}`,
+    { method: 'PUT' },
+  )
+}
+
 export function submitExerciseAttempt(
   exerciseId: string,
   attempt: ExerciseAttemptRequest,
@@ -232,6 +244,14 @@ export function getPreparedText(routeVersionId: string, textId: string) {
   )
 }
 
+export async function loadAudioFile(audioUrl: string): Promise<Blob> {
+  const response = await fetch(audioUrl, { credentials: 'include' })
+  if (!response.ok) {
+    throw new ApiError('Не удалось полностью загрузить аудио', response.status)
+  }
+  return response.blob()
+}
+
 export function exportAccountData() {
   return request<AccountDataExportResponse>('/me/data-export')
 }
@@ -293,6 +313,17 @@ export function startOrResumeVocabulary(
 ) {
   return request<LessonVocabularyStudySessionResponse>(
     `/me/course-progress/${routeVersionId}/lessons/${lessonId}/vocabulary-session`,
+    { method: 'PUT' },
+  )
+}
+
+export function encounterVocabularyItem(
+  routeVersionId: string,
+  lessonId: string,
+  itemId: string,
+) {
+  return request<void>(
+    `/me/course-progress/${routeVersionId}/lessons/${lessonId}/vocabulary/${itemId}/encounter`,
     { method: 'PUT' },
   )
 }

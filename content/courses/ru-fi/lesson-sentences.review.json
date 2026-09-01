@@ -9848,5 +9848,934 @@
         "acceptedVariants": ["Saan päätökset johtajilta."]
       }
     ]
+  },
+  {
+    "23": [
+      {
+        "order": 1,
+        "id": "exercise.fi.plural.genitive.jen.morning-weather",
+        "prompt": "Я проверю погоду для разных утр.",
+        "targetText": "Tarkistan eri aamujen sään.",
+        "acceptedVariants": ["Tarkistan eri aamujen sään."]
+      },
+      {
+        "order": 2,
+        "id": "exercise.fi.plural.genitive.ten.children-toys",
+        "prompt": "Игрушки детей находятся на полу.",
+        "targetText": "Lasten lelut ovat lattialla.",
+        "acceptedVariants": [
+          "Lasten lelut ovat lattialla.",
+          "Lapsien lelut ovat lattialla."
+        ]
+      },
+      {
+        "order": 3,
+        "id": "exercise.fi.plural.genitive.ien.afternoon-meetings",
+        "prompt": "Я помню дневные совещания.",
+        "targetText": "Muistan iltapäivien kokoukset.",
+        "acceptedVariants": ["Muistan iltapäivien kokoukset."]
+      },
+      {
+        "order": 4,
+        "id": "exercise.fi.plural.genitive.iden.saturday-trains",
+        "prompt": "Субботние поезда прибывают на станцию.",
+        "targetText": "Lauantaiden junat saapuvat asemalle.",
+        "acceptedVariants": [
+          "Lauantaiden junat saapuvat asemalle.",
+          "Lauantaitten junat saapuvat asemalle."
+        ]
+      },
+      {
+        "order": 5,
+        "id": "exercise.fi.plural.genitive.usage.pupils-tasks",
+        "prompt": "Задания учеников трудные.",
+        "targetText": "Oppilaiden tehtävät ovat vaikeita.",
+        "acceptedVariants": [
+          "Oppilaiden tehtävät ovat vaikeita.",
+          "Oppilaitten tehtävät ovat vaikeita."
+        ]
+      },
+      {
+        "order": 6,
+        "id": "exercise.fi.plural.genitive.jen.evening-music",
+        "prompt": "Я слушаю музыку по вечерам.",
+        "targetText": "Kuuntelen iltojen musiikkia.",
+        "acceptedVariants": ["Kuuntelen iltojen musiikkia."]
+      },
+      {
+        "order": 7,
+        "id": "exercise.fi.plural.genitive.ien.years-events",
+        "prompt": "Я помню события тех лет.",
+        "targetText": "Muistan vuosien tapahtumat.",
+        "acceptedVariants": ["Muistan vuosien tapahtumat."]
+      },
+      {
+        "order": 8,
+        "id": "exercise.fi.plural.genitive.ten.womens-clothes",
+        "prompt": "Одежда женщин находится в шкафу.",
+        "targetText": "Naisten vaatteet ovat kaapissa.",
+        "acceptedVariants": [
+          "Naisten vaatteet ovat kaapissa.",
+          "Naisien vaatteet ovat kaapissa."
+        ]
+      },
+      {
+        "order": 9,
+        "id": "exercise.fi.plural.genitive.ien.station-services",
+        "prompt": "Услуги железнодорожных вокзалов важны.",
+        "targetText": "Rautatieasemien palvelut ovat tärkeitä.",
+        "acceptedVariants": ["Rautatieasemien palvelut ovat tärkeitä."]
+      },
+      {
+        "order": 10,
+        "id": "exercise.fi.plural.genitive.iden.goal-names",
+        "prompt": "Названия целей находятся в списке.",
+        "targetText": "Tavoitteiden nimet ovat listassa.",
+        "acceptedVariants": [
+          "Tavoitteiden nimet ovat listassa.",
+          "Tavoitteitten nimet ovat listassa."
+        ]
+      },
+      {
+        "order": 11,
+        "id": "exercise.fi.plural.genitive.usage.book-names",
+        "prompt": "Названия книг находятся в списке.",
+        "targetText": "Kirjojen nimet ovat listassa.",
+        "acceptedVariants": ["Kirjojen nimet ovat listassa."]
+      },
+      {
+        "order": 12,
+        "id": "exercise.fi.plural.genitive.ien.lesson-beginnings",
+        "prompt": "Начала занятий трудные.",
+        "targetText": "Tuntien alut ovat vaikeita.",
+        "acceptedVariants": ["Tuntien alut ovat vaikeita."]
+      },
+      {
+        "order": 13,
+        "id": "exercise.fi.plural.genitive.ten.mens-coats",
+        "prompt": "Пальто мужчин находятся в шкафу.",
+        "targetText": "Miesten takit ovat kaapissa.",
+        "acceptedVariants": [
+          "Miesten takit ovat kaapissa.",
+          "Miehien takit ovat kaapissa."
+        ]
+      },
+      {
+        "order": 14,
+        "id": "exercise.fi.plural.genitive.ien.month-names",
+        "prompt": "Названия месяцев находятся в списке.",
+        "targetText": "Kuukausien nimet ovat listassa.",
+        "acceptedVariants": ["Kuukausien nimet ovat listassa."]
+      },
+      {
+        "order": 15,
+        "id": "exercise.fi.plural.genitive.iden.countries-weather",
+        "prompt": "Я помню погоду в этих странах.",
+        "targetText": "Muistan maiden säät.",
+        "acceptedVariants": ["Muistan maiden säät.", "Muistan maitten säät."]
+      },
+      {
+        "order": 16,
+        "id": "exercise.fi.plural.genitive.jen.house-roofs",
+        "prompt": "Крыши домов новые.",
+        "targetText": "Talojen katot ovat uusia.",
+        "acceptedVariants": ["Talojen katot ovat uusia."]
+      },
+      {
+        "order": 17,
+        "id": "exercise.fi.plural.genitive.ien.minute-count",
+        "prompt": "Количество минут небольшое.",
+        "targetText": "Minuuttien määrä on pieni.",
+        "acceptedVariants": ["Minuuttien määrä on pieni."]
+      },
+      {
+        "order": 18,
+        "id": "exercise.fi.plural.genitive.ten.peoples-opinions",
+        "prompt": "Мнения людей важны.",
+        "targetText": "Ihmisten mielipiteet ovat tärkeitä.",
+        "acceptedVariants": [
+          "Ihmisten mielipiteet ovat tärkeitä.",
+          "Ihmisien mielipiteet ovat tärkeitä."
+        ]
+      },
+      {
+        "order": 19,
+        "id": "exercise.fi.plural.genitive.usage.story-beginnings",
+        "prompt": "Начала рассказов короткие.",
+        "targetText": "Tarinoiden alut ovat lyhyitä.",
+        "acceptedVariants": [
+          "Tarinoiden alut ovat lyhyitä.",
+          "Tarinoitten alut ovat lyhyitä."
+        ]
+      },
+      {
+        "order": 20,
+        "id": "exercise.fi.plural.genitive.usage.student-answers",
+        "prompt": "Преподаватель проверяет ответы студентов.",
+        "targetText": "Opettaja tarkistaa opiskelijoiden vastaukset.",
+        "acceptedVariants": [
+          "Opettaja tarkistaa opiskelijoiden vastaukset.",
+          "Opettaja tarkistaa opiskelijoitten vastaukset."
+        ]
+      },
+      {
+        "order": 21,
+        "id": "exercise.fi.plural.genitive.ien.village-roads",
+        "prompt": "Дороги деревень длинные.",
+        "targetText": "Kylien tiet ovat pitkiä.",
+        "acceptedVariants": ["Kylien tiet ovat pitkiä."]
+      },
+      {
+        "order": 22,
+        "id": "exercise.fi.plural.genitive.jen.rule-count",
+        "prompt": "Количество правил растёт.",
+        "targetText": "Sääntöjen määrä kasvaa.",
+        "acceptedVariants": ["Sääntöjen määrä kasvaa."]
+      },
+      {
+        "order": 23,
+        "id": "exercise.fi.plural.genitive.ten.company-employees",
+        "prompt": "Сотрудники компаний находятся на совещании.",
+        "targetText": "Yritysten työntekijät ovat kokouksessa.",
+        "acceptedVariants": [
+          "Yritysten työntekijät ovat kokouksessa.",
+          "Yrityksien työntekijät ovat kokouksessa."
+        ]
+      },
+      {
+        "order": 24,
+        "id": "exercise.fi.plural.genitive.jen.weekend-trips",
+        "prompt": "Поездки на выходных короткие.",
+        "targetText": "Viikonloppujen matkat ovat lyhyitä.",
+        "acceptedVariants": ["Viikonloppujen matkat ovat lyhyitä."]
+      },
+      {
+        "order": 25,
+        "id": "exercise.fi.plural.genitive.usage.flight-schedules",
+        "prompt": "Расписания рейсов находятся на веб-страницах.",
+        "targetText": "Lentojen aikataulut ovat verkkosivuilla.",
+        "acceptedVariants": ["Lentojen aikataulut ovat verkkosivuilla."]
+      },
+      {
+        "order": 26,
+        "id": "exercise.fi.plural.genitive.jen.trip-mornings",
+        "prompt": "Я помню утра этих поездок.",
+        "targetText": "Muistan matkojen aamut.",
+        "acceptedVariants": ["Muistan matkojen aamut."]
+      },
+      {
+        "order": 27,
+        "id": "exercise.fi.plural.genitive.ien.rights-importance",
+        "prompt": "Значение прав велико.",
+        "targetText": "Oikeuksien merkitys on suuri.",
+        "acceptedVariants": ["Oikeuksien merkitys on suuri."]
+      },
+      {
+        "order": 28,
+        "id": "exercise.fi.plural.genitive.ten.question-answers",
+        "prompt": "Ответы на вопросы находятся в книге.",
+        "targetText": "Kysymysten vastaukset ovat kirjassa.",
+        "acceptedVariants": [
+          "Kysymysten vastaukset ovat kirjassa.",
+          "Kysymyksien vastaukset ovat kirjassa."
+        ]
+      },
+      {
+        "order": 29,
+        "id": "exercise.fi.plural.genitive.ien.food-pictures",
+        "prompt": "Фотографии блюд красивые.",
+        "targetText": "Ruokien kuvat ovat kauniita.",
+        "acceptedVariants": ["Ruokien kuvat ovat kauniita."]
+      },
+      {
+        "order": 30,
+        "id": "exercise.fi.plural.genitive.iden.device-numbers",
+        "prompt": "Номера устройств находятся в списке.",
+        "targetText": "Laitteiden numerot ovat listassa.",
+        "acceptedVariants": [
+          "Laitteiden numerot ovat listassa.",
+          "Laitteitten numerot ovat listassa."
+        ]
+      },
+      {
+        "order": 31,
+        "id": "exercise.fi.plural.genitive.usage.trip-evenings",
+        "prompt": "Я помню вечера этих поездок.",
+        "targetText": "Muistan matkojen illat.",
+        "acceptedVariants": ["Muistan matkojen illat."]
+      },
+      {
+        "order": 32,
+        "id": "exercise.fi.plural.genitive.jen.benefit-count",
+        "prompt": "Количество преимуществ растёт.",
+        "targetText": "Etujen määrä kasvaa.",
+        "acceptedVariants": ["Etujen määrä kasvaa."]
+      },
+      {
+        "order": 33,
+        "id": "exercise.fi.plural.genitive.usage.free-saturdays",
+        "prompt": "Субботы — свободные дни студентов.",
+        "targetText": "Lauantait ovat opiskelijoiden vapaita päiviä.",
+        "acceptedVariants": [
+          "Lauantait ovat opiskelijoiden vapaita päiviä.",
+          "Lauantait ovat opiskelijoitten vapaita päiviä."
+        ]
+      },
+      {
+        "order": 34,
+        "id": "exercise.fi.plural.genitive.jen.time-count",
+        "prompt": "Количество раз — пять.",
+        "targetText": "Kertojen määrä on viisi.",
+        "acceptedVariants": ["Kertojen määrä on viisi."]
+      },
+      {
+        "order": 35,
+        "id": "exercise.fi.plural.genitive.ten.adult-questions",
+        "prompt": "Вопросы взрослых трудные.",
+        "targetText": "Aikuisten kysymykset ovat vaikeita.",
+        "acceptedVariants": [
+          "Aikuisten kysymykset ovat vaikeita.",
+          "Aikuisien kysymykset ovat vaikeita."
+        ]
+      },
+      {
+        "order": 36,
+        "id": "exercise.fi.plural.genitive.jen.park-trees",
+        "prompt": "Деревья парков старые.",
+        "targetText": "Puistojen puut ovat vanhoja.",
+        "acceptedVariants": ["Puistojen puut ovat vanhoja."]
+      },
+      {
+        "order": 37,
+        "id": "exercise.fi.plural.genitive.usage.product-amounts",
+        "prompt": "Я проверю количество товаров.",
+        "targetText": "Tarkistan tuotteiden määrät.",
+        "acceptedVariants": [
+          "Tarkistan tuotteiden määrät.",
+          "Tarkistan tuotteitten määrät."
+        ]
+      },
+      {
+        "order": 38,
+        "id": "exercise.fi.plural.genitive.ten.adult-answers",
+        "prompt": "Ответы взрослых помогают детям.",
+        "targetText": "Aikuisten vastaukset auttavat lapsia.",
+        "acceptedVariants": [
+          "Aikuisten vastaukset auttavat lapsia.",
+          "Aikuisien vastaukset auttavat lapsia."
+        ]
+      },
+      {
+        "order": 39,
+        "id": "exercise.fi.plural.genitive.iden.country-weather",
+        "prompt": "Погода в разных странах холодная.",
+        "targetText": "Eri maiden säät ovat kylmiä.",
+        "acceptedVariants": [
+          "Eri maiden säät ovat kylmiä.",
+          "Eri maitten säät ovat kylmiä."
+        ]
+      },
+      {
+        "order": 40,
+        "id": "exercise.fi.plural.genitive.ien.boys-shoes",
+        "prompt": "Обувь мальчиков находится на полу.",
+        "targetText": "Poikien kengät ovat lattialla.",
+        "acceptedVariants": ["Poikien kengät ovat lattialla."]
+      },
+      {
+        "order": 41,
+        "id": "exercise.fi.plural.genitive.usage.week-count",
+        "prompt": "Количество недель растёт.",
+        "targetText": "Viikkojen määrä kasvaa.",
+        "acceptedVariants": ["Viikkojen määrä kasvaa."]
+      },
+      {
+        "order": 42,
+        "id": "exercise.fi.plural.genitive.jen.workplace-addresses",
+        "prompt": "Адреса рабочих мест находятся в списке.",
+        "targetText": "Työpaikkojen osoitteet ovat listassa.",
+        "acceptedVariants": ["Työpaikkojen osoitteet ovat listassa."]
+      },
+      {
+        "order": 43,
+        "id": "exercise.fi.plural.genitive.usage.manager-decisions",
+        "prompt": "Я помню решения руководителей.",
+        "targetText": "Muistan johtajien päätökset.",
+        "acceptedVariants": ["Muistan johtajien päätökset."]
+      },
+      {
+        "order": 44,
+        "id": "exercise.fi.plural.genitive.iden.different-student-answers",
+        "prompt": "Ответы разных студентов находятся в списке.",
+        "targetText": "Eri opiskelijoiden vastaukset ovat listassa.",
+        "acceptedVariants": [
+          "Eri opiskelijoiden vastaukset ovat listassa.",
+          "Eri opiskelijoitten vastaukset ovat listassa."
+        ]
+      },
+      {
+        "order": 45,
+        "id": "exercise.fi.plural.genitive.jen.shop-doors",
+        "prompt": "Двери магазинов большие.",
+        "targetText": "Kauppojen ovet ovat suuria.",
+        "acceptedVariants": ["Kauppojen ovet ovat suuria."]
+      },
+      {
+        "order": 46,
+        "id": "exercise.fi.plural.genitive.ien.bank-numbers",
+        "prompt": "Номера банков находятся в списке.",
+        "targetText": "Pankkien numerot ovat listassa.",
+        "acceptedVariants": ["Pankkien numerot ovat listassa."]
+      },
+      {
+        "order": 47,
+        "id": "exercise.fi.plural.genitive.ten.research-results",
+        "prompt": "Результаты исследований важны.",
+        "targetText": "Tutkimusten tulokset ovat tärkeitä.",
+        "acceptedVariants": [
+          "Tutkimusten tulokset ovat tärkeitä.",
+          "Tutkimuksien tulokset ovat tärkeitä."
+        ]
+      },
+      {
+        "order": 48,
+        "id": "exercise.fi.plural.genitive.ien.parent-opinions",
+        "prompt": "Мнения родителей помогают преподавателю.",
+        "targetText": "Vanhempien mielipiteet auttavat opettajaa.",
+        "acceptedVariants": ["Vanhempien mielipiteet auttavat opettajaa."]
+      },
+      {
+        "order": 49,
+        "id": "exercise.fi.plural.genitive.usage.dog-toys",
+        "prompt": "Игрушки собак находятся на полу.",
+        "targetText": "Koirien lelut ovat lattialla.",
+        "acceptedVariants": ["Koirien lelut ovat lattialla."]
+      },
+      {
+        "order": 50,
+        "id": "exercise.fi.plural.genitive.ien.city-streets",
+        "prompt": "Улицы городов длинные.",
+        "targetText": "Kaupunkien kadut ovat pitkiä.",
+        "acceptedVariants": ["Kaupunkien kadut ovat pitkiä."]
+      },
+      {
+        "order": 51,
+        "id": "exercise.fi.plural.genitive.iden.medicine-names",
+        "prompt": "Названия лекарств находятся в списке.",
+        "targetText": "Lääkkeiden nimet ovat listassa.",
+        "acceptedVariants": [
+          "Lääkkeiden nimet ovat listassa.",
+          "Lääkkeitten nimet ovat listassa."
+        ]
+      },
+      {
+        "order": 52,
+        "id": "exercise.fi.plural.genitive.ten.change-count",
+        "prompt": "Количество изменений небольшое.",
+        "targetText": "Muutosten määrä on pieni.",
+        "acceptedVariants": [
+          "Muutosten määrä on pieni.",
+          "Muutoksien määrä on pieni."
+        ]
+      },
+      {
+        "order": 53,
+        "id": "exercise.fi.plural.genitive.jen.function-names",
+        "prompt": "Названия функций находятся в списке.",
+        "targetText": "Toimintojen nimet ovat listassa.",
+        "acceptedVariants": ["Toimintojen nimet ovat listassa."]
+      },
+      {
+        "order": 54,
+        "id": "exercise.fi.plural.genitive.ten.association-meetings",
+        "prompt": "Совещания объединений начинаются скоро.",
+        "targetText": "Yhdistysten kokoukset alkavat pian.",
+        "acceptedVariants": [
+          "Yhdistysten kokoukset alkavat pian.",
+          "Yhdistyksien kokoukset alkavat pian."
+        ]
+      },
+      {
+        "order": 55,
+        "id": "exercise.fi.plural.genitive.jen.file-names",
+        "prompt": "Названия файлов длинные.",
+        "targetText": "Tiedostojen nimet ovat pitkiä.",
+        "acceptedVariants": ["Tiedostojen nimet ovat pitkiä."]
+      },
+      {
+        "order": 56,
+        "id": "exercise.fi.plural.genitive.iden.room-windows",
+        "prompt": "Окна комнат большие.",
+        "targetText": "Huoneiden ikkunat ovat suuria.",
+        "acceptedVariants": [
+          "Huoneiden ikkunat ovat suuria.",
+          "Huoneitten ikkunat ovat suuria."
+        ]
+      },
+      {
+        "order": 57,
+        "id": "exercise.fi.plural.genitive.ten.experience-importance",
+        "prompt": "Значение опыта велико.",
+        "targetText": "Kokemusten merkitys on suuri.",
+        "acceptedVariants": [
+          "Kokemusten merkitys on suuri.",
+          "Kokemuksien merkitys on suuri."
+        ]
+      },
+      {
+        "order": 58,
+        "id": "exercise.fi.plural.genitive.iden.goal-count",
+        "prompt": "Количество целей — три.",
+        "targetText": "Tavoitteiden määrä on kolme.",
+        "acceptedVariants": [
+          "Tavoitteiden määrä on kolme.",
+          "Tavoitteitten määrä on kolme."
+        ]
+      },
+      {
+        "order": 59,
+        "id": "exercise.fi.plural.genitive.usage.weather-importance",
+        "prompt": "Значение погодных условий велико.",
+        "targetText": "Säiden merkitys on suuri.",
+        "acceptedVariants": [
+          "Säiden merkitys on suuri.",
+          "Säitten merkitys on suuri."
+        ]
+      },
+      {
+        "order": 60,
+        "id": "exercise.fi.plural.genitive.ten.different-research-goals",
+        "prompt": "Цели разных исследований находятся в списке.",
+        "targetText": "Eri tutkimusten tavoitteet ovat listassa.",
+        "acceptedVariants": [
+          "Eri tutkimusten tavoitteet ovat listassa.",
+          "Eri tutkimuksien tavoitteet ovat listassa."
+        ]
+      }
+    ]
+  },
+  {
+    "24": [
+      {
+        "order": 1,
+        "id": "exercise.fi.adjective.case-agreement.internal.bright-office",
+        "prompt": "Мы работаем в светлом офисе.",
+        "targetText": "Työskentelemme valoisassa toimistossa.",
+        "acceptedVariants": ["Työskentelemme valoisassa toimistossa."]
+      },
+      {
+        "order": 2,
+        "id": "exercise.fi.adjective.case-agreement.genitive.heavy-bag",
+        "prompt": "Я подниму тяжёлую сумку.",
+        "targetText": "Nostan raskaan laukun.",
+        "acceptedVariants": ["Nostan raskaan laukun."]
+      },
+      {
+        "order": 3,
+        "id": "exercise.fi.adjective.case-agreement.plural.blue-bags",
+        "prompt": "Книги находятся в синих сумках.",
+        "targetText": "Kirjat ovat sinisissä laukuissa.",
+        "acceptedVariants": ["Kirjat ovat sinisissä laukuissa."]
+      },
+      {
+        "order": 4,
+        "id": "exercise.fi.adjective.case-agreement.external.narrow-street",
+        "prompt": "Я иду по узкой улице.",
+        "targetText": "Kävelen kapealla kadulla.",
+        "acceptedVariants": ["Kävelen kapealla kadulla."]
+      },
+      {
+        "order": 5,
+        "id": "exercise.fi.adjective.case-agreement.partitive.next-bus",
+        "prompt": "Я жду следующий автобус.",
+        "targetText": "Odotan seuraavaa bussia.",
+        "acceptedVariants": ["Odotan seuraavaa bussia."]
+      },
+      {
+        "order": 6,
+        "id": "exercise.fi.adjective.case-agreement.pluralgenitive.high-buildings",
+        "prompt": "Окна высоких зданий большие.",
+        "targetText": "Korkeiden rakennusten ikkunat ovat suuria.",
+        "acceptedVariants": ["Korkeiden rakennusten ikkunat ovat suuria."]
+      },
+      {
+        "order": 7,
+        "id": "exercise.fi.adjective.case-agreement.genitive.extra-task",
+        "prompt": "Я выполню дополнительное задание.",
+        "targetText": "Teen ylimääräisen tehtävän.",
+        "acceptedVariants": ["Teen ylimääräisen tehtävän."]
+      },
+      {
+        "order": 8,
+        "id": "exercise.fi.adjective.case-agreement.external.friendly-teacher",
+        "prompt": "Я получаю сообщение от дружелюбного преподавателя.",
+        "targetText": "Saan viestin ystävälliseltä opettajalta.",
+        "acceptedVariants": ["Saan viestin ystävälliseltä opettajalta."]
+      },
+      {
+        "order": 9,
+        "id": "exercise.fi.adjective.case-agreement.plural.dry-clothes",
+        "prompt": "Я покупаю сухую одежду.",
+        "targetText": "Ostan kuivia vaatteita.",
+        "acceptedVariants": ["Ostan kuivia vaatteita."]
+      },
+      {
+        "order": 10,
+        "id": "exercise.fi.adjective.case-agreement.internal.safe-hotel",
+        "prompt": "Мы идём в безопасный отель.",
+        "targetText": "Menemme turvalliseen hotelliin.",
+        "acceptedVariants": ["Menemme turvalliseen hotelliin."]
+      },
+      {
+        "order": 11,
+        "id": "exercise.fi.adjective.case-agreement.pluralgenitive.friendly-teachers",
+        "prompt": "Сообщения дружелюбных преподавателей короткие.",
+        "targetText": "Ystävällisten opettajien viestit ovat lyhyitä.",
+        "acceptedVariants": ["Ystävällisten opettajien viestit ovat lyhyitä."]
+      },
+      {
+        "order": 12,
+        "id": "exercise.fi.adjective.case-agreement.partitive.strong-sound",
+        "prompt": "Я слушаю громкий звук.",
+        "targetText": "Kuuntelen voimakasta ääntä.",
+        "acceptedVariants": ["Kuuntelen voimakasta ääntä."]
+      },
+      {
+        "order": 13,
+        "id": "exercise.fi.adjective.case-agreement.external.hungry-child",
+        "prompt": "Я даю еду голодному ребёнку.",
+        "targetText": "Annan ruokaa nälkäiselle lapselle.",
+        "acceptedVariants": ["Annan ruokaa nälkäiselle lapselle."]
+      },
+      {
+        "order": 14,
+        "id": "exercise.fi.adjective.case-agreement.pluralgenitive.narrow-streets",
+        "prompt": "Названия узких улиц находятся на карте.",
+        "targetText": "Kapeiden katujen nimet ovat kartassa.",
+        "acceptedVariants": ["Kapeiden katujen nimet ovat kartassa."]
+      },
+      {
+        "order": 15,
+        "id": "exercise.fi.adjective.case-agreement.internal.quiet-village",
+        "prompt": "Я живу в тихой деревне.",
+        "targetText": "Asun hiljaisessa kylässä.",
+        "acceptedVariants": ["Asun hiljaisessa kylässä."]
+      },
+      {
+        "order": 16,
+        "id": "exercise.fi.adjective.case-agreement.partitive.great-picture",
+        "prompt": "Я смотрю на великолепную фотографию.",
+        "targetText": "Katson upeaa kuvaa.",
+        "acceptedVariants": ["Katson upeaa kuvaa."]
+      },
+      {
+        "order": 17,
+        "id": "exercise.fi.adjective.case-agreement.genitive.special-day",
+        "prompt": "Я помню особенный день.",
+        "targetText": "Muistan erityisen päivän.",
+        "acceptedVariants": ["Muistan erityisen päivän."]
+      },
+      {
+        "order": 18,
+        "id": "exercise.fi.adjective.case-agreement.plural.narrow-streets",
+        "prompt": "Мы ходим по узким улицам.",
+        "targetText": "Kävelemme kapeilla kaduilla.",
+        "acceptedVariants": ["Kävelemme kapeilla kaduilla."]
+      },
+      {
+        "order": 19,
+        "id": "exercise.fi.adjective.case-agreement.pluralgenitive.dark-bags",
+        "prompt": "Номера тёмных сумок находятся в списке.",
+        "targetText": "Tummien laukkujen numerot ovat listassa.",
+        "acceptedVariants": ["Tummien laukkujen numerot ovat listassa."]
+      },
+      {
+        "order": 20,
+        "id": "exercise.fi.adjective.case-agreement.partitive.simple-form",
+        "prompt": "Я заполняю простую анкету.",
+        "targetText": "Täytän yksinkertaista lomaketta.",
+        "acceptedVariants": ["Täytän yksinkertaista lomaketta."]
+      },
+      {
+        "order": 21,
+        "id": "exercise.fi.adjective.case-agreement.external.polite-customer",
+        "prompt": "Я отвечаю вежливому клиенту.",
+        "targetText": "Vastaan kohteliaalle asiakkaalle.",
+        "acceptedVariants": ["Vastaan kohteliaalle asiakkaalle."]
+      },
+      {
+        "order": 22,
+        "id": "exercise.fi.adjective.case-agreement.genitive.ordinary-ticket",
+        "prompt": "Я куплю обычный билет.",
+        "targetText": "Ostan tavallisen lipun.",
+        "acceptedVariants": ["Ostan tavallisen lipun."]
+      },
+      {
+        "order": 23,
+        "id": "exercise.fi.adjective.case-agreement.plural.bright-offices",
+        "prompt": "Мы работаем в светлых офисах.",
+        "targetText": "Työskentelemme valoisissa toimistoissa.",
+        "acceptedVariants": ["Työskentelemme valoisissa toimistoissa."]
+      },
+      {
+        "order": 24,
+        "id": "exercise.fi.adjective.case-agreement.internal.shared-project",
+        "prompt": "Мы говорим об общем проекте.",
+        "targetText": "Puhumme yhteisestä projektista.",
+        "acceptedVariants": ["Puhumme yhteisestä projektista."]
+      },
+      {
+        "order": 25,
+        "id": "exercise.fi.adjective.case-agreement.partitive.wet-coat",
+        "prompt": "Я несу мокрое пальто.",
+        "targetText": "Kannan märkää takkia.",
+        "acceptedVariants": ["Kannan märkää takkia."]
+      },
+      {
+        "order": 26,
+        "id": "exercise.fi.adjective.case-agreement.plural.safe-hotels",
+        "prompt": "Пассажиры идут в безопасные отели.",
+        "targetText": "Matkustajat menevät turvallisiin hotelleihin.",
+        "acceptedVariants": ["Matkustajat menevät turvallisiin hotelleihin."]
+      },
+      {
+        "order": 27,
+        "id": "exercise.fi.adjective.case-agreement.genitive.yellow-bag",
+        "prompt": "Я куплю жёлтую сумку.",
+        "targetText": "Ostan keltaisen laukun.",
+        "acceptedVariants": ["Ostan keltaisen laukun."]
+      },
+      {
+        "order": 28,
+        "id": "exercise.fi.adjective.case-agreement.pluralgenitive.safe-hotels",
+        "prompt": "Адреса безопасных отелей находятся в списке.",
+        "targetText": "Turvallisten hotellien osoitteet ovat listassa.",
+        "acceptedVariants": ["Turvallisten hotellien osoitteet ovat listassa."]
+      },
+      {
+        "order": 29,
+        "id": "exercise.fi.adjective.case-agreement.internal.dry-bag",
+        "prompt": "Книга находится в сухой сумке.",
+        "targetText": "Kirja on kuivassa laukussa.",
+        "acceptedVariants": ["Kirja on kuivassa laukussa."]
+      },
+      {
+        "order": 30,
+        "id": "exercise.fi.adjective.case-agreement.external.polite-student",
+        "prompt": "Я даю задание вежливому ученику.",
+        "targetText": "Annan tehtävän kohteliaalle oppilaalle.",
+        "acceptedVariants": ["Annan tehtävän kohteliaalle oppilaalle."]
+      },
+      {
+        "order": 31,
+        "id": "exercise.fi.adjective.case-agreement.pluralgenitive.last-days",
+        "prompt": "События последних дней находятся в списке.",
+        "targetText": "Viimeisten päivien tapahtumat ovat listassa.",
+        "acceptedVariants": ["Viimeisten päivien tapahtumat ovat listassa."]
+      },
+      {
+        "order": 32,
+        "id": "exercise.fi.adjective.case-agreement.internal.happy-home",
+        "prompt": "Я прихожу из счастливого дома.",
+        "targetText": "Tulen onnellisesta kodista.",
+        "acceptedVariants": ["Tulen onnellisesta kodista."]
+      },
+      {
+        "order": 33,
+        "id": "exercise.fi.adjective.case-agreement.external.high-chair",
+        "prompt": "Я сижу на высоком стуле.",
+        "targetText": "Istun korkealla tuolilla.",
+        "acceptedVariants": ["Istun korkealla tuolilla."]
+      },
+      {
+        "order": 34,
+        "id": "exercise.fi.adjective.case-agreement.plural.great-pictures",
+        "prompt": "Я вижу великолепные фотографии.",
+        "targetText": "Näen upeita kuvia.",
+        "acceptedVariants": ["Näen upeita kuvia."]
+      },
+      {
+        "order": 35,
+        "id": "exercise.fi.adjective.case-agreement.genitive.light-box",
+        "prompt": "Я подниму лёгкую коробку.",
+        "targetText": "Nostan kevyen laatikon.",
+        "acceptedVariants": ["Nostan kevyen laatikon."]
+      },
+      {
+        "order": 36,
+        "id": "exercise.fi.adjective.case-agreement.partitive.dangerous-product",
+        "prompt": "Я не покупаю опасный товар.",
+        "targetText": "En osta vaarallista tuotetta.",
+        "acceptedVariants": ["En osta vaarallista tuotetta."]
+      },
+      {
+        "order": 37,
+        "id": "exercise.fi.adjective.case-agreement.internal.into-dry-bag",
+        "prompt": "Я кладу одежду в сухую сумку.",
+        "targetText": "Panen vaatteet kuivaan laukkuun.",
+        "acceptedVariants": ["Panen vaatteet kuivaan laukkuun."]
+      },
+      {
+        "order": 38,
+        "id": "exercise.fi.adjective.case-agreement.pluralgenitive.special-days",
+        "prompt": "Названия особенных дней находятся в списке.",
+        "targetText": "Erityisten päivien nimet ovat listassa.",
+        "acceptedVariants": ["Erityisten päivien nimet ovat listassa."]
+      },
+      {
+        "order": 39,
+        "id": "exercise.fi.adjective.case-agreement.partitive.ordinary-ticket",
+        "prompt": "Мне нужен обычный билет.",
+        "targetText": "Tarvitsen tavallista lippua.",
+        "acceptedVariants": ["Tarvitsen tavallista lippua."]
+      },
+      {
+        "order": 40,
+        "id": "exercise.fi.adjective.case-agreement.external.extra-computer",
+        "prompt": "Я работаю на дополнительном компьютере.",
+        "targetText": "Työskentelen ylimääräisellä tietokoneella.",
+        "acceptedVariants": ["Työskentelen ylimääräisellä tietokoneella."]
+      },
+      {
+        "order": 41,
+        "id": "exercise.fi.adjective.case-agreement.plural.friendly-customers",
+        "prompt": "Я отвечаю дружелюбным клиентам.",
+        "targetText": "Vastaan ystävällisille asiakkaille.",
+        "acceptedVariants": ["Vastaan ystävällisille asiakkaille."]
+      },
+      {
+        "order": 42,
+        "id": "exercise.fi.adjective.case-agreement.genitive.last-meeting",
+        "prompt": "Я помню последнее совещание.",
+        "targetText": "Muistan viimeisen kokouksen.",
+        "acceptedVariants": ["Muistan viimeisen kokouksen."]
+      },
+      {
+        "order": 43,
+        "id": "exercise.fi.adjective.case-agreement.external.happy-friend",
+        "prompt": "Я получаю письмо от счастливого друга.",
+        "targetText": "Saan kirjeen onnelliselta ystävältä.",
+        "acceptedVariants": ["Saan kirjeen onnelliselta ystävältä."]
+      },
+      {
+        "order": 44,
+        "id": "exercise.fi.adjective.case-agreement.plural.strong-sounds",
+        "prompt": "Я слушаю громкие звуки.",
+        "targetText": "Kuuntelen voimakkaita ääniä.",
+        "acceptedVariants": ["Kuuntelen voimakkaita ääniä."]
+      },
+      {
+        "order": 45,
+        "id": "exercise.fi.adjective.case-agreement.internal.bright-room",
+        "prompt": "Я прихожу из светлой комнаты.",
+        "targetText": "Tulen valoisasta huoneesta.",
+        "acceptedVariants": ["Tulen valoisasta huoneesta."]
+      },
+      {
+        "order": 46,
+        "id": "exercise.fi.adjective.case-agreement.pluralgenitive.shared-projects",
+        "prompt": "Цели общих проектов важны.",
+        "targetText": "Yhteisten projektien tavoitteet ovat tärkeitä.",
+        "acceptedVariants": ["Yhteisten projektien tavoitteet ovat tärkeitä."]
+      },
+      {
+        "order": 47,
+        "id": "exercise.fi.adjective.case-agreement.partitive.heavy-package",
+        "prompt": "Мы несём тяжёлую посылку.",
+        "targetText": "Kannamme raskasta pakettia.",
+        "acceptedVariants": ["Kannamme raskasta pakettia."]
+      },
+      {
+        "order": 48,
+        "id": "exercise.fi.adjective.case-agreement.genitive.simple-option",
+        "prompt": "Я выберу простой вариант.",
+        "targetText": "Valitsen yksinkertaisen vaihtoehdon.",
+        "acceptedVariants": ["Valitsen yksinkertaisen vaihtoehdon."]
+      },
+      {
+        "order": 49,
+        "id": "exercise.fi.adjective.case-agreement.plural.yellow-tables",
+        "prompt": "Книги находятся на жёлтых столах.",
+        "targetText": "Kirjat ovat keltaisilla pöydillä.",
+        "acceptedVariants": ["Kirjat ovat keltaisilla pöydillä."]
+      },
+      {
+        "order": 50,
+        "id": "exercise.fi.adjective.case-agreement.partitive.blue-car",
+        "prompt": "Я смотрю на синюю машину.",
+        "targetText": "Katson sinistä autoa.",
+        "acceptedVariants": ["Katson sinistä autoa."]
+      },
+      {
+        "order": 51,
+        "id": "exercise.fi.adjective.case-agreement.genitive.heavy-door",
+        "prompt": "Я открою тяжёлую дверь.",
+        "targetText": "Avaan raskaan oven.",
+        "acceptedVariants": ["Avaan raskaan oven."]
+      },
+      {
+        "order": 52,
+        "id": "exercise.fi.adjective.case-agreement.internal.dangerous-place",
+        "prompt": "Я не иду в опасное место.",
+        "targetText": "En mene vaaralliseen paikkaan.",
+        "acceptedVariants": ["En mene vaaralliseen paikkaan."]
+      },
+      {
+        "order": 53,
+        "id": "exercise.fi.adjective.case-agreement.pluralgenitive.polite-customers",
+        "prompt": "Сообщения вежливых клиентов короткие.",
+        "targetText": "Kohteliaiden asiakkaiden viestit ovat lyhyitä.",
+        "acceptedVariants": ["Kohteliaiden asiakkaiden viestit ovat lyhyitä."]
+      },
+      {
+        "order": 54,
+        "id": "exercise.fi.adjective.case-agreement.external.wet-floor",
+        "prompt": "Я подниму сумку с мокрого пола.",
+        "targetText": "Nostan laukun märältä lattialta.",
+        "acceptedVariants": ["Nostan laukun märältä lattialta."]
+      },
+      {
+        "order": 55,
+        "id": "exercise.fi.adjective.case-agreement.partitive.ordinary-coffee",
+        "prompt": "Я хочу обычный кофе.",
+        "targetText": "Haluan tavallista kahvia.",
+        "acceptedVariants": ["Haluan tavallista kahvia."]
+      },
+      {
+        "order": 56,
+        "id": "exercise.fi.adjective.case-agreement.plural.hungry-children",
+        "prompt": "Я даю еду голодным детям.",
+        "targetText": "Annan ruokaa nälkäisille lapsille.",
+        "acceptedVariants": ["Annan ruokaa nälkäisille lapsille."]
+      },
+      {
+        "order": 57,
+        "id": "exercise.fi.adjective.case-agreement.genitive.great-concert",
+        "prompt": "Я помню великолепный концерт.",
+        "targetText": "Muistan upean konsertin.",
+        "acceptedVariants": ["Muistan upean konsertin."]
+      },
+      {
+        "order": 58,
+        "id": "exercise.fi.adjective.case-agreement.internal.dark-cabinet",
+        "prompt": "Книги находятся в тёмном шкафу.",
+        "targetText": "Kirjat ovat tummassa kaapissa.",
+        "acceptedVariants": ["Kirjat ovat tummassa kaapissa."]
+      },
+      {
+        "order": 59,
+        "id": "exercise.fi.adjective.case-agreement.pluralgenitive.light-boxes",
+        "prompt": "Номера лёгких коробок находятся в списке.",
+        "targetText": "Kevyiden laatikoiden numerot ovat listassa.",
+        "acceptedVariants": ["Kevyiden laatikoiden numerot ovat listassa."]
+      },
+      {
+        "order": 60,
+        "id": "exercise.fi.adjective.case-agreement.external.shared-table",
+        "prompt": "Книга находится на общем столе.",
+        "targetText": "Kirja on yhteisellä pöydällä.",
+        "acceptedVariants": ["Kirja on yhteisellä pöydällä."]
+      }
+    ]
   }
 ]

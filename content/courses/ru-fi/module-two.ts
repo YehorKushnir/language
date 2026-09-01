@@ -28,6 +28,16 @@ import {
   pluralLocalCasesSkills,
   pluralLocalCasesVocabulary,
 } from './lessons/fi.plural.local-cases.js'
+import {
+  pluralGenitiveContent,
+  pluralGenitiveSkills,
+  pluralGenitiveVocabulary,
+} from './lessons/fi.plural.genitive.js'
+import {
+  adjectiveCaseAgreementContent,
+  adjectiveCaseAgreementSkills,
+  adjectiveCaseAgreementVocabulary,
+} from './lessons/fi.adjective.case-agreement.js'
 import { moduleOneLessons, type CourseLessonSeed } from './module-one.js'
 import { moduleTwoLessonPlan } from './module-two-plan.js'
 import { applyReviewedExercises } from './reviewed-exercises.js'
@@ -38,6 +48,8 @@ const numeralsQuantitiesPlan = moduleTwoLessonPlan[2]
 const pluralPartitiveFormationPlan = moduleTwoLessonPlan[3]
 const pluralPartitiveUsagePlan = moduleTwoLessonPlan[4]
 const pluralLocalCasesPlan = moduleTwoLessonPlan[5]
+const pluralGenitivePlan = moduleTwoLessonPlan[6]
+const adjectiveCaseAgreementPlan = moduleTwoLessonPlan[7]
 
 if (
   !objectBoundednessPlan ||
@@ -45,9 +57,11 @@ if (
   !numeralsQuantitiesPlan ||
   !pluralPartitiveFormationPlan ||
   !pluralPartitiveUsagePlan ||
-  !pluralLocalCasesPlan
+  !pluralLocalCasesPlan ||
+  !pluralGenitivePlan ||
+  !adjectiveCaseAgreementPlan
 ) {
-  throw new Error('Module two must declare lessons 17 through 22')
+  throw new Error('Module two must declare lessons 17 through 24')
 }
 
 const moduleTwoLessonDrafts: CourseLessonSeed[] = [
@@ -231,6 +245,68 @@ const moduleTwoLessonDrafts: CourseLessonSeed[] = [
       ],
     },
     templateId: `template.${pluralLocalCasesPlan.id}.prepared-variation@1`,
+    mvpQuality: {
+      content: 'CURATED',
+      linguisticReview: 'PENDING',
+      goldenExerciseIds: [],
+    },
+  },
+  {
+    id: pluralGenitivePlan.id,
+    modulePosition: 2,
+    lessonPosition: 7,
+    title: { ru: pluralGenitivePlan.title },
+    summary: {
+      ru: 'Генитив множественного числа и основные модели -jen, -ien, -iden/-itten и -ten.',
+    },
+    content: pluralGenitiveContent,
+    vocabulary: pluralGenitiveVocabulary,
+    exercises: [],
+    skills: pluralGenitiveSkills,
+    template: {
+      schemaVersion: 1,
+      frame: 'prepared-variation',
+      lessonId: pluralGenitivePlan.id,
+      sourceLanguage: 'ru',
+      targetLanguage: 'fi',
+      exerciseIds: [],
+      supportedItemIds: [
+        ...pluralGenitiveSkills.map((skill) => skill.id),
+        ...pluralGenitiveVocabulary.map((item) => item.itemId),
+      ],
+    },
+    templateId: `template.${pluralGenitivePlan.id}.prepared-variation@1`,
+    mvpQuality: {
+      content: 'CURATED',
+      linguisticReview: 'PENDING',
+      goldenExerciseIds: [],
+    },
+  },
+  {
+    id: adjectiveCaseAgreementPlan.id,
+    modulePosition: 2,
+    lessonPosition: 8,
+    title: { ru: adjectiveCaseAgreementPlan.title },
+    summary: {
+      ru: 'Прилагательное согласуется с существительным в падеже и числе: от генитива и партитива до местных падежей и множественного числа.',
+    },
+    content: adjectiveCaseAgreementContent,
+    vocabulary: adjectiveCaseAgreementVocabulary,
+    exercises: [],
+    skills: adjectiveCaseAgreementSkills,
+    template: {
+      schemaVersion: 1,
+      frame: 'prepared-variation',
+      lessonId: adjectiveCaseAgreementPlan.id,
+      sourceLanguage: 'ru',
+      targetLanguage: 'fi',
+      exerciseIds: [],
+      supportedItemIds: [
+        ...adjectiveCaseAgreementSkills.map((skill) => skill.id),
+        ...adjectiveCaseAgreementVocabulary.map((item) => item.itemId),
+      ],
+    },
+    templateId: `template.${adjectiveCaseAgreementPlan.id}.prepared-variation@1`,
     mvpQuality: {
       content: 'CURATED',
       linguisticReview: 'PENDING',

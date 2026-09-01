@@ -31,8 +31,8 @@ describe('module two draft', () => {
     })
   })
 
-  it('builds lessons 17 through 22 and covers every new word in its lesson', () => {
-    expect(moduleTwoDraftLessons).toHaveLength(6)
+  it('builds lessons 17 through 24 and covers every new word in its lesson', () => {
+    expect(moduleTwoDraftLessons).toHaveLength(8)
     expect(moduleTwoDraftLessons.map((lesson) => lesson.id)).toEqual([
       'fi.object.boundedness',
       'fi.object.total.forms',
@@ -40,8 +40,10 @@ describe('module two draft', () => {
       'fi.plural.partitive.formation',
       'fi.plural.partitive.usage',
       'fi.plural.local-cases',
+      'fi.plural.genitive',
+      'fi.adjective.case-agreement',
     ])
-    expect(moduleTwoDraftVocabulary).toHaveLength(156)
+    expect(moduleTwoDraftVocabulary).toHaveLength(208)
 
     const allowedVocabularyIds = moduleOneLessons.flatMap((candidate) =>
       candidate.vocabulary.map((item) => item.itemId),
@@ -135,6 +137,15 @@ function exerciseKind(exerciseId: string) {
     'adessive',
     'ablative',
     'allative',
+    'jen',
+    'ien',
+    'iden',
+    'ten',
+    'usage',
+    'genitive',
+    'internal',
+    'external',
+    'pluralgenitive',
     'partitive',
     'singular',
     'plural',
