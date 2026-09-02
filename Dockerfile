@@ -43,7 +43,7 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=45s --retries=4 \
 
 CMD ["node", "dist/main.js"]
 
-FROM node-base AS migrate
+FROM runtime-base AS migrate
 
 ENV NODE_ENV=production
 
