@@ -48,6 +48,7 @@ FROM runtime-base AS migrate
 ENV NODE_ENV=production
 
 COPY --from=build /prod/database /app/packages/database
+COPY --from=build /app/packages/language-fi/src /app/packages/language-fi/src
 COPY --from=build /app/content /app/content
 COPY --from=build /app/scripts/deploy/release.sh /app/scripts/deploy/release.sh
 
