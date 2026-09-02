@@ -32,6 +32,7 @@ import { Progress } from '@/components/ui/progress'
 import { authClient } from '@/lib/auth-client'
 import {
   getCompletedLessonPartCount,
+  getLatestAvailableLesson,
   getNextLessonPart,
   isLessonPartComplete,
 } from '@/lib/home-progress'
@@ -70,6 +71,24 @@ const lessonPartItems = [
   { part: 'practice', label: 'Практика', icon: DumbbellIcon },
 ] as const
 
+const guestLessonSteps = [
+  {
+    title: 'Понять правило',
+    description: 'Короткое объяснение с живыми примерами.',
+    icon: BookOpenIcon,
+  },
+  {
+    title: 'Запомнить слова',
+    description: 'Активное вспоминание вместо пассивного чтения.',
+    icon: LanguagesIcon,
+  },
+  {
+    title: 'Собрать фразы',
+    description: '60 заданий с проверкой форм и порядка слов.',
+    icon: DumbbellIcon,
+  },
+] as const
+
 function HomePage() {
   const session = authClient.useSession()
   const course = useQuery(courseQuery)
@@ -92,16 +111,16 @@ function HomePage() {
   }
 
   const routeLessons = course.data.route?.lessons ?? []
-  const currentLessonId =
-    progress.data.currentLessonId ?? routeLessons[0]?.id ?? null
-  const currentLesson = routeLessons.find(
-    (lesson) => lesson.id === currentLessonId,
+  const nextLesson = getLatestAvailableLesson(
+    routeLessons,
+    progress.data.lessons,
   )
-  const currentLessonProgress = progress.data.lessons.find(
-    (lesson) => lesson.lessonId === currentLessonId,
+  const nextLessonId = nextLesson?.id ?? null
+  const nextLessonProgress = progress.data.lessons.find(
+    (lesson) => lesson.lessonId === nextLessonId,
   )
-  const completedParts = getCompletedLessonPartCount(currentLessonProgress)
-  const nextPart = getNextLessonPart(currentLessonProgress)
+  const completedParts = getCompletedLessonPartCount(nextLessonProgress)
+  const nextPart = getNextLessonPart(nextLessonProgress)
   const continuation = continuationByPart[nextPart]
   const totalLessons = progress.data.totalLessons || routeLessons.length
   const coursePercent = totalLessons
@@ -121,15 +140,15 @@ function HomePage() {
         }
         description={getHomeSummary(
           progress.data.dueReviews,
-          currentLesson ? localizedText(currentLesson.title) : null,
+          nextLesson ? localizedText(nextLesson.title) : null,
         )}
       />
 
       <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1.55fr)_minmax(17rem,0.75fr)]">
-        {currentLesson && currentLessonId ? (
+        {nextLesson && nextLessonId ? (
           <Link
             to={continuation.to}
-            params={{ lessonId: currentLessonId }}
+            params={{ lessonId: nextLessonId }}
             className="interactive-surface group flex min-h-64 flex-col rounded-xl bg-card p-5 shadow-xs sm:p-6"
           >
             <div className="flex items-center justify-between gap-4">
@@ -137,24 +156,23 @@ function HomePage() {
                 Следующий шаг
               </span>
               <Badge variant="secondary">
-                Урок {getAbsoluteLessonPosition(currentLesson)} из{' '}
-                {totalLessons}
+                Урок {getAbsoluteLessonPosition(nextLesson)} из {totalLessons}
               </Badge>
             </div>
 
             <div className="mt-5 max-w-2xl">
               <h2 className="font-serif text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
-                {localizedText(currentLesson.title)}
+                {localizedText(nextLesson.title)}
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                {localizedText(currentLesson.summary)}
+                {localizedText(nextLesson.summary)}
               </p>
             </div>
 
             <div className="mt-auto pt-6">
               <LessonPartProgress
                 activePart={nextPart}
-                progress={currentLessonProgress}
+                progress={nextLessonProgress}
               />
               <div className="mt-5 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <span className="text-xs text-muted-foreground">
@@ -172,8 +190,8 @@ function HomePage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
           <ReviewCard dueReviews={progress.data.dueReviews} />
           <ModuleProgressCard
+            availableLesson={nextLesson?.lessonPosition ?? 1}
             completedLessons={progress.data.completedLessons}
-            currentLesson={currentLesson?.lessonPosition ?? 1}
             percent={coursePercent}
             totalLessons={totalLessons}
           />
@@ -254,38 +272,61 @@ function LessonPartProgress({
 
 function ReviewCard({ dueReviews }: { dueReviews: number }) {
   const hasReviews = dueReviews > 0
+  const reviewLabel = formatReviewNoun(dueReviews)
 
   return (
     <Link
       to={hasReviews ? '/reviews/session' : '/vocabulary'}
       className="interactive-surface group flex min-h-31 flex-col rounded-xl bg-card p-4 shadow-xs"
     >
-      <div className="flex items-start justify-between gap-4">
-        <span className="grid size-9 place-items-center rounded-lg bg-secondary text-primary">
+      <div className="flex items-center gap-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary text-primary">
           <BrainIcon className="size-4.5" />
         </span>
-        <ArrowRightIcon className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5" />
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">Повторение</p>
+          <p className="text-xs font-medium text-primary">
+            {hasReviews ? 'Запланировано на сегодня' : 'План выполнен'}
+          </p>
+        </div>
       </div>
-      <div className="mt-auto pt-4">
-        <p className="text-xs text-muted-foreground">Повторение</p>
-        <h2 className="mt-0.5 text-base font-semibold">
+
+      <div className="mt-3 flex items-end gap-2">
+        {hasReviews ? (
+          <>
+            <strong className="font-serif text-3xl leading-none font-semibold tabular-nums">
+              {dueReviews}
+            </strong>
+            <span className="pb-0.5 text-sm font-semibold">{reviewLabel}</span>
+          </>
+        ) : (
+          <h2 className="text-base font-semibold">На сегодня всё</h2>
+        )}
+      </div>
+
+      <div className="mt-auto flex items-end justify-between gap-3 pt-3">
+        <p className="max-w-44 text-[11px] leading-4 text-muted-foreground">
           {hasReviews
-            ? `${formatReviewCount(dueReviews)} на сегодня`
-            : 'На сегодня всё'}
-        </h2>
+            ? 'Слова и грамматика, которые пора освежить.'
+            : 'Новые карточки появятся по расписанию.'}
+        </p>
+        <ArrowRightIcon
+          aria-hidden="true"
+          className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5"
+        />
       </div>
     </Link>
   )
 }
 
 function ModuleProgressCard({
+  availableLesson,
   completedLessons,
-  currentLesson,
   percent,
   totalLessons,
 }: {
+  availableLesson: number
   completedLessons: number
-  currentLesson: number
   percent: number
   totalLessons: number
 }) {
@@ -313,7 +354,7 @@ function ModuleProgressCard({
           </span>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Сейчас урок {currentLesson}
+          Доступен урок {availableLesson}
         </p>
       </div>
     </Link>
@@ -403,22 +444,60 @@ function GuestHome({ course }: { course: CourseOverviewResponse }) {
         <CourseFact value={5} label="подготовленных текстов" />
       </section>
 
-      {firstLesson ? (
-        <section className="mt-6 rounded-xl bg-card p-5 shadow-xs sm:p-6">
+      <div className="mt-6 grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_minmax(19rem,0.85fr)]">
+        {firstLesson ? (
+          <section className="flex flex-col rounded-xl bg-card p-5 shadow-xs sm:p-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+              Первый урок
+            </p>
+            <h2 className="mt-2 font-serif text-2xl font-semibold sm:text-3xl">
+              {localizedText(firstLesson.title)}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              {localizedText(firstLesson.summary)}
+            </p>
+            <div className="mt-auto pt-6">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <CheckIcon className="size-3.5 text-primary" />
+                Следующий урок открывается при результате от 85%
+              </div>
+              <Button asChild className="mt-4" size="sm" variant="outline">
+                <Link to="/sign-up">Создать аккаунт и начать</Link>
+              </Button>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="rounded-xl border border-primary/10 bg-primary/[0.035] p-5 sm:p-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Первый урок
+            Как устроен урок
           </p>
-          <h2 className="mt-2 font-serif text-2xl font-semibold">
-            {localizedText(firstLesson.title)}
+          <h2 className="mt-2 font-serif text-xl font-semibold">
+            От правила к своей фразе
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            {localizedText(firstLesson.summary)}
-          </p>
-          <Button asChild className="mt-5" size="sm" variant="outline">
-            <Link to="/sign-up">Создать аккаунт и начать</Link>
-          </Button>
+          <ol className="mt-5 grid gap-4">
+            {guestLessonSteps.map((step, index) => {
+              const Icon = step.icon
+              return (
+                <li className="flex gap-3" key={step.title}>
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-card text-primary shadow-xs">
+                    <Icon className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">
+                      <span className="mr-1.5 text-primary">{index + 1}.</span>
+                      {step.title}
+                    </p>
+                    <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                      {step.description}
+                    </p>
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
         </section>
-      ) : null}
+      </div>
     </PageShell>
   )
 }
@@ -444,7 +523,10 @@ function CourseFact({
 
 function getHomeSummary(dueReviews: number, lessonTitle: string | null) {
   if (dueReviews > 0) {
-    return `${formatReviewCount(dueReviews)} ждут тренировки. После неё можно продолжить текущий урок.`
+    const reviewSummary = `На сегодня запланировано ${formatReviewCount(dueReviews)}.`
+    return lessonTitle
+      ? `${reviewSummary} После тренировки — «${lessonTitle}».`
+      : reviewSummary
   }
   return lessonTitle
     ? `Повторений на сегодня нет. Следующий шаг — «${lessonTitle}».`
@@ -459,15 +541,17 @@ function getAbsoluteLessonPosition(lesson: {
 }
 
 function formatReviewCount(count: number) {
+  return `${count} ${formatReviewNoun(count)}`
+}
+
+function formatReviewNoun(count: number) {
   const mod10 = count % 10
   const mod100 = count % 100
-  const noun =
-    mod10 === 1 && mod100 !== 11
-      ? 'повторение'
-      : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
-        ? 'повторения'
-        : 'повторений'
-  return `${count} ${noun}`
+  return mod10 === 1 && mod100 !== 11
+    ? 'повторение'
+    : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+      ? 'повторения'
+      : 'повторений'
 }
 
 function PageState({

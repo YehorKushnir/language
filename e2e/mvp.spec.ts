@@ -339,6 +339,7 @@ test('learner can move through the first lesson with keyboard controls', async (
     page.getByRole('heading', { level: 1, name: 'Первый модуль · 16 уроков' }),
   ).toBeVisible()
   await expect(page.locator('main')).toHaveCount(1)
+  await expect(page.getByLabel('Прогресс практики: 0%')).toHaveCount(16)
   await expectAccessible(page)
 
   const firstLesson = page.getByRole('button', {
@@ -1052,7 +1053,29 @@ test('account settings update profile and password while hiding destructive acti
   const email = await signUpLearner(page, 'Settings learner')
   await page.goto('/settings')
 
-  await expect(page.getByText('Выгрузить данные')).toHaveCount(0)
+  await expect(
+    page.locator('header').getByRole('button', { name: 'Выйти' }),
+  ).toHaveCount(0)
+  const accountDownloadPromise = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Выгрузить данные' }).click()
+  const accountDownload = await accountDownloadPromise
+  expect(accountDownload.suggestedFilename()).toMatch(
+    /^suomi-account-data-\d{4}-\d{2}-\d{2}\.json$/u,
+  )
+  const accountDownloadPath = await accountDownload.path()
+  expect(accountDownloadPath).not.toBeNull()
+  const accountExport = JSON.parse(
+    await readFile(accountDownloadPath!, 'utf8'),
+  ) as {
+    formatVersion: number
+    user: { email: string }
+    exerciseHistory: unknown[]
+  }
+  expect(accountExport).toMatchObject({
+    formatVersion: 1,
+    user: { email },
+  })
+  expect(accountExport.exerciseHistory).toBeInstanceOf(Array)
   await expect(
     page.getByRole('heading', { level: 2, name: 'Удалить аккаунт' }),
   ).toBeHidden()

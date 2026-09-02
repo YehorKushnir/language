@@ -92,6 +92,7 @@ export class AccountService {
           orderBy: { answeredAt: 'asc' },
           include: { evidence: { orderBy: { itemId: 'asc' } } },
         },
+        exerciseHistory: { orderBy: { firstSeenAt: 'asc' } },
         exerciseReports: { orderBy: { createdAt: 'asc' } },
       },
     })
@@ -99,6 +100,7 @@ export class AccountService {
     if (!user) throw new NotFoundException('User was not found')
 
     return {
+      formatVersion: 1,
       exportedAt: new Date().toISOString(),
       user: {
         id: user.id,
@@ -122,8 +124,10 @@ export class AccountService {
           progress.explanationCompletedAt?.toISOString() ?? null,
         vocabularyCompletedAt:
           progress.vocabularyCompletedAt?.toISOString() ?? null,
+        practiceStartedAt: progress.practiceStartedAt?.toISOString() ?? null,
         practiceCompletedAt:
           progress.practiceCompletedAt?.toISOString() ?? null,
+        practiceProgressPercent: progress.practiceProgressPercent,
         completedAt: progress.completedAt?.toISOString() ?? null,
       })),
       vocabularyStudyProgress: user.vocabularyProgress.map((progress) => ({
@@ -147,24 +151,45 @@ export class AccountService {
       })),
       memories: user.memories.map((memory) => ({
         itemId: memory.itemId,
+        difficulty: memory.difficulty,
+        stability: memory.stability,
         state: memory.state,
         dueAt: memory.dueAt.toISOString(),
         lastReviewAt: memory.lastReviewAt?.toISOString() ?? null,
+        elapsedDays: memory.elapsedDays,
+        scheduledDays: memory.scheduledDays,
+        learningSteps: memory.learningSteps,
         repetitions: memory.repetitions,
         lapses: memory.lapses,
+        manuallyKnown: memory.manuallyKnown,
+        manualStatusSnapshot: memory.manualStatusSnapshot,
+        updatedAt: memory.updatedAt.toISOString(),
       })),
       attempts: user.attempts.map((attempt) => ({
         id: attempt.id,
         exerciseId: attempt.exerciseId,
         routeVersionId: attempt.routeVersionId,
         answerText: attempt.answerText,
+        normalizedAnswerText: attempt.normalizedAnswerText,
         outcome: attempt.outcome,
+        diagnostics: attempt.diagnostics,
+        checkerVersion: attempt.checkerVersion,
+        generatorVersion: attempt.generatorVersion,
+        durationMs: attempt.durationMs,
         answeredAt: attempt.answeredAt.toISOString(),
         evidence: attempt.evidence.map((evidence) => ({
           itemId: evidence.itemId,
           role: evidence.role,
           result: evidence.result,
+          score: evidence.score,
         })),
+      })),
+      exerciseHistory: user.exerciseHistory.map((history) => ({
+        exerciseId: history.exerciseId,
+        firstSeenAt: history.firstSeenAt.toISOString(),
+        lastSeenAt: history.lastSeenAt.toISOString(),
+        timesSeen: history.timesSeen,
+        lastOutcome: history.lastOutcome,
       })),
       exerciseReports: user.exerciseReports.map((report) => ({
         id: report.id,

@@ -69,6 +69,7 @@ interface TextWithTokens {
           state: ReviewMemoryState
           dueAt: Date
           repetitions: number
+          manuallyKnown: boolean
         }>
       }
     } | null
@@ -252,11 +253,10 @@ export class TextsService {
     isGrammarReady: boolean,
   ): PreparedTextSummaryResponse {
     const linkedTokens = text.tokens.filter((token) => token.lexicalSense)
-    const knownWordCount = linkedTokens.filter(
-      (token) =>
-        (token.lexicalSense?.knowledgeItem.userMemories[0]?.repetitions ?? 0) >
-        0,
-    ).length
+    const knownWordCount = linkedTokens.filter((token) => {
+      const memory = token.lexicalSense?.knowledgeItem.userMemories[0]
+      return Boolean(memory?.manuallyKnown || (memory?.repetitions ?? 0) > 0)
+    }).length
     const normalAudio = text.audioAssets.find(
       (audio) => audio.variant === 'normal',
     )?.audioAsset

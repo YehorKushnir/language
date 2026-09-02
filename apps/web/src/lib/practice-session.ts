@@ -7,6 +7,9 @@ export function appendPracticeAttempt(
   isCorrect: boolean,
 ): PracticeSessionResponse {
   const isPrimaryAttempt = !session.completedExerciseIds.includes(exerciseId)
+  const correctsPreviousError = session.pendingCorrections.some(
+    (correction) => correction.exerciseId === exerciseId,
+  )
   const attemptIds = [...session.attemptIds, attemptId]
   const pendingCorrections = session.pendingCorrections.filter(
     (correction) => correction.exerciseId !== exerciseId,
@@ -23,7 +26,8 @@ export function appendPracticeAttempt(
     ...session,
     answeredExercises: session.answeredExercises + (isPrimaryAttempt ? 1 : 0),
     correctAnswers:
-      session.correctAnswers + (isPrimaryAttempt && isCorrect ? 1 : 0),
+      session.correctAnswers +
+      (isCorrect && (isPrimaryAttempt || correctsPreviousError) ? 1 : 0),
     attemptIds,
     completedExerciseIds: isPrimaryAttempt
       ? [...session.completedExerciseIds, exerciseId]
@@ -51,6 +55,6 @@ export function practiceIsReadyToComplete(
 ): boolean {
   return (
     session.answeredExercises === session.totalExercises &&
-    session.pendingCorrections.length === 0
+    session.correctAnswers >= session.requiredCorrectAnswers
   )
 }

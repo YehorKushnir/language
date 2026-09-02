@@ -22,7 +22,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        target: [api, web]
+        target: [api, migrate, web]
     steps:
       - uses: actions/checkout@v5
 

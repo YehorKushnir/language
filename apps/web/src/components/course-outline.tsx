@@ -133,6 +133,8 @@ export function CourseOutline({
                   absolutePositionByLesson.get(lesson.id) ??
                   lesson.lessonPosition
                 const lessonProgress = progressByLesson.get(lesson.id)
+                const practiceProgressPercent =
+                  lessonProgress?.practiceProgressPercent ?? 0
                 const isExpanded = lesson.id === expandedLessonId
                 const isAvailable =
                   unlockAllLessons ||
@@ -181,18 +183,25 @@ export function CourseOutline({
                       <span className="min-w-0 flex-1 text-[15px] font-medium leading-5 sm:text-base">
                         {title}
                       </span>
-                      {!isAvailable ? (
-                        <span className="max-w-20 shrink-0 text-right text-[10px] leading-3 sm:max-w-none sm:text-xs sm:leading-normal">
-                          После предыдущего урока
-                        </span>
-                      ) : (
+                      <span
+                        aria-label={`Прогресс практики: ${practiceProgressPercent}%`}
+                        className={cn(
+                          'w-10 shrink-0 text-right text-xs font-semibold tabular-nums',
+                          practiceProgressPercent >= 85
+                            ? 'text-primary'
+                            : 'text-muted-foreground',
+                        )}
+                      >
+                        {practiceProgressPercent}%
+                      </span>
+                      {isAvailable ? (
                         <ChevronDownIcon
                           className={cn(
                             'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
                             isExpanded && 'rotate-180',
                           )}
                         />
-                      )}
+                      ) : null}
                     </button>
 
                     {isAvailable ? (

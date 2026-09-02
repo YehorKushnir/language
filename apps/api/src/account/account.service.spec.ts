@@ -84,7 +84,18 @@ describe('AccountService', () => {
           completedAt: null,
         },
       ],
-      lessonProgress: [],
+      lessonProgress: [
+        {
+          routeVersionId: 'route.1',
+          lessonId: 'lesson.1',
+          explanationCompletedAt: new Date('2026-01-02T00:00:00.000Z'),
+          vocabularyCompletedAt: null,
+          practiceStartedAt: new Date('2026-01-03T00:00:00.000Z'),
+          practiceCompletedAt: null,
+          practiceProgressPercent: 42,
+          completedAt: null,
+        },
+      ],
       vocabularyProgress: [
         {
           routeVersionId: 'route.1',
@@ -111,11 +122,19 @@ describe('AccountService', () => {
       memories: [
         {
           itemId: 'word.fi.test',
+          difficulty: 5,
+          stability: 4,
           state: MemoryState.LEARNING,
           dueAt: new Date('2026-01-04T00:00:00.000Z'),
           lastReviewAt: null,
+          elapsedDays: 1,
+          scheduledDays: 2,
+          learningSteps: 1,
           repetitions: 1,
           lapses: 0,
+          manuallyKnown: false,
+          manualStatusSnapshot: null,
+          updatedAt: new Date('2026-01-03T00:00:00.000Z'),
         },
       ],
       attempts: [
@@ -124,15 +143,30 @@ describe('AccountService', () => {
           exerciseId: 'exercise.1',
           routeVersionId: 'route.1',
           answerText: 'Minä olen.',
+          normalizedAnswerText: 'minä olen',
           outcome: AttemptOutcome.CORRECT,
+          diagnostics: null,
+          checkerVersion: 'v1',
+          generatorVersion: null,
+          durationMs: 900,
           answeredAt: new Date('2026-01-03T00:00:00.000Z'),
           evidence: [
             {
               itemId: 'grammar.fi.olla',
               role: 'PRIMARY',
               result: EvidenceResult.SUCCESS,
+              score: 1,
             },
           ],
+        },
+      ],
+      exerciseHistory: [
+        {
+          exerciseId: 'exercise.1',
+          firstSeenAt: new Date('2026-01-03T00:00:00.000Z'),
+          lastSeenAt: new Date('2026-01-03T00:00:00.000Z'),
+          timesSeen: 1,
+          lastOutcome: AttemptOutcome.CORRECT,
         },
       ],
       exerciseReports: [],
@@ -142,7 +176,9 @@ describe('AccountService', () => {
 
     const result = await service.exportData('user.1')
 
+    expect(result.formatVersion).toBe(1)
     expect(result.user.email).toBe('learner@example.com')
+    expect(result.lessonProgress[0]?.practiceProgressPercent).toBe(42)
     expect(result.memories[0]?.dueAt).toBe('2026-01-04T00:00:00.000Z')
     expect(result.vocabularyStudyProgress[0]?.correctAnswers).toBe(2)
     expect(result.vocabularyStudyAttempts[0]?.answerText).toBe('testi')
@@ -150,7 +186,9 @@ describe('AccountService', () => {
       itemId: 'grammar.fi.olla',
       role: 'PRIMARY',
       result: EvidenceResult.SUCCESS,
+      score: 1,
     })
+    expect(result.exerciseHistory[0]?.timesSeen).toBe(1)
     expect(JSON.stringify(result)).not.toMatch(/password|token/u)
   })
 

@@ -2,6 +2,12 @@
   "name": "@language/database",
   "version": "0.0.0",
   "private": true,
+  "files": [
+    "dist",
+    "src",
+    "prisma",
+    "prisma.config.ts"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./src/index.ts",

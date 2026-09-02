@@ -34,3 +34,26 @@ export function isLessonPartComplete(
   const definition = lessonParts.find((item) => item.part === part)
   return Boolean(definition && progress?.[definition.completedAt])
 }
+
+export function getLatestAvailableLesson<
+  Lesson extends { id: string; prerequisiteLessonIds: string[] },
+>(lessons: Lesson[], progress: LessonProgressResponse[]): Lesson | undefined {
+  const completedLessonIds = new Set(
+    progress
+      .filter((lesson) => lesson.completedAt)
+      .map((lesson) => lesson.lessonId),
+  )
+  let latestAvailableLesson: Lesson | undefined
+
+  for (const lesson of lessons) {
+    if (
+      lesson.prerequisiteLessonIds.every((prerequisiteLessonId) =>
+        completedLessonIds.has(prerequisiteLessonId),
+      )
+    ) {
+      latestAvailableLesson = lesson
+    }
+  }
+
+  return latestAvailableLesson ?? lessons[0]
+}

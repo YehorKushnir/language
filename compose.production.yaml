@@ -12,6 +12,12 @@ x-api-image: &api-image
     context: .
     target: api
 
+x-migrate-image: &migrate-image
+  image: ${IMAGE_REPO:-ghcr.io/yehorkushnir/language}/migrate:${IMAGE_TAG:-local}
+  build:
+    context: .
+    target: migrate
+
 x-api-environment: &api-environment
   NODE_ENV: production
   API_HOST: 0.0.0.0
@@ -74,8 +80,7 @@ services:
     logging: *default-logging
 
   migrate:
-    <<: *api-image
-    command: [sh, /app/scripts/deploy/release.sh]
+    <<: *migrate-image
     restart: 'no'
     environment: *api-environment
     depends_on:

@@ -77,6 +77,7 @@ describe('TextsService', () => {
                 state: MemoryState.REVIEW,
                 dueAt: new Date('2026-09-01T00:00:00.000Z'),
                 repetitions: 2,
+                manuallyKnown: false,
               },
             ],
           },
@@ -177,6 +178,22 @@ describe('TextsService', () => {
     ).resolves.toMatchObject({
       recommendedTextId: null,
       items: [{ id: 'text.fi.test', isGrammarReady: false }],
+    })
+  })
+
+  it('counts a manually known word even before its first review', async () => {
+    const manuallyKnownText = structuredClone(preparedText)
+    const memory =
+      manuallyKnownText.tokens[1]?.lexicalSense?.knowledgeItem.userMemories[0]
+    if (!memory) throw new Error('Expected a prepared lexical memory')
+    memory.repetitions = 0
+    memory.manuallyKnown = true
+    prisma.text.findMany.mockResolvedValue([manuallyKnownText])
+
+    await expect(
+      service.getCatalog('user.1', 'route.1'),
+    ).resolves.toMatchObject({
+      items: [{ knownWordCount: 1, knownPercent: 50 }],
     })
   })
 

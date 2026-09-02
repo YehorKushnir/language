@@ -2,16 +2,13 @@ import {
   createRootRouteWithContext,
   Link,
   Outlet,
-  useRouter,
   useRouterState,
 } from '@tanstack/react-router'
-import { useQueryClient } from '@tanstack/react-query'
 import {
   BookOpenCheckIcon,
   BookOpenTextIcon,
   HomeIcon,
   LanguagesIcon,
-  LogOutIcon,
   ScrollTextIcon,
   SettingsIcon,
   ShieldCheckIcon,
@@ -69,8 +66,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 })
 
 function RootLayout() {
-  const router = useRouter()
-  const queryClient = useQueryClient()
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   })
@@ -91,12 +86,6 @@ function RootLayout() {
   const mobileNavigationItems = [...navigationItems, settingsNavigationItem]
   const isSignInPage = pathname === '/sign-in'
   const isSignUpPage = pathname === '/sign-up'
-
-  async function signOut() {
-    await authClient.signOut()
-    queryClient.clear()
-    await router.navigate({ to: '/' })
-  }
 
   return (
     <div
@@ -159,15 +148,6 @@ function RootLayout() {
                   <Link aria-label="Настройки" title="Настройки" to="/settings">
                     <SettingsIcon />
                   </Link>
-                </Button>
-                <Button
-                  aria-label="Выйти"
-                  onClick={signOut}
-                  size="icon"
-                  title="Выйти"
-                  variant="ghost"
-                >
-                  <LogOutIcon />
                 </Button>
               </div>
             ) : session.isPending ? null : (

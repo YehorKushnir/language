@@ -188,6 +188,7 @@ export interface LessonProgressResponse {
   explanationCompletedAt: string | null
   vocabularyCompletedAt: string | null
   practiceCompletedAt: string | null
+  practiceProgressPercent: number
   completedAt: string | null
 }
 
@@ -525,6 +526,7 @@ export interface SetAccountPasswordRequest {
 }
 
 export interface AccountDataExportResponse {
+  formatVersion: 1
   exportedAt: string
   user: {
     id: string
@@ -546,7 +548,9 @@ export interface AccountDataExportResponse {
     lessonId: string
     explanationCompletedAt: string | null
     vocabularyCompletedAt: string | null
+    practiceStartedAt: string | null
     practiceCompletedAt: string | null
+    practiceProgressPercent: number
     completedAt: string | null
   }>
   vocabularyStudyProgress: Array<{
@@ -570,20 +574,40 @@ export interface AccountDataExportResponse {
   }>
   memories: Array<{
     itemId: string
+    difficulty: number
+    stability: number
     state: ReviewMemoryState
     dueAt: string
     lastReviewAt: string | null
+    elapsedDays: number
+    scheduledDays: number
+    learningSteps: number
     repetitions: number
     lapses: number
+    manuallyKnown: boolean
+    manualStatusSnapshot: string | null
+    updatedAt: string
   }>
   attempts: Array<{
     id: string
     exerciseId: string
     routeVersionId: string
     answerText: string
+    normalizedAnswerText: string
     outcome: ExerciseAttemptOutcome
+    diagnostics: unknown
+    checkerVersion: string
+    generatorVersion: string | null
+    durationMs: number | null
     answeredAt: string
-    evidence: ExerciseAttemptEvidenceResponse[]
+    evidence: Array<ExerciseAttemptEvidenceResponse & { score: number | null }>
+  }>
+  exerciseHistory: Array<{
+    exerciseId: string
+    firstSeenAt: string
+    lastSeenAt: string
+    timesSeen: number
+    lastOutcome: ExerciseAttemptOutcome | null
   }>
   exerciseReports: Array<{
     id: string

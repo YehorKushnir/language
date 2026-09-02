@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   getCompletedLessonPartCount,
+  getLatestAvailableLesson,
   getNextLessonPart,
   isLessonPartComplete,
 } from './home-progress'
@@ -36,6 +37,32 @@ describe('home progress', () => {
     expect(getNextLessonPart(progress)).toBe('explanation')
     expect(getCompletedLessonPartCount(progress)).toBe(3)
   })
+
+  it('selects the latest unlocked lesson instead of the last visited lesson', () => {
+    const lessons = [
+      { id: 'lesson.1', prerequisiteLessonIds: [] },
+      { id: 'lesson.2', prerequisiteLessonIds: ['lesson.1'] },
+      { id: 'lesson.3', prerequisiteLessonIds: ['lesson.2'] },
+    ]
+
+    expect(
+      getLatestAvailableLesson(lessons, [
+        lessonProgress({
+          lessonId: 'lesson.1',
+          completedAt: '2026-09-02T10:00:00.000Z',
+        }),
+      ]),
+    ).toEqual(lessons[1])
+  })
+
+  it('keeps the first lesson as the next step for a new learner', () => {
+    const lessons = [
+      { id: 'lesson.1', prerequisiteLessonIds: [] },
+      { id: 'lesson.2', prerequisiteLessonIds: ['lesson.1'] },
+    ]
+
+    expect(getLatestAvailableLesson(lessons, [])).toEqual(lessons[0])
+  })
 })
 
 function lessonProgress(
@@ -46,6 +73,7 @@ function lessonProgress(
     explanationCompletedAt: null,
     vocabularyCompletedAt: null,
     practiceCompletedAt: null,
+    practiceProgressPercent: 0,
     completedAt: null,
     ...values,
   }

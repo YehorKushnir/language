@@ -67,7 +67,7 @@ write_default_value() {
 
 prune_old_release_images() {
   image_repo=$(read_value IMAGE_REPO)
-  for component in api web; do
+  for component in api migrate web; do
     docker image ls --format '{{.Repository}} {{.Tag}}' "$image_repo/$component" |
       while read -r repository tag; do
         case "$tag" in

@@ -26,7 +26,10 @@ import { createRouteMemoryScope } from '../common/route-memory-scope'
 import { initialUserMemoryData } from '../common/user-memory'
 
 const PRACTICE_EXERCISE_COUNT = 60
-const PRACTICE_REQUIRED_CORRECT = PRACTICE_EXERCISE_COUNT
+const PRACTICE_PASS_PERCENT = 85
+const PRACTICE_REQUIRED_CORRECT = Math.ceil(
+  (PRACTICE_EXERCISE_COUNT * PRACTICE_PASS_PERCENT) / 100,
+)
 const PRACTICE_CORRECTION_DELAY = 12
 const VOCABULARY_REQUIRED_CORRECT = 3
 
@@ -78,8 +81,52 @@ export class CourseProgressService {
     const progressByLesson = new Map(
       lessonProgress.map((progress) => [progress.lessonId, progress]),
     )
+    const activePracticeProgress = lessonProgress.filter(
+      (progress) => progress.practiceStartedAt,
+    )
+    const activePracticeAttempts =
+      activePracticeProgress.length > 0
+        ? await this.prisma.userAttempt.findMany({
+            where: {
+              userId,
+              routeVersionId,
+              OR: activePracticeProgress.map((progress) => ({
+                answeredAt: { gte: progress.practiceStartedAt! },
+                exercise: {
+                  lessonId: progress.lessonId,
+                  kind: ExerciseKind.PREPARED,
+                  status: ContentStatus.CURATED,
+                },
+              })),
+            },
+            select: {
+              id: true,
+              exerciseId: true,
+              outcome: true,
+              exercise: { select: { lessonId: true } },
+            },
+            orderBy: { answeredAt: 'asc' },
+          })
+        : []
+    const activeAttemptsByLesson = new Map<
+      string,
+      Array<{ id: string; exerciseId: string; outcome: AttemptOutcome }>
+    >()
+    for (const attempt of activePracticeAttempts) {
+      const lessonId = attempt.exercise.lessonId
+      if (!lessonId) continue
+      const attempts = activeAttemptsByLesson.get(lessonId) ?? []
+      attempts.push(attempt)
+      activeAttemptsByLesson.set(lessonId, attempts)
+    }
     const lessons = route.entries.map(({ lessonId }) => {
       const progress = progressByLesson.get(lessonId)
+      const activeAttempts = activeAttemptsByLesson.get(lessonId)
+      const practiceProgressPercent = activeAttempts
+        ? toPracticeProgressPercent(
+            summarizePracticeAttempts(activeAttempts).correctAnswers,
+          )
+        : (progress?.practiceProgressPercent ?? 0)
       return {
         lessonId,
         explanationCompletedAt:
@@ -88,6 +135,7 @@ export class CourseProgressService {
           progress?.vocabularyCompletedAt?.toISOString() ?? null,
         practiceCompletedAt:
           progress?.practiceCompletedAt?.toISOString() ?? null,
+        practiceProgressPercent,
         completedAt: progress?.completedAt?.toISOString() ?? null,
       }
     })
@@ -285,11 +333,23 @@ export class CourseProgressService {
         `Практика должна содержать ${PRACTICE_EXERCISE_COUNT} разных упражнений этого урока.`,
       )
     }
-    if (session.pendingCorrections.length > 0) {
+    if (session.correctAnswers < PRACTICE_REQUIRED_CORRECT) {
       throw new BadRequestException(
-        `Сначала исправь оставшиеся ошибки: ${session.pendingCorrections.length}.`,
+        `Для прохождения нужно дать минимум ${PRACTICE_REQUIRED_CORRECT} правильных ответов из ${PRACTICE_EXERCISE_COUNT}.`,
       )
     }
+
+    const scorePercent = toPracticeProgressPercent(session.correctAnswers)
+    await this.prisma.userLessonProgress.update({
+      where: {
+        userId_routeVersionId_lessonId: {
+          userId,
+          routeVersionId,
+          lessonId,
+        },
+      },
+      data: { practiceProgressPercent: scorePercent },
+    })
 
     const progress = await this.completePart(
       userId,
@@ -311,9 +371,9 @@ export class CourseProgressService {
 
     return {
       totalExercises: PRACTICE_EXERCISE_COUNT,
-      correctAnswers: PRACTICE_EXERCISE_COUNT,
+      correctAnswers: session.correctAnswers,
       requiredCorrectAnswers: PRACTICE_REQUIRED_CORRECT,
-      scorePercent: 100,
+      scorePercent,
       passed: true,
       progress,
     }
@@ -363,12 +423,16 @@ export class CourseProgressService {
                   lessonId,
                 },
               },
-              update: { practiceStartedAt: now },
+              update: {
+                practiceStartedAt: now,
+                practiceProgressPercent: 0,
+              },
               create: {
                 userId,
                 routeVersionId,
                 lessonId,
                 practiceStartedAt: now,
+                practiceProgressPercent: 0,
               },
               select: { practiceStartedAt: true },
             })
@@ -532,10 +596,12 @@ export class CourseProgressService {
       )
     }
 
-    const duplicate = await this.prisma.userLessonVocabularyAttempt.findUnique({
-      where: { userId_idempotencyKey: { userId, idempotencyKey } },
-    })
-    if (duplicate) {
+    const respondToDuplicate = async (duplicate: {
+      routeVersionId: string
+      lessonId: string
+      itemId: string
+      isCorrect: boolean
+    }): Promise<LessonVocabularyAnswerResponse> => {
       if (
         duplicate.routeVersionId !== routeVersionId ||
         duplicate.lessonId !== lessonId ||
@@ -565,59 +631,30 @@ export class CourseProgressService {
       }
     }
 
+    const duplicate = await this.prisma.userLessonVocabularyAttempt.findUnique({
+      where: { userId_idempotencyKey: { userId, idempotencyKey } },
+    })
+    if (duplicate) {
+      return respondToDuplicate(duplicate)
+    }
+
     const isCorrect =
       !gaveUp &&
       normalizeExactAnswer(answer) === normalizeExactAnswer(expectedAnswer)
     const now = new Date()
-    const itemProgress = await this.prisma.$transaction(async (transaction) => {
-      await transaction.userMemory.upsert({
-        where: { userId_itemId: { userId, itemId } },
-        update: {},
-        create: {
-          userId,
-          itemId,
-          ...initialUserMemoryData(now),
-        },
-      })
-
-      await transaction.userLessonVocabularyProgress.upsert({
-        where: {
-          userId_routeVersionId_lessonId_itemId: {
+    const saveAnswer = () =>
+      this.prisma.$transaction(async (transaction) => {
+        await transaction.userMemory.upsert({
+          where: { userId_itemId: { userId, itemId } },
+          update: {},
+          create: {
             userId,
-            routeVersionId,
-            lessonId,
             itemId,
+            ...initialUserMemoryData(now),
           },
-        },
-        update: {
-          attempts: { increment: 1 },
-          lastAnsweredAt: now,
-        },
-        create: {
-          userId,
-          routeVersionId,
-          lessonId,
-          itemId,
-          attempts: 1,
-          lastAnsweredAt: now,
-        },
-      })
-
-      if (isCorrect) {
-        await transaction.userLessonVocabularyProgress.updateMany({
-          where: {
-            userId,
-            routeVersionId,
-            lessonId,
-            itemId,
-            correctAnswers: { lt: VOCABULARY_REQUIRED_CORRECT },
-          },
-          data: { correctAnswers: { increment: 1 } },
         })
-      }
 
-      let progress =
-        await transaction.userLessonVocabularyProgress.findUniqueOrThrow({
+        await transaction.userLessonVocabularyProgress.upsert({
           where: {
             userId_routeVersionId_lessonId_itemId: {
               userId,
@@ -626,51 +663,101 @@ export class CourseProgressService {
               itemId,
             },
           },
+          update: {
+            attempts: { increment: 1 },
+            lastAnsweredAt: now,
+          },
+          create: {
+            userId,
+            routeVersionId,
+            lessonId,
+            itemId,
+            attempts: 1,
+            lastAnsweredAt: now,
+          },
         })
-      if (
-        progress.correctAnswers >= VOCABULARY_REQUIRED_CORRECT &&
-        !progress.completedAt
-      ) {
-        progress = await transaction.userLessonVocabularyProgress.update({
-          where: {
-            userId_routeVersionId_lessonId_itemId: {
+
+        if (isCorrect) {
+          await transaction.userLessonVocabularyProgress.updateMany({
+            where: {
               userId,
               routeVersionId,
               lessonId,
               itemId,
+              correctAnswers: { lt: VOCABULARY_REQUIRED_CORRECT },
             },
+            data: { correctAnswers: { increment: 1 } },
+          })
+        }
+
+        let progress =
+          await transaction.userLessonVocabularyProgress.findUniqueOrThrow({
+            where: {
+              userId_routeVersionId_lessonId_itemId: {
+                userId,
+                routeVersionId,
+                lessonId,
+                itemId,
+              },
+            },
+          })
+        if (
+          progress.correctAnswers >= VOCABULARY_REQUIRED_CORRECT &&
+          !progress.completedAt
+        ) {
+          progress = await transaction.userLessonVocabularyProgress.update({
+            where: {
+              userId_routeVersionId_lessonId_itemId: {
+                userId,
+                routeVersionId,
+                lessonId,
+                itemId,
+              },
+            },
+            data: { completedAt: now },
+          })
+        }
+
+        await transaction.userLessonVocabularyAttempt.create({
+          data: {
+            userId,
+            routeVersionId,
+            lessonId,
+            itemId,
+            idempotencyKey,
+            answerText: answer.trim(),
+            isCorrect,
+            correctAnswersAfter: progress.correctAnswers,
+            answeredAt: now,
           },
-          data: { completedAt: now },
         })
+
+        await transaction.userCourseProgress.upsert({
+          where: { userId_routeVersionId: { userId, routeVersionId } },
+          update: { currentLessonId: lessonId, lastActivityAt: now },
+          create: {
+            userId,
+            routeVersionId,
+            currentLessonId: lessonId,
+            lastActivityAt: now,
+          },
+        })
+
+        return progress
+      })
+    let itemProgress: Awaited<ReturnType<typeof saveAnswer>>
+    try {
+      itemProgress = await saveAnswer()
+    } catch (error: unknown) {
+      if (isUniqueConstraintError(error)) {
+        const concurrent =
+          await this.prisma.userLessonVocabularyAttempt.findUnique({
+            where: { userId_idempotencyKey: { userId, idempotencyKey } },
+          })
+        if (concurrent) return respondToDuplicate(concurrent)
       }
-
-      await transaction.userLessonVocabularyAttempt.create({
-        data: {
-          userId,
-          routeVersionId,
-          lessonId,
-          itemId,
-          idempotencyKey,
-          answerText: answer.trim(),
-          isCorrect,
-          correctAnswersAfter: progress.correctAnswers,
-          answeredAt: now,
-        },
-      })
-
-      await transaction.userCourseProgress.upsert({
-        where: { userId_routeVersionId: { userId, routeVersionId } },
-        update: { currentLessonId: lessonId, lastActivityAt: now },
-        create: {
-          userId,
-          routeVersionId,
-          currentLessonId: lessonId,
-          lastActivityAt: now,
-        },
-      })
-
-      return progress
-    })
+      throw error
+    }
 
     const session = await this.startOrResumeVocabulary(
       userId,
@@ -753,6 +840,7 @@ function summarizePracticeAttempts(
   }>,
 ) {
   const firstAttempts = new Map<string, (typeof attempts)[number]>()
+  const latestAttempts = new Map<string, (typeof attempts)[number]>()
   const pendingCorrections = new Map<
     string,
     { exerciseId: string; retryAfterAttempt: number }
@@ -762,6 +850,7 @@ function summarizePracticeAttempts(
     if (!firstAttempts.has(attempt.exerciseId)) {
       firstAttempts.set(attempt.exerciseId, attempt)
     }
+    latestAttempts.set(attempt.exerciseId, attempt)
 
     pendingCorrections.delete(attempt.exerciseId)
     if (attempt.outcome !== AttemptOutcome.CORRECT) {
@@ -783,8 +872,9 @@ function summarizePracticeAttempts(
 
   return {
     answeredExercises: primaryAttempts.length,
-    correctAnswers: primaryAttempts.filter(
-      (attempt) => attempt.outcome === AttemptOutcome.CORRECT,
+    correctAnswers: completedExerciseIds.filter(
+      (exerciseId) =>
+        latestAttempts.get(exerciseId)?.outcome === AttemptOutcome.CORRECT,
     ).length,
     attemptIds: attempts.map((attempt) => attempt.id),
     completedExerciseIds,
@@ -792,6 +882,19 @@ function summarizePracticeAttempts(
       completedExerciseIdSet.has(correction.exerciseId),
     ),
   }
+}
+
+function toPracticeProgressPercent(correctAnswers: number): number {
+  return Math.round((correctAnswers / PRACTICE_EXERCISE_COUNT) * 100)
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === 'P2002'
+  )
 }
 
 function toVocabularyStudyProgress(progress: {

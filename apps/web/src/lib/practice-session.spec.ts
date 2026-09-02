@@ -50,23 +50,23 @@ describe('appendPracticeAttempt', () => {
       true,
     )
     expect(corrected.answeredExercises).toBe(2)
+    expect(corrected.correctAnswers).toBe(2)
     expect(corrected.pendingCorrections).toEqual([])
   })
 
-  it('finishes only after the main round and every correction', () => {
+  it('finishes after the main round reaches the 85 percent threshold', () => {
     const complete = {
       ...session(),
       answeredExercises: 60,
-      pendingCorrections: [],
+      correctAnswers: 51,
+      pendingCorrections: [{ exerciseId: 'exercise.7', retryAfterAttempt: 72 }],
     }
 
     expect(practiceIsReadyToComplete(complete)).toBe(true)
     expect(
       practiceIsReadyToComplete({
         ...complete,
-        pendingCorrections: [
-          { exerciseId: 'exercise.7', retryAfterAttempt: 72 },
-        ],
+        correctAnswers: 50,
       }),
     ).toBe(false)
   })
@@ -76,7 +76,7 @@ function session(): PracticeSessionResponse {
   return {
     startedAt: '2026-08-23T18:00:00.000Z',
     totalExercises: 60,
-    requiredCorrectAnswers: 60,
+    requiredCorrectAnswers: 51,
     correctionDelay: 12,
     answeredExercises: 1,
     correctAnswers: 1,

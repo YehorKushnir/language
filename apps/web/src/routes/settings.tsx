@@ -5,6 +5,8 @@ import {
   AlertTriangleIcon,
   CheckCircle2Icon,
   ChevronDownIcon,
+  DatabaseIcon,
+  DownloadIcon,
   KeyRoundIcon,
   LinkIcon,
   LoaderCircleIcon,
@@ -18,6 +20,7 @@ import { type FormEvent, useEffect, useState } from 'react'
 
 import {
   deleteAccount,
+  exportAccountData,
   getAccountAuthMethods,
   setAccountPassword,
 } from '@/api/language-api'
@@ -62,6 +65,8 @@ function SettingsPage() {
   const [passwordSaved, setPasswordSaved] = useState(false)
   const [googlePending, setGooglePending] = useState(false)
   const [googleError, setGoogleError] = useState<string>()
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string>()
   const [confirmation, setConfirmation] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string>()
@@ -227,6 +232,33 @@ function SettingsPage() {
         caught instanceof Error ? caught.message : 'Не удалось удалить аккаунт',
       )
       setDeleting(false)
+    }
+  }
+
+  async function downloadAccountData() {
+    setExportError(undefined)
+    setExporting(true)
+    try {
+      const exported = await exportAccountData()
+      const blob = new Blob([JSON.stringify(exported, null, 2)], {
+        type: 'application/json;charset=utf-8',
+      })
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `suomi-account-data-${exported.exportedAt.slice(0, 10)}.json`
+      document.body.append(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(url)
+    } catch (caught) {
+      setExportError(
+        caught instanceof Error
+          ? caught.message
+          : 'Не удалось выгрузить данные.',
+      )
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -449,6 +481,43 @@ function SettingsPage() {
             </CardContent>
           </Card>
         </div>
+
+        <section className="mt-5 rounded-xl border border-border/70 bg-card p-4 shadow-xs sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                <DatabaseIcon className="size-4" />
+              </span>
+              <div>
+                <h2 className="text-sm font-semibold">Данные аккаунта</h2>
+                <p className="mt-1 max-w-xl text-xs leading-5 text-muted-foreground">
+                  Скачайте профиль, учебный прогресс, историю ответов и
+                  расписание повторений в формате JSON.
+                </p>
+              </div>
+            </div>
+            <Button
+              className="w-fit shrink-0"
+              disabled={exporting}
+              onClick={() => void downloadAccountData()}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              {exporting ? (
+                <LoaderCircleIcon className="animate-spin" />
+              ) : (
+                <DownloadIcon />
+              )}
+              {exporting ? 'Подготавливаем…' : 'Выгрузить данные'}
+            </Button>
+          </div>
+          {exportError ? (
+            <p className="mt-3 text-xs text-destructive" role="alert">
+              {exportError}
+            </p>
+          ) : null}
+        </section>
 
         <section className="mt-5 rounded-lg border border-border/70 bg-card px-4 py-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

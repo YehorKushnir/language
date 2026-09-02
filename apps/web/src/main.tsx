@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import '@fontsource-variable/inter/wght.css'
+import '@fontsource-variable/source-serif-4/wght.css'
 
 import { installClientErrorReporting } from './lib/client-telemetry'
 import { routeTree } from './routeTree.gen'

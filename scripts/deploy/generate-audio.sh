@@ -49,10 +49,7 @@ export GOOGLE_TTS_VOICE=$google_voice
 scope=${1:-all}
 if [ "$#" -gt 0 ]; then shift; fi
 case "$scope" in
-  all) command=audio:generate ;;
-  words) command=audio:generate:words ;;
-  sentences) command=audio:generate:sentences ;;
-  texts) command=audio:generate:texts ;;
+  all | words | sentences | texts) ;;
   *) fail "scope must be all, words, sentences or texts" ;;
 esac
 
@@ -60,4 +57,4 @@ exec docker compose \
   --env-file "$ENV_FILE" \
   -f "$COMPOSE_FILE" \
   -f "$GENERATION_COMPOSE_FILE" \
-  run --rm --no-deps api pnpm --filter @language/api "$command" -- "$@"
+  run --rm --no-deps api node dist/audio/generate-audio.js --scope="$scope" "$@"
