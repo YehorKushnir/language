@@ -84,9 +84,9 @@ describe('reviewed exercise application', () => {
       ),
     )
 
-    expect(
-      exercises.get('exercise.fi.present.common.third.006')?.prompt,
-    ).toBe('Он смотрит.')
+    expect(exercises.get('exercise.fi.present.common.third.006')?.prompt).toBe(
+      'Он смотрит.',
+    )
     expect(
       exercises.get('exercise.fi.verb-types.two-three.first.013'),
     ).toMatchObject({
@@ -94,9 +94,7 @@ describe('reviewed exercise application', () => {
       targetText: 'Minä käyn kaupassa.',
     })
     expect(
-      exercises.get(
-        'exercise.fi.verb-types.two-three.first-plural-now.003',
-      ),
+      exercises.get('exercise.fi.verb-types.two-three.first-plural-now.003'),
     ).toMatchObject({
       prompt: 'Мы не посещаем магазин.',
       targetText: 'Me emme käy kaupassa.',

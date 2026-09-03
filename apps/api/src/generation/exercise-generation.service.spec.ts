@@ -102,10 +102,7 @@ describe('ExerciseGenerationService', () => {
         where: expect.objectContaining({
           generated: expect.objectContaining({
             generatorVersion: {
-              in: [
-                'finnish-identity-v1',
-                'finnish-prepared-variation-v2',
-              ],
+              in: ['finnish-identity-v1', 'finnish-prepared-variation-v2'],
             },
           }),
         }),

@@ -466,7 +466,9 @@ export class CourseProgressService {
           },
         })
         return {
-          mode: progress.practiceCompletedAt ? ('FREE' as const) : ('PROGRESS' as const),
+          mode: progress.practiceCompletedAt
+            ? ('FREE' as const)
+            : ('PROGRESS' as const),
           startedAt,
           attempts,
         }
