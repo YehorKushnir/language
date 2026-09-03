@@ -82,7 +82,7 @@ export class CourseProgressService {
       lessonProgress.map((progress) => [progress.lessonId, progress]),
     )
     const activePracticeProgress = lessonProgress.filter(
-      (progress) => progress.practiceStartedAt,
+      (progress) => progress.practiceStartedAt && !progress.practiceCompletedAt,
     )
     const activePracticeAttempts =
       activePracticeProgress.length > 0
@@ -122,11 +122,13 @@ export class CourseProgressService {
     const lessons = route.entries.map(({ lessonId }) => {
       const progress = progressByLesson.get(lessonId)
       const activeAttempts = activeAttemptsByLesson.get(lessonId)
-      const practiceProgressPercent = activeAttempts
-        ? toPracticeProgressPercent(
-            summarizePracticeAttempts(activeAttempts).correctAnswers,
-          )
-        : (progress?.practiceProgressPercent ?? 0)
+      const practiceProgressPercent = progress?.practiceCompletedAt
+        ? 100
+        : activeAttempts
+          ? toPracticeProgressPercent(
+              summarizePracticeAttempts(activeAttempts).correctAnswers,
+            )
+          : (progress?.practiceProgressPercent ?? 0)
       return {
         lessonId,
         explanationCompletedAt:
@@ -301,7 +303,7 @@ export class CourseProgressService {
           lessonId,
         },
       },
-      select: { practiceStartedAt: true },
+      select: { practiceStartedAt: true, practiceCompletedAt: true },
     })
     if (!lessonProgress?.practiceStartedAt) {
       throw new BadRequestException(
@@ -340,23 +342,28 @@ export class CourseProgressService {
     }
 
     const scorePercent = toPracticeProgressPercent(session.correctAnswers)
-    await this.prisma.userLessonProgress.update({
-      where: {
-        userId_routeVersionId_lessonId: {
-          userId,
-          routeVersionId,
-          lessonId,
+    const mode = lessonProgress.practiceCompletedAt ? 'FREE' : 'PROGRESS'
+    let progress: CourseProgressResponse
+    if (mode === 'PROGRESS') {
+      await this.prisma.userLessonProgress.update({
+        where: {
+          userId_routeVersionId_lessonId: {
+            userId,
+            routeVersionId,
+            lessonId,
+          },
         },
-      },
-      data: { practiceProgressPercent: scorePercent },
-    })
-
-    const progress = await this.completePart(
-      userId,
-      routeVersionId,
-      lessonId,
-      'practice',
-    )
+        data: { practiceProgressPercent: 100 },
+      })
+      progress = await this.completePart(
+        userId,
+        routeVersionId,
+        lessonId,
+        'practice',
+      )
+    } else {
+      progress = await this.getProgress(userId, routeVersionId)
+    }
 
     await this.prisma.userLessonProgress.update({
       where: {
@@ -370,6 +377,7 @@ export class CourseProgressService {
     })
 
     return {
+      mode,
       totalExercises: PRACTICE_EXERCISE_COUNT,
       correctAnswers: session.correctAnswers,
       requiredCorrectAnswers: PRACTICE_REQUIRED_CORRECT,
@@ -401,7 +409,7 @@ export class CourseProgressService {
     }
 
     const now = new Date()
-    const { startedAt, attempts } = await this.prisma.$transaction(
+    const { mode, startedAt, attempts } = await this.prisma.$transaction(
       async (transaction) => {
         const existing = await transaction.userLessonProgress.findUnique({
           where: {
@@ -411,7 +419,7 @@ export class CourseProgressService {
               lessonId,
             },
           },
-          select: { practiceStartedAt: true },
+          select: { practiceStartedAt: true, practiceCompletedAt: true },
         })
         const progress = existing?.practiceStartedAt
           ? existing
@@ -425,7 +433,9 @@ export class CourseProgressService {
               },
               update: {
                 practiceStartedAt: now,
-                practiceProgressPercent: 0,
+                ...(existing?.practiceCompletedAt
+                  ? {}
+                  : { practiceProgressPercent: 0 }),
               },
               create: {
                 userId,
@@ -434,7 +444,7 @@ export class CourseProgressService {
                 practiceStartedAt: now,
                 practiceProgressPercent: 0,
               },
-              select: { practiceStartedAt: true },
+              select: { practiceStartedAt: true, practiceCompletedAt: true },
             })
         const startedAt = progress.practiceStartedAt ?? now
         const attempts = await transaction.userAttempt.findMany({
@@ -455,13 +465,18 @@ export class CourseProgressService {
             outcome: true,
           },
         })
-        return { startedAt, attempts }
+        return {
+          mode: progress.practiceCompletedAt ? ('FREE' as const) : ('PROGRESS' as const),
+          startedAt,
+          attempts,
+        }
       },
     )
 
     const session = summarizePracticeAttempts(attempts)
 
     return {
+      mode,
       startedAt: startedAt.toISOString(),
       totalExercises: PRACTICE_EXERCISE_COUNT,
       requiredCorrectAnswers: PRACTICE_REQUIRED_CORRECT,

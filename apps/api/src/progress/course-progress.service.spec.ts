@@ -444,9 +444,9 @@ describe('CourseProgressService route progress', () => {
           lessonId: 'lesson.2',
           explanationCompletedAt: null,
           vocabularyCompletedAt: null,
-          practiceStartedAt: null,
+          practiceStartedAt: startedAt,
           practiceCompletedAt: new Date('2026-09-01T09:00:00.000Z'),
-          practiceProgressPercent: 85,
+          practiceProgressPercent: 0,
           completedAt: null,
         },
       ]),
@@ -489,9 +489,9 @@ describe('CourseProgressService route progress', () => {
         lessonId: 'lesson.2',
         explanationCompletedAt: null,
         vocabularyCompletedAt: null,
-        practiceStartedAt: null,
+        practiceStartedAt: startedAt,
         practiceCompletedAt: new Date('2026-09-01T09:00:00.000Z'),
-        practiceProgressPercent: 85,
+        practiceProgressPercent: 0,
         completedAt: null,
       },
     ])
@@ -513,7 +513,7 @@ describe('CourseProgressService route progress', () => {
     ).resolves.toMatchObject({
       lessons: [
         { lessonId: 'lesson.1', practiceProgressPercent: 50 },
-        { lessonId: 'lesson.2', practiceProgressPercent: 85 },
+        { lessonId: 'lesson.2', practiceProgressPercent: 100 },
       ],
     })
   })
@@ -553,6 +553,7 @@ describe('CourseProgressService practice completion', () => {
     })
     prisma.userLessonProgress.findUnique.mockResolvedValue({
       practiceStartedAt: new Date('2026-08-23T18:00:00.000Z'),
+      practiceCompletedAt: null,
     })
     prisma.userLessonProgress.update.mockResolvedValue({})
   })
@@ -580,6 +581,7 @@ describe('CourseProgressService practice completion', () => {
     )
 
     expect(result).toMatchObject({
+      mode: 'PROGRESS',
       totalExercises: 60,
       correctAnswers: 60,
       requiredCorrectAnswers: 51,
@@ -627,7 +629,31 @@ describe('CourseProgressService practice completion', () => {
     })
     expect(completePart).toHaveBeenCalledOnce()
     expect(prisma.userLessonProgress.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { practiceProgressPercent: 85 } }),
+      expect.objectContaining({ data: { practiceProgressPercent: 100 } }),
+    )
+  })
+
+  it('finishes free practice without changing completed lesson progress', async () => {
+    prisma.userLessonProgress.findUnique.mockResolvedValue({
+      practiceStartedAt: new Date('2026-08-23T18:00:00.000Z'),
+      practiceCompletedAt: new Date('2026-08-22T18:00:00.000Z'),
+    })
+    prisma.userAttempt.findMany.mockResolvedValue(createPracticeAttempts(51))
+    const completePart = vi.spyOn(service, 'completePart')
+    vi.spyOn(service, 'getProgress').mockResolvedValue(progress)
+
+    await expect(
+      service.completePractice('user.1', 'route.1', 'lesson.1'),
+    ).resolves.toMatchObject({
+      mode: 'FREE',
+      scorePercent: 85,
+      passed: true,
+      progress,
+    })
+    expect(completePart).not.toHaveBeenCalled()
+    expect(prisma.userLessonProgress.update).toHaveBeenCalledOnce()
+    expect(prisma.userLessonProgress.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { practiceStartedAt: null } }),
     )
   })
 
@@ -696,6 +722,7 @@ describe('CourseProgressService resumable practice', () => {
     })
     transaction.userLessonProgress.findUnique.mockResolvedValue({
       practiceStartedAt: startedAt,
+      practiceCompletedAt: null,
     })
     transaction.userAttempt.findMany.mockResolvedValue(
       createPracticeAttempts(30).slice(0, 36),
@@ -710,6 +737,7 @@ describe('CourseProgressService resumable practice', () => {
     )
 
     expect(result).toMatchObject({
+      mode: 'PROGRESS',
       startedAt: startedAt.toISOString(),
       totalExercises: 60,
       requiredCorrectAnswers: 51,
@@ -727,6 +755,7 @@ describe('CourseProgressService resumable practice', () => {
   it('starts a new persisted session when none is active', async () => {
     transaction.userLessonProgress.findUnique.mockResolvedValue({
       practiceStartedAt: null,
+      practiceCompletedAt: null,
     })
     transaction.userLessonProgress.upsert.mockImplementation(({ update }) =>
       Promise.resolve(update),
@@ -747,6 +776,31 @@ describe('CourseProgressService resumable practice', () => {
           practiceStartedAt: expect.any(Date),
           practiceProgressPercent: 0,
         }),
+      }),
+    )
+  })
+
+  it('starts free practice without resetting a completed lesson', async () => {
+    const practiceCompletedAt = new Date('2026-08-22T18:00:00.000Z')
+    transaction.userLessonProgress.findUnique.mockResolvedValue({
+      practiceStartedAt: null,
+      practiceCompletedAt,
+    })
+    transaction.userLessonProgress.upsert.mockImplementation(({ update }) =>
+      Promise.resolve({ ...update, practiceCompletedAt }),
+    )
+    transaction.userAttempt.findMany.mockResolvedValue([])
+
+    const result = await service.startOrResumePractice(
+      'user.1',
+      'route.1',
+      'lesson.1',
+    )
+
+    expect(result).toMatchObject({ mode: 'FREE', answeredExercises: 0 })
+    expect(transaction.userLessonProgress.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.not.objectContaining({ practiceProgressPercent: 0 }),
       }),
     )
   })

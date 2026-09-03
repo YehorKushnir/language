@@ -662,11 +662,12 @@ function buildExercises(): PreparedExerciseSeed[] {
   takeVerbs(2, 8).forEach(({ item, vocabularyIndex }, index) => {
     const vocabulary = presentCommonVocabulary[vocabularyIndex]!
     const context = presentCommonContexts[item.key]!
+    const subject = index % 2 === 0 ? 'Он' : 'Она'
     exercises.push(
       exercise({
         id: `exercise.fi.present.common.third.${serial(index)}`,
         selectionOrder: exercises.length + 1,
-        prompt: `Он или она ${item.source[2]} ${context.source}.`,
+        prompt: `${subject} ${item.source[2]} ${context.source}.`,
         targetText: `Hän ${item.forms[2]} ${context.target}.`,
         acceptedVariants: [`Hän ${item.forms[2]} ${context.target}.`],
         slots: [

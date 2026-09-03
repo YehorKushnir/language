@@ -524,6 +524,7 @@ function LessonPracticePage() {
     displaySession?.pendingCorrections.length ?? pendingCorrections.length
   const displayedCorrectAnswers =
     displaySession?.correctAnswers ?? correctAnswers
+  const isFreeMode = practiceSession.data.mode === 'FREE'
   const requiredCorrectAnswers = practiceSession.data.requiredCorrectAnswers
   const missingCorrectAnswers = Math.max(
     0,
@@ -541,7 +542,9 @@ function LessonPracticePage() {
 
       <section className="mt-4 sm:mt-8">
         <div className="flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-wider">
-          {mainRoundCompleted ? (
+          {isFreeMode ? (
+            <p className="text-primary">Свободная практика</p>
+          ) : mainRoundCompleted ? (
             <p className="text-primary">
               {missingCorrectAnswers > 0
                 ? `Нужно ещё правильных ответов: ${missingCorrectAnswers}`
@@ -565,8 +568,12 @@ function LessonPracticePage() {
           {mainRoundCompleted
             ? missingCorrectAnswers > 0
               ? `Исправь ${Math.min(missingCorrectAnswers, displayedPendingCorrections)} из оставшихся ошибок, чтобы набрать 85%.`
-              : 'Следующий урок сейчас откроется.'
-            : `Для прохождения нужно не менее ${requiredCorrectAnswers} правильных ответов из ${SESSION_SIZE}.`}
+              : isFreeMode
+                ? 'Подводим итог свободной практики.'
+                : 'Следующий урок сейчас откроется.'
+            : isFreeMode
+              ? 'Результат этой тренировки не изменит прогресс урока.'
+              : `Для прохождения нужно не менее ${requiredCorrectAnswers} правильных ответов из ${SESSION_SIZE}.`}
         </p>
         <article className="mt-4 rounded-xl border border-border/70 bg-card p-4 shadow-xs sm:mt-5 sm:p-7">
           <h2
@@ -702,6 +709,8 @@ function PracticeSummary({
   lessonId: string
   lessonTitle: string
 }) {
+  const isFreeMode = completion.mode === 'FREE'
+
   return (
     <PageShell>
       <LessonWorkspaceHeader
@@ -711,15 +720,17 @@ function PracticeSummary({
       />
       <section className="mt-8">
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-          Практика завершена
+          {isFreeMode ? 'Свободная практика завершена' : 'Практика завершена'}
         </p>
         <h2 className="mt-2 font-serif text-2xl font-semibold sm:text-3xl">
-          Урок пройден
+          {isFreeMode ? 'Тренировка окончена' : 'Урок пройден'}
         </h2>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
           Правильных ответов: {completion.correctAnswers} из{' '}
-          {completion.totalExercises} — {completion.scorePercent}%. Для
-          прохождения достаточно 85%.
+          {completion.totalExercises} — {completion.scorePercent}%.{' '}
+          {isFreeMode
+            ? 'Прогресс урока остался без изменений.'
+            : 'Для прохождения достаточно 85%.'}
         </p>
         <Progress
           className="mt-5 h-2"
@@ -735,7 +746,7 @@ function PracticeSummary({
                 to="/lessons/$lessonId/explanation"
                 params={{ lessonId: completion.progress.currentLessonId }}
               >
-                Следующий урок
+                {isFreeMode ? 'Продолжить курс' : 'Следующий урок'}
               </Link>
             </Button>
           ) : null}

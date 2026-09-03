@@ -177,8 +177,9 @@ export function buildPresentVerbExercises(input: {
   })
   addGroup(2, 8, 'third', ({ item, skillId, vocabulary }) => {
     const context = getPresentVerbContext(item.lemma)
+    const subject = input.verbs.indexOf(item) % 2 === 0 ? 'Он' : 'Она'
     return {
-      prompt: `Он или она ${getRussianPresentForms(item.lemma)[2]} ${context.source}.`,
+      prompt: `${subject} ${getRussianPresentForms(item.lemma)[2]} ${context.source}.`,
       targetText: `Hän ${item.forms[2]} ${context.target}.`,
       acceptedVariants: [`Hän ${item.forms[2]} ${context.target}.`],
       slots: [
@@ -378,7 +379,7 @@ const presentVerbContexts: Record<string, { target: string; source: string }> =
     myydä: { target: 'auton', source: 'машину' },
     tehdä: { target: 'ruokaa', source: 'еду' },
     nähdä: { target: 'ystävän', source: 'друга' },
-    käydä: { target: 'kaupassa', source: 'в магазин' },
+    käydä: { target: 'kaupassa', source: 'магазин' },
     pestä: { target: 'kädet', source: 'руки' },
     nousta: { target: 'aikaisin', source: 'рано' },
     purra: { target: 'omenaa', source: 'яблоко' },
@@ -461,7 +462,14 @@ const russianPresentFormsByLemma: Record<string, RussianPresentForms> = {
   myydä: ['продаю', 'продаёшь', 'продаёт', 'продаём', 'продаёте', 'продают'],
   tehdä: ['готовлю', 'готовишь', 'готовит', 'готовим', 'готовите', 'готовят'],
   nähdä: ['вижу', 'видишь', 'видит', 'видим', 'видите', 'видят'],
-  käydä: ['хожу', 'ходишь', 'ходит', 'ходим', 'ходите', 'ходят'],
+  käydä: [
+    'посещаю',
+    'посещаешь',
+    'посещает',
+    'посещаем',
+    'посещаете',
+    'посещают',
+  ],
   pestä: ['мою', 'моешь', 'моет', 'моем', 'моете', 'моют'],
   nousta: ['встаю', 'встаёшь', 'встаёт', 'встаём', 'встаёте', 'встают'],
   purra: ['кусаю', 'кусаешь', 'кусает', 'кусаем', 'кусаете', 'кусают'],

@@ -1,7 +1,23 @@
 import { QueryClient } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { textAudioFileQuery } from './queries'
+import {
+  nextExerciseQuery,
+  practiceSessionQuery,
+  textAudioFileQuery,
+} from './queries'
+
+describe('practice queries', () => {
+  it('keeps the current exercise stable when the browser tab regains focus', () => {
+    const exercise = nextExerciseQuery('lesson.1', 'route.1', ['exercise.1'])
+    const session = practiceSessionQuery('lesson.1', 'route.1')
+
+    expect(exercise.refetchOnWindowFocus).toBe(false)
+    expect(exercise.refetchOnReconnect).toBe(false)
+    expect(session.refetchOnWindowFocus).toBe(false)
+    expect(session.refetchOnReconnect).toBe(false)
+  })
+})
 
 describe('text audio query', () => {
   afterEach(() => vi.unstubAllGlobals())

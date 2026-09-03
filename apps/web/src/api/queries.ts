@@ -61,6 +61,8 @@ export function nextExerciseQuery(
       getNextExercise(lessonId, routeVersionId, 'ru', excludedExerciseIds),
     placeholderData: (previousExercise) => previousExercise,
     staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   })
 }
 
@@ -90,6 +92,8 @@ export function practiceSessionQuery(lessonId: string, routeVersionId: string) {
     staleTime: 0,
     gcTime: 5 * 60_000,
     refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   })
 }
 

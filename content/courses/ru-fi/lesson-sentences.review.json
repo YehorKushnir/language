@@ -526,7 +526,7 @@
       {
         "order": 15,
         "id": "exercise.fi.present.common.third.008",
-        "prompt": "Он или она преподаёт.",
+        "prompt": "Он преподаёт.",
         "targetText": "Hän opettaa.",
         "acceptedVariants": ["Hän opettaa."]
       },
@@ -568,7 +568,7 @@
       {
         "order": 21,
         "id": "exercise.fi.present.common.third.004",
-        "prompt": "Он или она читает.",
+        "prompt": "Она читает.",
         "targetText": "Hän lukee.",
         "acceptedVariants": ["Hän lukee."]
       },
@@ -617,7 +617,7 @@
       {
         "order": 28,
         "id": "exercise.fi.present.common.third.006",
-        "prompt": "Он или она смотрит.",
+        "prompt": "Он смотрит.",
         "targetText": "Hän katsoo.",
         "acceptedVariants": ["Hän katsoo."]
       },
@@ -659,7 +659,7 @@
       {
         "order": 34,
         "id": "exercise.fi.present.common.third.003",
-        "prompt": "Он или она рассказывает.",
+        "prompt": "Она рассказывает.",
         "targetText": "Hän kertoo.",
         "acceptedVariants": ["Hän kertoo."]
       },
@@ -694,7 +694,7 @@
       {
         "order": 39,
         "id": "exercise.fi.present.common.third.007",
-        "prompt": "Он или она учится.",
+        "prompt": "Он учится.",
         "targetText": "Hän oppii.",
         "acceptedVariants": ["Hän oppii."]
       },
@@ -736,7 +736,7 @@
       {
         "order": 45,
         "id": "exercise.fi.present.common.third.005",
-        "prompt": "Он или она пишет.",
+        "prompt": "Она пишет.",
         "targetText": "Hän kirjoittaa.",
         "acceptedVariants": ["Hän kirjoittaa."]
       },
@@ -799,7 +799,7 @@
       {
         "order": 54,
         "id": "exercise.fi.present.common.third.001",
-        "prompt": "Он или она спрашивает.",
+        "prompt": "Он спрашивает.",
         "targetText": "Hän kysyy.",
         "acceptedVariants": ["Hän kysyy."]
       },
@@ -834,7 +834,7 @@
       {
         "order": 59,
         "id": "exercise.fi.present.common.third.002",
-        "prompt": "Он или она произносит «привет».",
+        "prompt": "Она произносит «привет».",
         "targetText": "Hän sanoo hei.",
         "acceptedVariants": ["Hän sanoo hei."]
       },
@@ -866,7 +866,7 @@
       {
         "order": 3,
         "id": "exercise.fi.questions.verb-negative.003",
-        "prompt": "Он или она не спрашивает.",
+        "prompt": "Он не спрашивает.",
         "targetText": "Hän ei kysy.",
         "acceptedVariants": ["Hän ei kysy."]
       },
@@ -887,7 +887,7 @@
       {
         "order": 6,
         "id": "exercise.fi.questions.special.004",
-        "prompt": "Когда он или она пишет?",
+        "prompt": "Когда он пишет?",
         "targetText": "Milloin hän kirjoittaa?",
         "acceptedVariants": ["Milloin hän kirjoittaa?"]
       },
@@ -929,7 +929,7 @@
       {
         "order": 12,
         "id": "exercise.fi.questions.verb-question.003",
-        "prompt": "Он или она рассказывает?",
+        "prompt": "Она рассказывает?",
         "targetText": "Kertooko hän?",
         "acceptedVariants": ["Kertooko hän?"]
       },
@@ -1055,7 +1055,7 @@
       {
         "order": 30,
         "id": "exercise.fi.questions.special.002",
-        "prompt": "Кто он или она?",
+        "prompt": "Кто она?",
         "targetText": "Kuka hän on?",
         "acceptedVariants": ["Kuka hän on?"]
       },
@@ -1167,7 +1167,7 @@
       {
         "order": 46,
         "id": "exercise.fi.questions.verb-negative.009",
-        "prompt": "Он или она не смотрит.",
+        "prompt": "Он не смотрит.",
         "targetText": "Hän ei katso.",
         "acceptedVariants": ["Hän ei katso."]
       },
@@ -1209,7 +1209,7 @@
       {
         "order": 52,
         "id": "exercise.fi.questions.verb-question.009",
-        "prompt": "Он или она учится?",
+        "prompt": "Она учится?",
         "targetText": "Oppiiko hän?",
         "acceptedVariants": ["Oppiiko hän?"]
       },
@@ -1237,7 +1237,7 @@
       {
         "order": 56,
         "id": "exercise.fi.questions.special.005",
-        "prompt": "Почему он или она спрашивает?",
+        "prompt": "Почему он спрашивает?",
         "targetText": "Miksi hän kysyy?",
         "acceptedVariants": ["Miksi hän kysyy?"]
       },
@@ -1318,9 +1318,9 @@
       {
         "order": 7,
         "id": "exercise.fi.verb-types.two-three.first.013",
-        "prompt": "Я хожу.",
-        "targetText": "Minä käyn.",
-        "acceptedVariants": ["Minä käyn.", "Käyn."]
+        "prompt": "Я посещаю магазин.",
+        "targetText": "Minä käyn kaupassa.",
+        "acceptedVariants": ["Minä käyn kaupassa.", "Käyn kaupassa."]
       },
       {
         "order": 8,
@@ -1353,7 +1353,7 @@
       {
         "order": 12,
         "id": "exercise.fi.verb-types.two-three.third.006",
-        "prompt": "Он или она относит?",
+        "prompt": "Он относит?",
         "targetText": "Viekö hän?",
         "acceptedVariants": ["Viekö hän?"]
       },
@@ -1416,7 +1416,7 @@
       {
         "order": 21,
         "id": "exercise.fi.verb-types.two-three.third.003",
-        "prompt": "Он или она не курит.",
+        "prompt": "Она не курит.",
         "targetText": "Hän ei tupakoi.",
         "acceptedVariants": ["Hän ei tupakoi."]
       },
@@ -1458,7 +1458,7 @@
       {
         "order": 27,
         "id": "exercise.fi.verb-types.two-three.third.004",
-        "prompt": "Он или она пылесосит?",
+        "prompt": "Он пылесосит?",
         "targetText": "Imuroiko hän?",
         "acceptedVariants": ["Imuroiko hän?"]
       },
@@ -1472,9 +1472,9 @@
       {
         "order": 29,
         "id": "exercise.fi.verb-types.two-three.first-plural-now.003",
-        "prompt": "Мы не ходим.",
-        "targetText": "Me emme käy.",
-        "acceptedVariants": ["Me emme käy.", "Emme käy."]
+        "prompt": "Мы не посещаем магазин.",
+        "targetText": "Me emme käy kaupassa.",
+        "acceptedVariants": ["Me emme käy kaupassa.", "Emme käy kaupassa."]
       },
       {
         "order": 30,
@@ -1493,7 +1493,7 @@
       {
         "order": 32,
         "id": "exercise.fi.verb-types.two-three.third.001",
-        "prompt": "Он или она не пьёт.",
+        "prompt": "Она не пьёт.",
         "targetText": "Hän ei juo.",
         "acceptedVariants": ["Hän ei juo."]
       },
@@ -1542,7 +1542,7 @@
       {
         "order": 39,
         "id": "exercise.fi.verb-types.two-three.third.008",
-        "prompt": "Он или она продаёт?",
+        "prompt": "Он продаёт?",
         "targetText": "Myykö hän?",
         "acceptedVariants": ["Myykö hän?"]
       },
@@ -1584,7 +1584,7 @@
       {
         "order": 45,
         "id": "exercise.fi.verb-types.two-three.third.005",
-        "prompt": "Он или она не паркуется.",
+        "prompt": "Она не паркуется.",
         "targetText": "Hän ei pysäköi.",
         "acceptedVariants": ["Hän ei pysäköi."]
       },
@@ -1626,7 +1626,7 @@
       {
         "order": 51,
         "id": "exercise.fi.verb-types.two-three.third.002",
-        "prompt": "Он или она плавает?",
+        "prompt": "Он плавает?",
         "targetText": "Uiko hän?",
         "acceptedVariants": ["Uiko hän?"]
       },
@@ -1661,7 +1661,7 @@
       {
         "order": 56,
         "id": "exercise.fi.verb-types.two-three.third.007",
-        "prompt": "Он или она не приносит.",
+        "prompt": "Она не приносит.",
         "targetText": "Hän ei tuo.",
         "acceptedVariants": ["Hän ei tuo."]
       },
@@ -1819,7 +1819,7 @@
       {
         "order": 18,
         "id": "exercise.fi.verb-types.four-six.third.008",
-        "prompt": "Он или она нуждается?",
+        "prompt": "Он нуждается?",
         "targetText": "Tarvitseeko hän?",
         "acceptedVariants": ["Tarvitseeko hän?"]
       },
@@ -1847,7 +1847,7 @@
       {
         "order": 22,
         "id": "exercise.fi.verb-types.four-six.third.003",
-        "prompt": "Он или она не играет.",
+        "prompt": "Она не играет.",
         "targetText": "Hän ei pelaa.",
         "acceptedVariants": ["Hän ei pelaa."]
       },
@@ -1889,7 +1889,7 @@
       {
         "order": 28,
         "id": "exercise.fi.verb-types.four-six.third.006",
-        "prompt": "Он или она любит?",
+        "prompt": "Он любит?",
         "targetText": "Tykkääkö hän?",
         "acceptedVariants": ["Tykkääkö hän?"]
       },
@@ -1931,7 +1931,7 @@
       {
         "order": 34,
         "id": "exercise.fi.verb-types.four-six.third.007",
-        "prompt": "Он или она не ненавидит.",
+        "prompt": "Она не ненавидит.",
         "targetText": "Hän ei vihaa.",
         "acceptedVariants": ["Hän ei vihaa."]
       },
@@ -1973,7 +1973,7 @@
       {
         "order": 40,
         "id": "exercise.fi.verb-types.four-six.third.004",
-        "prompt": "Он или она убирает?",
+        "prompt": "Он убирает?",
         "targetText": "Siivoaako hän?",
         "acceptedVariants": ["Siivoaako hän?"]
       },
@@ -2008,7 +2008,7 @@
       {
         "order": 45,
         "id": "exercise.fi.verb-types.four-six.third.005",
-        "prompt": "Он или она не берёт взаймы.",
+        "prompt": "Она не берёт взаймы.",
         "targetText": "Hän ei lainaa.",
         "acceptedVariants": ["Hän ei lainaa."]
       },
@@ -2057,7 +2057,7 @@
       {
         "order": 52,
         "id": "exercise.fi.verb-types.four-six.third.002",
-        "prompt": "Он или она умеет?",
+        "prompt": "Он умеет?",
         "targetText": "Osaako hän?",
         "acceptedVariants": ["Osaako hän?"]
       },
@@ -2085,7 +2085,7 @@
       {
         "order": 56,
         "id": "exercise.fi.verb-types.four-six.third.001",
-        "prompt": "Он или она не встречает.",
+        "prompt": "Она не встречает.",
         "targetText": "Hän ei tapaa.",
         "acceptedVariants": ["Hän ei tapaa."]
       },
@@ -2138,7 +2138,7 @@
       {
         "order": 3,
         "id": "exercise.fi.consonant-gradation.word.2",
-        "prompt": "Он или она пишет.",
+        "prompt": "Он пишет.",
         "targetText": "Hän kirjoittaa.",
         "acceptedVariants": ["Hän kirjoittaa."]
       },
@@ -2159,7 +2159,7 @@
       {
         "order": 6,
         "id": "exercise.fi.consonant-gradation.context.1",
-        "prompt": "Он или она берёт?",
+        "prompt": "Она берёт?",
         "targetText": "Ottaako hän?",
         "acceptedVariants": ["Ottaako hän?"]
       },
@@ -2180,7 +2180,7 @@
       {
         "order": 9,
         "id": "exercise.fi.consonant-gradation.word.8",
-        "prompt": "Он или она использует.",
+        "prompt": "Он использует.",
         "targetText": "Hän käyttää.",
         "acceptedVariants": ["Hän käyttää."]
       },
@@ -2222,7 +2222,7 @@
       {
         "order": 15,
         "id": "exercise.fi.consonant-gradation.word.21",
-        "prompt": "Он или она не встречает.",
+        "prompt": "Она не встречает.",
         "targetText": "Hän ei tapaa.",
         "acceptedVariants": ["Hän ei tapaa."]
       },
@@ -2327,7 +2327,7 @@
       {
         "order": 30,
         "id": "exercise.fi.consonant-gradation.context.6",
-        "prompt": "Он или она упаковывает?",
+        "prompt": "Он упаковывает?",
         "targetText": "Pakkaako hän?",
         "acceptedVariants": ["Pakkaako hän?"]
       },
@@ -2369,7 +2369,7 @@
       {
         "order": 36,
         "id": "exercise.fi.consonant-gradation.word.4",
-        "prompt": "Он или она помогает.",
+        "prompt": "Она помогает.",
         "targetText": "Hän auttaa.",
         "acceptedVariants": ["Hän auttaa."]
       },
@@ -2432,7 +2432,7 @@
       {
         "order": 45,
         "id": "exercise.fi.consonant-gradation.word.11",
-        "prompt": "Он или она любит.",
+        "prompt": "Он любит.",
         "targetText": "Hän tykkää.",
         "acceptedVariants": ["Hän tykkää."]
       },
@@ -2474,7 +2474,7 @@
       {
         "order": 51,
         "id": "exercise.fi.consonant-gradation.word.15",
-        "prompt": "Он или она не понимает.",
+        "prompt": "Она не понимает.",
         "targetText": "Hän ei ymmärrä.",
         "acceptedVariants": ["Hän ei ymmärrä."]
       },
@@ -2516,7 +2516,7 @@
       {
         "order": 57,
         "id": "exercise.fi.consonant-gradation.word.25",
-        "prompt": "Он или она понимает?",
+        "prompt": "Он понимает?",
         "targetText": "Ymmärtääkö hän?",
         "acceptedVariants": ["Ymmärtääkö hän?"]
       },
@@ -2562,7 +2562,7 @@
       {
         "order": 3,
         "id": "exercise.fi.infinitive.chains.word.9",
-        "prompt": "Он или она хочет держать.",
+        "prompt": "Она хочет держать.",
         "targetText": "Hän haluaa pitää.",
         "acceptedVariants": ["Hän haluaa pitää."]
       },
@@ -2604,7 +2604,7 @@
       {
         "order": 9,
         "id": "exercise.fi.infinitive.chains.word.15",
-        "prompt": "Он или она хочет летать.",
+        "prompt": "Он хочет летать.",
         "targetText": "Hän haluaa lentää.",
         "acceptedVariants": ["Hän haluaa lentää."]
       },
@@ -2653,7 +2653,7 @@
       {
         "order": 16,
         "id": "exercise.fi.infinitive.chains.context.15",
-        "prompt": "Он или она не умеет водить.",
+        "prompt": "Она не умеет водить.",
         "targetText": "Hän ei osaa ajaa.",
         "acceptedVariants": ["Hän ei osaa ajaa."]
       },
@@ -2702,7 +2702,7 @@
       {
         "order": 23,
         "id": "exercise.fi.infinitive.chains.word.3",
-        "prompt": "Он или она может чувствовать.",
+        "prompt": "Он может чувствовать.",
         "targetText": "Hän voi tuntea.",
         "acceptedVariants": ["Hän voi tuntea."]
       },
@@ -2737,7 +2737,7 @@
       {
         "order": 28,
         "id": "exercise.fi.infinitive.chains.context.9",
-        "prompt": "Он или она не может подойти.",
+        "prompt": "Она не может подойти.",
         "targetText": "Hän ei voi sopia.",
         "acceptedVariants": ["Hän ei voi sopia."]
       },
@@ -2786,7 +2786,7 @@
       {
         "order": 35,
         "id": "exercise.fi.infinitive.chains.context.18",
-        "prompt": "Он или она может подойти?",
+        "prompt": "Он может подойти?",
         "targetText": "Voiko hän sopia?",
         "acceptedVariants": ["Voiko hän sopia?"]
       },
@@ -2814,7 +2814,7 @@
       {
         "order": 39,
         "id": "exercise.fi.infinitive.chains.context.24",
-        "prompt": "Он или она умеет водить?",
+        "prompt": "Она умеет водить?",
         "targetText": "Osaako hän ajaa?",
         "acceptedVariants": ["Osaako hän ajaa?"]
       },
@@ -2849,7 +2849,7 @@
       {
         "order": 44,
         "id": "exercise.fi.infinitive.chains.word.21",
-        "prompt": "Он или она умеет готовить.",
+        "prompt": "Он умеет готовить.",
         "targetText": "Hän osaa kokata.",
         "acceptedVariants": ["Hän osaa kokata."]
       },
@@ -2891,7 +2891,7 @@
       {
         "order": 50,
         "id": "exercise.fi.infinitive.chains.pair.4",
-        "prompt": "Он или она умеет печь?",
+        "prompt": "Она умеет печь?",
         "targetText": "Osaako hän leipoa?",
         "acceptedVariants": ["Osaako hän leipoa?"]
       },
@@ -2933,7 +2933,7 @@
       {
         "order": 56,
         "id": "exercise.fi.infinitive.chains.context.3",
-        "prompt": "Он или она не хочет попытаться.",
+        "prompt": "Он не хочет попытаться.",
         "targetText": "Hän ei halua yrittää.",
         "acceptedVariants": ["Hän ei halua yrittää."]
       },
@@ -4880,7 +4880,7 @@
       {
         "order": 6,
         "id": "exercise.fi.local-cases.internal.word.9",
-        "prompt": "Он или она в аптеке.",
+        "prompt": "Она в аптеке.",
         "targetText": "Hän on apteekissa.",
         "acceptedVariants": ["Hän on apteekissa."]
       },
@@ -4911,7 +4911,7 @@
       {
         "order": 10,
         "id": "exercise.fi.local-cases.internal.context.1",
-        "prompt": "Он или она идёт в аптеку.",
+        "prompt": "Он идёт в аптеку.",
         "targetText": "Hän menee apteekkiin.",
         "acceptedVariants": ["Hän menee apteekkiin."]
       },
@@ -4960,7 +4960,7 @@
       {
         "order": 17,
         "id": "exercise.fi.local-cases.internal.word.15",
-        "prompt": "Он или она в магазине.",
+        "prompt": "Она в магазине.",
         "targetText": "Hän on myymälässä.",
         "acceptedVariants": ["Hän on myymälässä."]
       },
@@ -4988,7 +4988,7 @@
       {
         "order": 21,
         "id": "exercise.fi.local-cases.internal.context.22",
-        "prompt": "Он или она идёт из полицейского участка.",
+        "prompt": "Он идёт из полицейского участка.",
         "targetText": "Hän tulee poliisiasemalta.",
         "acceptedVariants": ["Hän tulee poliisiasemalta."]
       },
@@ -5050,7 +5050,7 @@
       {
         "order": 29,
         "id": "exercise.fi.local-cases.internal.word.3",
-        "prompt": "Он или она в библиотеке.",
+        "prompt": "Она в библиотеке.",
         "targetText": "Hän on kirjastossa.",
         "acceptedVariants": ["Hän on kirjastossa."]
       },
@@ -5099,7 +5099,7 @@
       {
         "order": 36,
         "id": "exercise.fi.local-cases.internal.context.7",
-        "prompt": "Он или она идёт в тренажёрный зал.",
+        "prompt": "Он идёт в тренажёрный зал.",
         "targetText": "Hän menee kuntosalille.",
         "acceptedVariants": ["Hän menee kuntosalille."]
       },
@@ -5127,7 +5127,7 @@
       {
         "order": 40,
         "id": "exercise.fi.local-cases.internal.pair.2",
-        "prompt": "Он или она идёт с почты.",
+        "prompt": "Она идёт с почты.",
         "targetText": "Hän tulee postista.",
         "acceptedVariants": ["Hän tulee postista."]
       },
@@ -5169,7 +5169,7 @@
       {
         "order": 46,
         "id": "exercise.fi.local-cases.internal.word.21",
-        "prompt": "Он или она в кинотеатре.",
+        "prompt": "Он в кинотеатре.",
         "targetText": "Hän on elokuvateatterissa.",
         "acceptedVariants": ["Hän on elokuvateatterissa."]
       },
@@ -5228,7 +5228,7 @@
       {
         "order": 54,
         "id": "exercise.fi.local-cases.internal.context.13",
-        "prompt": "Он или она идёт в ресторан.",
+        "prompt": "Она идёт в ресторан.",
         "targetText": "Hän menee ravintolaan.",
         "acceptedVariants": ["Hän menee ravintolaan."]
       },
@@ -5263,7 +5263,7 @@
       {
         "order": 59,
         "id": "exercise.fi.local-cases.internal.pair.8",
-        "prompt": "Он или она идёт из лифта.",
+        "prompt": "Он идёт из лифта.",
         "targetText": "Hän tulee hissistä.",
         "acceptedVariants": ["Hän tulee hissistä."]
       },
@@ -5288,7 +5288,7 @@
       {
         "order": 2,
         "id": "exercise.fi.local-cases.external.context.14",
-        "prompt": "Он или она идёт на ветер.",
+        "prompt": "Она идёт на ветер.",
         "targetText": "Hän menee tuuleen.",
         "acceptedVariants": ["Hän menee tuuleen."]
       },
@@ -5340,7 +5340,7 @@
       {
         "order": 9,
         "id": "exercise.fi.local-cases.external.word.21",
-        "prompt": "Он или она на траве.",
+        "prompt": "Он на траве.",
         "targetText": "Hän on ruoholla.",
         "acceptedVariants": ["Hän on ruoholla."]
       },
@@ -5375,7 +5375,7 @@
       {
         "order": 14,
         "id": "exercise.fi.local-cases.external.context.2",
-        "prompt": "Он или она идёт к перекрёстку.",
+        "prompt": "Она идёт к перекрёстку.",
         "targetText": "Hän menee risteykseen.",
         "acceptedVariants": ["Hän menee risteykseen."]
       },
@@ -5410,7 +5410,7 @@
       {
         "order": 19,
         "id": "exercise.fi.local-cases.external.word.3",
-        "prompt": "Он или она едет на трамвае.",
+        "prompt": "Он едет на трамвае.",
         "targetText": "Hän matkustaa raitiovaunulla.",
         "acceptedVariants": ["Hän matkustaa raitiovaunulla."]
       },
@@ -5459,7 +5459,7 @@
       {
         "order": 26,
         "id": "exercise.fi.local-cases.external.context.20",
-        "prompt": "Он или она идёт с озера.",
+        "prompt": "Она идёт с озера.",
         "targetText": "Hän tulee järveltä.",
         "acceptedVariants": ["Hän tulee järveltä."]
       },
@@ -5500,7 +5500,7 @@
       {
         "order": 31,
         "id": "exercise.fi.local-cases.external.word.9",
-        "prompt": "Он или она на перекрёстке.",
+        "prompt": "Он на перекрёстке.",
         "targetText": "Hän on risteyksessä.",
         "acceptedVariants": ["Hän on risteyksessä."]
       },
@@ -5545,7 +5545,7 @@
       {
         "order": 37,
         "id": "exercise.fi.local-cases.external.context.8",
-        "prompt": "Он или она идёт на дерево.",
+        "prompt": "Она идёт на дерево.",
         "targetText": "Hän menee puuhun.",
         "acceptedVariants": ["Hän menee puuhun."]
       },
@@ -5621,7 +5621,7 @@
       {
         "order": 47,
         "id": "exercise.fi.local-cases.external.word.15",
-        "prompt": "Он или она на реке.",
+        "prompt": "Он на реке.",
         "targetText": "Hän on joella.",
         "acceptedVariants": ["Hän on joella."]
       },
@@ -5669,7 +5669,7 @@
       {
         "order": 53,
         "id": "exercise.fi.local-cases.external.context.26",
-        "prompt": "Он или она идёт с травы.",
+        "prompt": "Она идёт с травы.",
         "targetText": "Hän tulee ruoholta.",
         "acceptedVariants": ["Hän tulee ruoholta."]
       },
@@ -5700,7 +5700,7 @@
       {
         "order": 57,
         "id": "exercise.fi.local-cases.external.pair.4",
-        "prompt": "Он или она едет на поезде?",
+        "prompt": "Он едет на поезде?",
         "targetText": "Matkustaako hän junalla?",
         "acceptedVariants": ["Matkustaako hän junalla?"]
       },
@@ -6219,7 +6219,7 @@
       {
         "order": 10,
         "id": "exercise.fi.imperfect.affirmative.context.15",
-        "prompt": "Он или она пришёл(ла) со станции.",
+        "prompt": "Она пришла со станции.",
         "targetText": "Hän tuli asemalta.",
         "acceptedVariants": ["Hän tuli asemalta."]
       },
@@ -6268,7 +6268,7 @@
       {
         "order": 17,
         "id": "exercise.fi.imperfect.affirmative.word.9",
-        "prompt": "Вчера он или она совершил(а) экскурсию.",
+        "prompt": "Вчера она совершила экскурсию.",
         "targetText": "Eilen hän teki retken.",
         "acceptedVariants": ["Eilen hän teki retken."]
       },
@@ -6310,7 +6310,7 @@
       {
         "order": 23,
         "id": "exercise.fi.imperfect.affirmative.context.9",
-        "prompt": "Он или она пошёл(ла) на станцию.",
+        "prompt": "Он пошёл на станцию.",
         "targetText": "Hän meni asemalle.",
         "acceptedVariants": ["Hän meni asemalle."]
       },
@@ -6355,7 +6355,7 @@
       {
         "order": 29,
         "id": "exercise.fi.imperfect.affirmative.word.3",
-        "prompt": "Вчера он или она сделал(а) бронирование.",
+        "prompt": "Вчера он сделал бронирование.",
         "targetText": "Eilen hän teki varauksen.",
         "acceptedVariants": ["Eilen hän teki varauksen."]
       },
@@ -6410,7 +6410,7 @@
       {
         "order": 36,
         "id": "exercise.fi.imperfect.affirmative.context.3",
-        "prompt": "Он или она был(а) на станции.",
+        "prompt": "Она была на станции.",
         "targetText": "Hän oli asemalla.",
         "acceptedVariants": ["Hän oli asemalla."]
       },
@@ -6458,7 +6458,7 @@
       {
         "order": 42,
         "id": "exercise.fi.imperfect.affirmative.word.15",
-        "prompt": "Вчера он или она увидел(а) фотографию.",
+        "prompt": "Вчера она увидела фотографию.",
         "targetText": "Eilen hän näki valokuvan.",
         "acceptedVariants": ["Eilen hän näki valokuvan."]
       },
@@ -6513,7 +6513,7 @@
       {
         "order": 49,
         "id": "exercise.fi.imperfect.affirmative.pair.1",
-        "prompt": "Он или она совершил(а) экскурсию.",
+        "prompt": "Он совершил экскурсию.",
         "targetText": "Hän teki retken.",
         "acceptedVariants": ["Hän teki retken."]
       },
@@ -6558,7 +6558,7 @@
       {
         "order": 55,
         "id": "exercise.fi.imperfect.affirmative.context.21",
-        "prompt": "Он или она увидел(а) карту.",
+        "prompt": "Она увидела карту.",
         "targetText": "Hän näki kartan.",
         "acceptedVariants": ["Hän näki kartan."]
       },
@@ -6870,7 +6870,7 @@
       {
         "order": 30,
         "id": "exercise.fi.imperfect.negative-question.pair.7",
-        "prompt": "Разве он или она не родился или не родилась в Хельсинки?",
+        "prompt": "Разве он не родился в Хельсинки?",
         "targetText": "Eikö hän syntynyt Helsingissä?",
         "acceptedVariants": ["Eikö hän syntynyt Helsingissä?"]
       },
@@ -7006,7 +7006,7 @@
       {
         "order": 46,
         "id": "exercise.fi.imperfect.negative-question.pair.3",
-        "prompt": "Разве он или она не стоял(а) у двери?",
+        "prompt": "Разве она не стояла у двери?",
         "targetText": "Eikö hän seissyt ovella?",
         "acceptedVariants": ["Eikö hän seissyt ovella?"]
       },

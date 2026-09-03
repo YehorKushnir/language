@@ -97,6 +97,20 @@ describe('ExerciseGenerationService', () => {
     })
     expect(prisma.exerciseTemplate.findMany).not.toHaveBeenCalled()
     expect(morphology.analyzeText).not.toHaveBeenCalled()
+    expect(prisma.exercise.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          generated: expect.objectContaining({
+            generatorVersion: {
+              in: [
+                'finnish-identity-v1',
+                'finnish-prepared-variation-v2',
+              ],
+            },
+          }),
+        }),
+      }),
+    )
   })
 
   it('realizes, validates and stores a deterministic exercise', async () => {
@@ -268,11 +282,11 @@ describe('ExerciseGenerationService', () => {
           targetText: 'Puhun suomea.',
           answerSpec: expect.objectContaining({
             sourceExerciseId: 'exercise.fi.present.common.word.1',
-            generatorVersion: 'finnish-prepared-variation-v1',
+            generatorVersion: 'finnish-prepared-variation-v2',
           }),
           generated: {
             create: expect.objectContaining({
-              generatorVersion: 'finnish-prepared-variation-v1',
+              generatorVersion: 'finnish-prepared-variation-v2',
             }),
           },
         }),

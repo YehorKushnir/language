@@ -207,7 +207,10 @@ export interface PracticeCorrectionResponse {
   retryAfterAttempt: number
 }
 
+export type PracticeMode = 'PROGRESS' | 'FREE'
+
 export interface PracticeSessionResponse {
+  mode: PracticeMode
   startedAt: string
   totalExercises: number
   requiredCorrectAnswers: number
@@ -220,6 +223,7 @@ export interface PracticeSessionResponse {
 }
 
 export interface PracticeCompletionResponse {
+  mode: PracticeMode
   totalExercises: number
   correctAnswers: number
   requiredCorrectAnswers: number

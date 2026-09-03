@@ -74,6 +74,7 @@ describe('appendPracticeAttempt', () => {
 
 function session(): PracticeSessionResponse {
   return {
+    mode: 'PROGRESS',
     startedAt: '2026-08-23T18:00:00.000Z',
     totalExercises: 60,
     requiredCorrectAnswers: 51,

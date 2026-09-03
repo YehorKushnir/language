@@ -30,7 +30,7 @@ import { PrismaService } from '../database/prisma.service'
 import { FinnishMorphologyService } from '../morphology/finnish-morphology.service'
 
 const IDENTITY_GENERATOR_VERSION = 'finnish-identity-v1'
-const PREPARED_VARIATION_GENERATOR_VERSION = 'finnish-prepared-variation-v1'
+const PREPARED_VARIATION_GENERATOR_VERSION = 'finnish-prepared-variation-v2'
 const PUBLISHED_GENERATED_STATUSES = [
   ContentStatus.GENERATED,
   ContentStatus.VERIFIED,
@@ -403,6 +403,12 @@ export class ExerciseGenerationService {
         status: { in: PUBLISHED_GENERATED_STATUSES },
         generated: {
           routeVersionId,
+          generatorVersion: {
+            in: [
+              IDENTITY_GENERATOR_VERSION,
+              PREPARED_VARIATION_GENERATOR_VERSION,
+            ],
+          },
           template: { status: ContentStatus.CURATED },
         },
         prompts: { some: { sourceLanguage } },

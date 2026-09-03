@@ -76,4 +76,35 @@ describe('reviewed exercise application', () => {
     ])
     expect(exercise?.slots.at(-1)?.accepted).toEqual(['hei', 'moi'])
   })
+
+  it('uses unambiguous gender and movement prompts from learner reports', () => {
+    const exercises = new Map(
+      moduleOneLessons.flatMap((lesson) =>
+        lesson.exercises.map((exercise) => [exercise.id, exercise] as const),
+      ),
+    )
+
+    expect(
+      exercises.get('exercise.fi.present.common.third.006')?.prompt,
+    ).toBe('Он смотрит.')
+    expect(
+      exercises.get('exercise.fi.verb-types.two-three.first.013'),
+    ).toMatchObject({
+      prompt: 'Я посещаю магазин.',
+      targetText: 'Minä käyn kaupassa.',
+    })
+    expect(
+      exercises.get(
+        'exercise.fi.verb-types.two-three.first-plural-now.003',
+      ),
+    ).toMatchObject({
+      prompt: 'Мы не посещаем магазин.',
+      targetText: 'Me emme käy kaupassa.',
+    })
+    expect(
+      [...exercises.values()].some((exercise) =>
+        exercise.prompt.toLocaleLowerCase('ru').includes('он или она'),
+      ),
+    ).toBe(false)
+  })
 })
